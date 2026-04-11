@@ -4,17 +4,6 @@
     <p class="profile-page__subtitle">Gerencie suas informações profissionais.</p>
   </div>
 
-  @if (apiError()) {
-    <div class="alert alert--error">{{ apiError() }}</div>
-  }
-
-  @if (successMessage()) {
-    <div class="alert alert--success">
-      <lucide-icon name="check" [size]="16"></lucide-icon>
-      {{ successMessage() }}
-    </div>
-  }
-
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
 
     <!-- Identidade -->

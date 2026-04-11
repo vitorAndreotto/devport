@@ -3,6 +3,7 @@ import { DevLayoutComponent } from '../../layouts/dev-layout/dev-layout.componen
 import { hasProfileGuard, noProfileGuard } from '../../core/guards/profile.guard';
 import { DashboardComponent } from './dashboard/dashboard.component';
 import { ProfileComponent } from './profile/profile.component';
+import { SkillsComponent } from './skills/skills.component';
 import { OnboardingComponent } from './onboarding/onboarding.component';
 
 export const devRoutes: Routes = [
@@ -18,6 +19,7 @@ export const devRoutes: Routes = [
     children: [
       { path: '', component: DashboardComponent },
       { path: 'profile', component: ProfileComponent },
+      { path: 'skills', component: SkillsComponent },
     ],
   },
 ];

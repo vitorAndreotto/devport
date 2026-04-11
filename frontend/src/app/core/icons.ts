@@ -26,6 +26,11 @@ import {
   Link,
   Plus,
   Trash2,
+  Edit3,
+  Filter,
+  ChevronDown,
+  Info,
+  AlertTriangle,
 } from 'lucide-angular';
 
 export const APP_ICONS = {
@@ -56,4 +61,9 @@ export const APP_ICONS = {
   Link,
   Plus,
   Trash2,
+  Edit3,
+  Filter,
+  ChevronDown,
+  Info,
+  AlertTriangle,
 };

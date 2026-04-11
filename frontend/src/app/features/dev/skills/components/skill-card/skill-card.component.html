@@ -1,0 +1,46 @@
+<div class="skill-card" [class.skill-card--editing]="isEditing()">
+  @if (isEditing()) {
+    <div class="skill-card__name">{{ skill().skill.name }}</div>
+    <div class="skill-card__edit">
+      <select class="skill-card__select" [(ngModel)]="editLevel">
+        @for (level of levels; track level.value) {
+          <option [value]="level.value">{{ level.label }}</option>
+        }
+      </select>
+      <input
+        class="skill-card__input"
+        type="number"
+        [(ngModel)]="editYears"
+        placeholder="Anos"
+        min="0"
+        max="50"
+      >
+      <button class="skill-card__btn skill-card__btn--save" (click)="saveEdit()" [disabled]="saving()">
+        <lucide-icon name="check" [size]="16"></lucide-icon>
+      </button>
+      <button class="skill-card__btn skill-card__btn--cancel" (click)="cancelEdit()">
+        <lucide-icon name="x" [size]="16"></lucide-icon>
+      </button>
+    </div>
+  } @else {
+    <div class="skill-card__info">
+      <span class="skill-card__name">{{ skill().skill.name }}</span>
+      <div class="skill-card__meta">
+        <span class="skill-card__level skill-card__level--{{ skill().level }}">
+          {{ getLevelLabel(skill().level) }}
+        </span>
+        @if (skill().years_experience !== null) {
+          <span class="skill-card__years">{{ skill().years_experience }} {{ skill().years_experience === 1 ? 'ano' : 'anos' }}</span>
+        }
+      </div>
+    </div>
+    <div class="skill-card__actions">
+      <button class="skill-card__btn skill-card__btn--edit" (click)="startEdit()">
+        <lucide-icon name="edit-3" [size]="15"></lucide-icon>
+      </button>
+      <button class="skill-card__btn skill-card__btn--delete" (click)="remove.emit()">
+        <lucide-icon name="trash-2" [size]="15"></lucide-icon>
+      </button>
+    </div>
+  }
+</div>

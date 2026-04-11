@@ -1,0 +1,93 @@
+<div class="modal-backdrop" (click)="onClose()"></div>
+<div class="modal">
+  <div class="modal__header">
+    <h2 class="modal__title">Adicionar skill</h2>
+    <button class="modal__close" (click)="onClose()">
+      <lucide-icon name="x" [size]="20"></lucide-icon>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    @if (!selectedSkill()) {
+      <!-- Step 1: Search and select -->
+      <div class="modal__filters">
+        <div class="modal__search">
+          <lucide-icon name="search" [size]="16"></lucide-icon>
+          <input
+            type="text"
+            placeholder="Buscar skill..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="searchQuery.set($event)"
+          >
+        </div>
+        <select
+          class="modal__category"
+          [ngModel]="selectedCategory()"
+          (ngModelChange)="selectedCategory.set($event)"
+        >
+          <option value="">Todas categorias</option>
+          @for (cat of categories(); track cat) {
+            <option [value]="cat">{{ categoryLabels[cat] || cat }}</option>
+          }
+        </select>
+      </div>
+
+      <div class="modal__results">
+        @if (filteredTree().length === 0) {
+          <div class="modal__empty">Nenhuma skill encontrada</div>
+        } @else {
+          @for (skill of filteredTree(); track skill.id) {
+            <button class="modal__skill-item" (click)="selectSkill(skill)">
+              <span class="modal__skill-name">{{ skill.name }}</span>
+              <span class="modal__skill-cat">{{ categoryLabels[skill.category] || skill.category }}</span>
+            </button>
+          }
+        }
+      </div>
+    } @else {
+      <!-- Step 2: Configure level and years -->
+      <div class="modal__config">
+        <div class="modal__selected">
+          <span class="modal__selected-name">{{ selectedSkill()!.name }}</span>
+          <button class="modal__selected-change" (click)="clearSelection()">Trocar</button>
+        </div>
+
+        <div class="modal__field">
+          <label>Nível</label>
+          <select
+            class="modal__select"
+            [ngModel]="level()"
+            (ngModelChange)="level.set($event)"
+          >
+            @for (lvl of levels; track lvl.value) {
+              <option [value]="lvl.value">{{ lvl.label }}</option>
+            }
+          </select>
+        </div>
+
+        <div class="modal__field">
+          <label>Anos de experiência (opcional)</label>
+          <input
+            class="modal__input"
+            type="number"
+            [ngModel]="years()"
+            (ngModelChange)="years.set($event)"
+            placeholder="Ex: 3"
+            min="0"
+            max="50"
+          >
+        </div>
+
+        <button class="modal__confirm" (click)="onConfirm()" [disabled]="isAdding()">
+          @if (isAdding()) {
+            <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+            Adicionando...
+          } @else {
+            <lucide-icon name="plus" [size]="18"></lucide-icon>
+            Adicionar ao perfil
+          }
+        </button>
+      </div>
+    }
+  </div>
+</div>

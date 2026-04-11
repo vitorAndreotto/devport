@@ -609,6 +609,7 @@ import { INestApplication, ValidationPipe } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { SanitizePipe } from '../src/common/pipes/sanitize.pipe';
 import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { DataSource } from 'typeorm';
@@ -624,11 +625,14 @@ describe('Auth (e2e)', () => {
 
     app = moduleFixture.createNestApplication();
     app.setGlobalPrefix('api/v1');
-    app.useGlobalPipes(new ValidationPipe({
-      whitelist: true,
-      forbidNonWhitelisted: true,
-      transform: true,
-    }));
+    app.useGlobalPipes(
+      new SanitizePipe(),
+      new ValidationPipe({
+        whitelist: true,
+        forbidNonWhitelisted: true,
+        transform: true,
+      }),
+    );
     app.useGlobalInterceptors(new TransformInterceptor(app.get(Reflector)));
     app.useGlobalFilters(new HttpExceptionFilter());
     await app.init();
@@ -779,23 +783,171 @@ app.useGlobalFilters(new HttpExceptionFilter());
 ```typescript
 import { NestFactory, Reflector } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
+import helmet from 'helmet';
+import { SanitizePipe } from './common/pipes/sanitize.pipe';
 import { TransformInterceptor } from './common/interceptors/transform.interceptor';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+  const config = app.get(ConfigService);
+
+  app.use(helmet());
   app.setGlobalPrefix('api/v1');
-  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+
+  app.useGlobalPipes(
+    new SanitizePipe(),
+    new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }),
+  );
   app.useGlobalInterceptors(new TransformInterceptor(app.get(Reflector)));
   app.useGlobalFilters(new HttpExceptionFilter());
-  app.enableCors();
+
+  const allowedOrigins = config.get<string>('CORS_ORIGINS', 'http://localhost:4200')
+    .split(',').map((o) => o.trim());
+  app.enableCors({
+    origin: allowedOrigins,
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+    credentials: true,
+  });
+
   await app.listen(process.env.PORT ?? 3000);
 }
 ```
 
+**Ordem importa:** `SanitizePipe` antes do `ValidationPipe` garante que a sanitização ocorra antes da validação.
+
 ---
 
-## 7. Enums — Referência Completa
+## 7. Segurança
+
+### 7.1 Helmet
+
+Middleware registrado no `main.ts` via `app.use(helmet())`. Adiciona headers de segurança automaticamente (CSP, X-Frame-Options, HSTS, X-Content-Type-Options, etc.). Sem configuração adicional necessária.
+
+### 7.2 CORS
+
+Origins permitidas configuráveis via env var `CORS_ORIGINS` (comma-separated):
+```bash
+# .env
+CORS_ORIGINS=http://localhost:4200
+# Produção:
+CORS_ORIGINS=https://devport.com.br,https://www.devport.com.br
+```
+
+**Regras:**
+- **Nunca** usar `app.enableCors()` sem config (aceita qualquer origin)
+- Sempre restringir `methods` e `allowedHeaders`
+- Habilitar `credentials: true` para cookies/auth headers
+
+### 7.3 Rate Limiting
+
+Configurado via `ThrottlerModule` no `app.module.ts` com dois perfis:
+
+```typescript
+// Em controllers que precisam de throttling mais restritivo:
+@Controller('auth')
+@UseGuards(ThrottlerGuard)
+@Throttle({ auth: { ttl: 60000, limit: 10 } })
+export class AuthController { ... }
+```
+
+**Regras:**
+- Endpoints de auth (login, register, refresh) devem usar o perfil `auth` (mais restritivo)
+- Novos controllers públicos devem avaliar se precisam de throttling dedicado
+- Configuração via env: `THROTTLE_TTL`, `THROTTLE_LIMIT`, `THROTTLE_AUTH_TTL`, `THROTTLE_AUTH_LIMIT`
+
+### 7.4 Sanitização XSS (SanitizePipe)
+
+Pipe global que escapa `< > " ' &` em toda string do body da request. Registrado **antes** do `ValidationPipe`.
+
+```typescript
+// Entrada:                  → Armazenado no banco:
+// "<script>alert(1)</script>" → "&lt;script&gt;alert(1)&lt;/script&gt;"
+```
+
+**Regras:**
+- Escapa **apenas body** (não query params ou route params)
+- Percorre objetos e arrays recursivamente
+- Não altera números, booleans ou null
+
+### 7.5 Validação de Query Params
+
+Endpoints que recebem query params **devem** ter um DTO dedicado com validações:
+
+```typescript
+// ✅ CORRETO — DTO com limites
+export class ListSkillsQueryDto {
+  @IsOptional()
+  @IsString()
+  @IsIn(['language', 'framework', 'database', ...])
+  category?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(100)    // Previne queries lentas via ILIKE
+  q?: string;
+}
+
+@Get()
+async list(@Query() query: ListSkillsQueryDto) { ... }
+
+// ❌ ERRADO — query params soltos sem validação
+@Get()
+async list(@Query('q') q?: string) { ... }
+```
+
+### 7.6 Validação de Route Params
+
+Route params devem usar pipes de validação:
+
+| Tipo | Pipe | Exemplo |
+|---|---|---|
+| UUID | `ParseUUIDPipe` | `@Param('id', ParseUUIDPipe) id: string` |
+| Inteiro | `ParseIntPipe` | `@Param('cityId', ParseIntPipe) cityId: number` |
+| Handle | `ParseHandlePipe` | `@Param('handle', ParseHandlePipe) handle: string` |
+
+```typescript
+// ✅ CORRETO — param validado
+@Get(':handle')
+async findPublic(@Param('handle', ParseHandlePipe) handle: string) { ... }
+
+// ❌ ERRADO — param sem validação aceita qualquer string
+@Get(':handle')
+async findPublic(@Param('handle') handle: string) { ... }
+```
+
+### 7.7 Limites em DTOs
+
+DTOs devem impor limites defensivos:
+
+```typescript
+// Arrays — sempre @ArrayMaxSize()
+@IsArray()
+@ArrayMaxSize(10)
+@ValidateNested({ each: true })
+@Type(() => LinkDto)
+links?: LinkDto[];
+
+// Strings — sempre @MaxLength()
+@IsString()
+@MaxLength(100)
+label: string;
+
+// Usernames externos — regex do serviço de destino
+@Matches(/^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/)
+@MaxLength(39)
+github_username?: string;
+
+// Enums de query params — @IsIn() em vez de @IsEnum() (aceita só valores válidos)
+@IsIn(['language', 'framework', 'database'])
+category?: string;
+```
+
+---
+
+## 8. Enums — Referência Completa
 
 | Enum | Valores |
 |---|---|
@@ -811,7 +963,7 @@ async function bootstrap() {
 
 ---
 
-## 8. Imports — Ordem
+## 9. Imports — Ordem
 
 ```typescript
 // 1. Node / terceiros
@@ -830,7 +982,7 @@ import { DevSkill } from './dev-skill.entity';
 
 ---
 
-## 9. Regras Gerais
+## 10. Regras Gerais
 
 | Regra | Detalhe |
 |---|---|
@@ -848,7 +1000,7 @@ import { DevSkill } from './dev-skill.entity';
 
 ---
 
-## 10. Checklist de Code Review
+## 11. Checklist de Code Review
 
 ### Backend
 - [ ] Controller magro (sem lógica de negócio)
@@ -861,6 +1013,11 @@ import { DevSkill } from './dev-skill.entity';
 - [ ] Testes unitários para o service
 - [ ] Sem `any` no código
 - [ ] Guards aplicados corretamente
+- [ ] **Segurança:** Route params com pipes de validação (`ParseUUIDPipe`, `ParseHandlePipe`, etc.)
+- [ ] **Segurança:** Query params via DTO com `@MaxLength()` e `@IsIn()` onde aplicável
+- [ ] **Segurança:** Arrays com `@ArrayMaxSize()` e strings com `@MaxLength()`
+- [ ] **Segurança:** Endpoints públicos sensíveis com `@UseGuards(ThrottlerGuard)`
+- [ ] **Segurança:** Usernames/IDs externos com regex do serviço de destino
 
 ### Frontend
 - [ ] Componentes standalone com `input()`/`output()` (não `@Input()/@Output()`)

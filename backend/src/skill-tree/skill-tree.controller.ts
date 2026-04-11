@@ -1,17 +1,14 @@
 import { Controller, Get, Query } from '@nestjs/common';
 import { SkillTreeService } from './skill-tree.service.js';
+import { ListSkillsQueryDto } from './dto/list-skills-query.dto.js';
 
 @Controller('skills')
 export class SkillTreeController {
   constructor(private readonly skillTreeService: SkillTreeService) {}
 
   @Get()
-  async list(
-    @Query('category') category?: string,
-    @Query('q') query?: string,
-    @Query('parent_id') parentId?: string,
-  ) {
-    return this.skillTreeService.list(category, query, parentId);
+  async list(@Query() query: ListSkillsQueryDto) {
+    return this.skillTreeService.list(query.category, query.q, query.parent_id);
   }
 
   @Get('categories')

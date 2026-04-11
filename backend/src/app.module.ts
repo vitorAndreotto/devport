@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { ThrottlerModule } from '@nestjs/throttler';
 import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { DevProfileModule } from './dev-profile/dev-profile.module.js';
@@ -13,6 +14,24 @@ import { DevSkillModule } from './dev-skill/dev-skill.module.js';
     ConfigModule.forRoot({
       isGlobal: true,
       envFilePath: '.env',
+    }),
+
+    ThrottlerModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        throttlers: [
+          {
+            name: 'default',
+            ttl: config.get<number>('THROTTLE_TTL', 60000),
+            limit: config.get<number>('THROTTLE_LIMIT', 100),
+          },
+          {
+            name: 'auth',
+            ttl: config.get<number>('THROTTLE_AUTH_TTL', 60000),
+            limit: config.get<number>('THROTTLE_AUTH_LIMIT', 10),
+          },
+        ],
+      }),
     }),
 
     TypeOrmModule.forRootAsync({

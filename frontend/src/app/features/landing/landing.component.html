@@ -1,0 +1,141 @@
+<!-- Hero -->
+<section class="hero">
+  <div class="container">
+    <div class="hero__content">
+      <div class="hero__badge">
+        <span class="hero__badge-dot"></span>
+        Plataforma para desenvolvedores e empresas
+      </div>
+
+      <h1 class="hero__title">
+        Ancore seu perfil.<br>
+        <span class="hero__title-accent">Encontre a vaga certa.</span>
+      </h1>
+
+      <p class="hero__description">
+        O Dev Port é o porto digital onde desenvolvedores constroem perfis profissionais
+        e empresas publicam vagas — com matching inteligente que conecta os dois lados.
+      </p>
+
+      <div class="hero__actions">
+        <a routerLink="/auth/register" class="btn btn--primary btn--lg">Criar meu perfil</a>
+        <a href="#features" class="btn btn--outline btn--lg">Conhecer a plataforma</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Features -->
+<section id="features" class="features">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-header__title">Tudo que um dev precisa</h2>
+      <p class="section-header__subtitle">Um espaço completo para apresentar sua trajetória e encontrar oportunidades.</p>
+    </div>
+
+    <div class="features__grid">
+      <div class="feature-card">
+        <div class="feature-card__icon">
+          <lucide-icon name="user" [size]="28"></lucide-icon>
+        </div>
+        <h3 class="feature-card__title">Perfil profissional</h3>
+        <p class="feature-card__text">Bio, cargo, localização e links para suas redes. Tudo organizado em uma página pública.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card__icon">
+          <lucide-icon name="puzzle" [size]="28"></lucide-icon>
+        </div>
+        <h3 class="feature-card__title">Skills & Competências</h3>
+        <p class="feature-card__text">Selecione habilidades de uma árvore padronizada, com níveis de proficiência e anos de experiência.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card__icon">
+          <lucide-icon name="briefcase" [size]="28"></lucide-icon>
+        </div>
+        <h3 class="feature-card__title">Experiência profissional</h3>
+        <p class="feature-card__text">Sua trajetória de trabalho, cargos e empresas. Ordenada cronologicamente com destaque para o atual.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card__icon">
+          <lucide-icon name="graduation-cap" [size]="28"></lucide-icon>
+        </div>
+        <h3 class="feature-card__title">Formação acadêmica</h3>
+        <p class="feature-card__text">Graduação, cursos, certificações e MBAs. Registre toda sua jornada de aprendizado.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card__icon">
+          <lucide-icon name="folder-git-2" [size]="28"></lucide-icon>
+        </div>
+        <h3 class="feature-card__title">Projetos + GitHub</h3>
+        <p class="feature-card__text">Cadastre projetos manualmente ou importe direto do GitHub. Stars, linguagens e descrições sincronizadas.</p>
+      </div>
+
+      <div class="feature-card">
+        <div class="feature-card__icon">
+          <lucide-icon name="compass" [size]="28"></lucide-icon>
+        </div>
+        <h3 class="feature-card__title">Matching inteligente</h3>
+        <p class="feature-card__text">Score de compatibilidade entre devs e vagas, baseado em skills, experiência e preferências.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- How it works -->
+<section id="how-it-works" class="how-it-works">
+  <div class="container">
+    <div class="section-header">
+      <h2 class="section-header__title">Como funciona</h2>
+      <p class="section-header__subtitle">Três passos para ancorar seu perfil no porto.</p>
+    </div>
+
+    <div class="steps">
+      <div class="step">
+        <div class="step__icon">
+          <lucide-icon name="user-plus" [size]="28"></lucide-icon>
+        </div>
+        <h3 class="step__title">Crie sua conta</h3>
+        <p class="step__text">Registre-se como dev ou empresa. Monte seu perfil em minutos.</p>
+      </div>
+
+      <div class="step">
+        <div class="step__icon">
+          <lucide-icon name="list-checks" [size]="28"></lucide-icon>
+        </div>
+        <h3 class="step__title">Preencha suas seções</h3>
+        <p class="step__text">Skills, experiências, formação e projetos. Importe do GitHub se preferir.</p>
+      </div>
+
+      <div class="step">
+        <div class="step__icon">
+          <lucide-icon name="share-2" [size]="28"></lucide-icon>
+        </div>
+        <h3 class="step__title">Conecte-se</h3>
+        <p class="step__text">Devs encontram vagas com match. Empresas encontram candidatos ideais.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section id="cta" class="cta">
+  <div class="container">
+    <div class="cta__content">
+      <h2 class="cta__title">Pronto para zarpar?</h2>
+      <p class="cta__text">
+        Crie seu perfil no Dev Port e tenha um espaço profissional feito por devs, para devs.
+      </p>
+      <div class="cta__actions">
+        <a routerLink="/auth/register" class="btn btn--white btn--lg">Criar meu perfil</a>
+        <a routerLink="/developers" class="btn btn--outline-light btn--lg">
+          <lucide-icon name="search" [size]="18"></lucide-icon>
+          Explorar desenvolvedores
+        </a>
+      </div>
+    </div>
+  </div>
+</section>

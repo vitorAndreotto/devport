@@ -1,0 +1,7 @@
+<div class="form-field" [class.form-field--error]="showError">
+  <label class="form-field__label">{{ label() }}</label>
+  <ng-content></ng-content>
+  @if (showError) {
+    <span class="form-field__error">{{ errorMessage }}</span>
+  }
+</div>

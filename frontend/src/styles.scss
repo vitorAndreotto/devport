@@ -1,1 +1,84 @@
-/* You can add global styles to this file, and also import other style files */
+// =============================================
+// Dev Port — Global Styles
+// =============================================
+
+// --- Variables ---
+$navy-950: #071e3d;
+$navy-900: #0b3260;
+$navy-800: #1a4574;
+$navy-700: #245080;
+$navy-600: #2f5a8b;
+$navy-500: #376293;
+$navy-400: #5579a3;
+$navy-300: #7390b3;
+$navy-200: #9bafc9;
+$navy-100: #c3cfe0;
+$navy-50: #e7ecf3;
+
+$sand-50: #faf8f5;
+$sand-100: #f3efe8;
+$sand-200: #e8e0d4;
+$sand-300: #d5c9b6;
+$sand-400: #bfae96;
+
+$white: #ffffff;
+
+// --- Reset & Base ---
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  background-color: $sand-50;
+  color: $navy-950;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+
+a {
+  text-decoration: none;
+  color: inherit;
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+// --- Utilities ---
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1.5rem;
+}
+
+// --- CSS Custom Properties (usáveis nos componentes) ---
+:root {
+  --navy-950: #{$navy-950};
+  --navy-900: #{$navy-900};
+  --navy-800: #{$navy-800};
+  --navy-700: #{$navy-700};
+  --navy-600: #{$navy-600};
+  --navy-500: #{$navy-500};
+  --navy-400: #{$navy-400};
+  --navy-300: #{$navy-300};
+  --navy-200: #{$navy-200};
+  --navy-100: #{$navy-100};
+  --navy-50: #{$navy-50};
+  --sand-50: #{$sand-50};
+  --sand-100: #{$sand-100};
+  --sand-200: #{$sand-200};
+  --sand-300: #{$sand-300};
+  --sand-400: #{$sand-400};
+  --white: #{$white};
+}

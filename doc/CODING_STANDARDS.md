@@ -384,23 +384,100 @@ this.form = this.fb.group({
 
 ## 5. Testes
 
-### 5.1 Backend
+### 5.1 Backend — E2E (API)
 
 | Tipo | Local | Naming | Ferramenta |
 |---|---|---|---|
-| Unit | `src/**/*.spec.ts` | `dev-skill.service.spec.ts` | Jest |
 | E2E | `test/*.e2e-spec.ts` | `auth.e2e-spec.ts` | Jest + Supertest |
+| Unit | `src/**/*.spec.ts` | `auth.service.spec.ts` | Jest |
+
+**Setup do E2E test:**
 
 ```typescript
-describe('DevSkillService', () => {
-  it('should create a skill for a dev profile', async () => {
-    // arrange
-    // act
-    // assert
+import { Test, TestingModule } from '@nestjs/testing';
+import { INestApplication, ValidationPipe } from '@nestjs/common';
+import request from 'supertest';
+import { AppModule } from '../src/app.module';
+import { DataSource } from 'typeorm';
+
+describe('Auth (e2e)', () => {
+  let app: INestApplication;
+  let dataSource: DataSource;
+
+  beforeAll(async () => {
+    const moduleFixture: TestingModule = await Test.createTestingModule({
+      imports: [AppModule],
+    }).compile();
+
+    app = moduleFixture.createNestApplication();
+    app.setGlobalPrefix('api/v1');
+    app.useGlobalPipes(new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true,
+    }));
+    await app.init();
+
+    dataSource = app.get(DataSource);
   });
 
-  it('should throw when skill limit is reached', async () => {
-    // ...
+  beforeEach(async () => {
+    // Limpa tabelas relevantes antes de cada teste
+    await dataSource.query('DELETE FROM users');
+  });
+
+  afterAll(async () => {
+    await app.close();
+  });
+});
+```
+
+**Regras:**
+- Cada arquivo de teste cobre um módulo/controller
+- `beforeAll`: cria app com mesma config do `main.ts`
+- `beforeEach`: limpa tabelas para isolamento
+- `afterAll`: fecha app e conexão
+- Usa banco real (mesmo PostgreSQL de desenvolvimento)
+- Testa: status code, body structure, headers, regras de negócio
+
+**Padrão de assertion:**
+
+```typescript
+it('should register a new dev', async () => {
+  const res = await request(app.getHttpServer())
+    .post('/api/v1/auth/register/dev')
+    .send({
+      name: 'vitor',
+      email: 'vitor@test.com',
+      password: 'senha12345',
+      password_confirmation: 'senha12345',
+    })
+    .expect(201);
+
+  expect(res.body.data).toHaveProperty('user');
+  expect(res.body.data).toHaveProperty('access_token');
+  expect(res.body.data).toHaveProperty('refresh_token');
+  expect(res.body.data.user.role).toBe('dev');
+});
+```
+
+**Helpers reutilizáveis:**
+
+```typescript
+// test/helpers.ts — funções auxiliares para testes
+async function registerDev(app, overrides = {}) { ... }
+async function loginDev(app, email, password) { ... }
+async function getAuthToken(app, role) { ... }
+```
+
+### 5.2 Backend — Unit
+
+```typescript
+describe('AuthService', () => {
+  it('should throw ConflictException if email exists', async () => {
+    // arrange: mock usersService.findByEmail → return user
+    // act: authService.register(dto, UserRole.Dev)
+    // assert: expect to throw ConflictException
   });
 });
 ```
@@ -409,15 +486,28 @@ describe('DevSkillService', () => {
 - `describe` com nome da classe
 - `it` com frase descritiva em inglês
 - Padrão AAA (Arrange, Act, Assert)
-- Mock de repositories nos unit tests
-- E2E tests usam banco real (test database)
+- Mock de repositories e serviços injetados
+- Testar regras de negócio e edge cases
 
-### 5.2 Frontend
+### 5.3 Frontend
 
 | Tipo | Local | Naming | Ferramenta |
 |---|---|---|---|
 | Unit | `*.spec.ts` ao lado do arquivo | `auth.service.spec.ts` | Jest ou Karma |
 | Component | `*.spec.ts` ao lado do componente | `skill-badge.component.spec.ts` | Jest + Testing Library |
+
+### 5.4 Executando testes
+
+```bash
+# E2E (backend)
+cd backend && npm run test:e2e
+
+# Unit (backend)
+cd backend && npm run test
+
+# Com cobertura
+cd backend && npm run test:cov
+```
 
 ---
 

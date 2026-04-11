@@ -1,161 +1,143 @@
-# ⚓ Dev Port
+# Dev Port
 
-## 📖 Visão Geral
+## Visão Geral
 
-O **Dev Port** é uma plataforma de currículos voltada para desenvolvedores, com identidade visual inspirada no universo náutico.
+O **Dev Port** é uma plataforma de recrutamento tech onde desenvolvedores constroem perfis profissionais completos e empresas publicam vagas — com um sistema de matching inteligente que conecta os dois lados.
 
-A proposta é que cada desenvolvedor tenha um espaço centralizado para apresentar sua trajetória profissional, habilidades e projetos de forma organizada e visualmente atraente.
-
-O conceito da plataforma gira em torno da ideia de um **porto**, onde desenvolvedores “ancoram” seus perfis e compartilham sua jornada profissional.
+A plataforma funciona como um **porto digital**: devs "ancoram" seus perfis, empresas "atracam" suas vagas, e o sistema de matching atua como uma **bússola** que aponta as melhores conexões.
 
 ---
 
-## 🎯 Objetivo do Projeto
+## Objetivo do Projeto
 
 Este projeto tem como foco **estudo e aprendizado**, abordando:
 
-- Estruturação de um sistema completo (CRUD)
-- Boas práticas de desenvolvimento
-- Organização de código (camadas e responsabilidades)
-- Integração com APIs externas (GitHub)
-- Experiência de usuário (UX) com identidade visual consistente
+- **NestJS** — API RESTful com arquitetura modular, JWT, Guards, TypeORM
+- **Angular** — SPA com standalone components, Signals, lazy loading
+- **PostgreSQL** — Modelagem relacional, constraints, ILIKE search
+- **Redis** — Cache, JWT blacklist, refresh token storage
+- **Docker** — Containerização completa do ambiente
+- **TypeScript** — Full-stack, strict mode
 
 ---
 
-## ⚓ Conceito do Produto
+## Conceito do Produto
 
-- Desenvolvedor → Perfil (navio)
-- Experiência → Jornada (rotas)
-- Projetos → Entregas (cargas)
-- Skills → Capacidades técnicas (equipamentos)
+| Conceito | Metáfora náutica |
+|---|---|
+| Desenvolvedor | Navio |
+| Empresa | Atracadouro |
+| Experiência | Jornada / Rotas |
+| Projetos | Entregas / Cargas |
+| Skills | Equipamentos |
+| Vagas | Âncoras |
+| Matching | Bússola |
 
-> ⚠️ O tema náutico será aplicado principalmente na interface (UI), mantendo a modelagem de dados simples e objetiva.
-
----
-
-## 🧩 Funcionalidades do MVP
-
-### 👤 Perfil
-- Informações principais do desenvolvedor
-- Apresentação / resumo profissional
-- Contato
-- Links externos (GitHub, LinkedIn, etc.)
+> O tema náutico é aplicado na interface (UI). A modelagem de dados usa nomenclatura técnica direta.
 
 ---
 
-### 🛠️ Skills
-- Cadastro de habilidades
-- Separação entre:
-  - Hard skills (tecnologias)
-  - Soft skills (comportamentais)
+## Funcionalidades do MVP
 
----
-
-### 🎓 Formação
-- Cursos
-- Graduação
-- Certificações
-
----
-
-### 💼 Experiência
+### Lado Dev
+- Perfil profissional completo (bio, cargo, links, localização)
+- Skills vinculadas a uma árvore padronizada (com nível e anos de experiência)
+- Formação acadêmica e certificações
 - Histórico profissional
-- Empresas anteriores
-- Cargos
-- Período de atuação
+- Projetos (manuais + importação do GitHub)
+- Busca de vagas com score de compatibilidade
+
+### Lado Empresa
+- Perfil corporativo (CNPJ, setor, tamanho)
+- Publicação de vagas (skills exigidas, modelo, modalidade, salário)
+- Busca de devs com score de compatibilidade por vaga
+
+### Matching
+- Score de 0 a 100 baseado em: skills (60%), experiência (20%), modalidade (10%), localização (10%)
+- Bidirecional: dev busca vagas, empresa busca devs
+- Faixa salarial visível apenas internamente para a empresa
 
 ---
 
-### 📦 Projetos
-- Cadastro manual de projetos
-- Informações como:
-  - Nome
-  - Descrição
-  - Tecnologias utilizadas
-  - Link do repositório
+## Stack
+
+| Camada | Tecnologia |
+|---|---|
+| Backend | NestJS (Node.js / TypeScript) |
+| Frontend | Angular (TypeScript) |
+| Banco de dados | PostgreSQL |
+| Cache / Sessão | Redis |
+| Autenticação | JWT (access + refresh token) |
+| ORM | TypeORM |
+| Containerização | Docker + Docker Compose |
 
 ---
 
-### 🔗 Integração com GitHub (básica)
-- Conexão com conta GitHub
-- Importação de repositórios
-- Exibição de projetos automaticamente
+## Documentação
 
----
+A documentação completa está organizada em [`/doc/`](doc/):
 
-### 🔍 Busca de Desenvolvedores
-- Busca por:
-  - Nome
-  - Skills
-- Filtros básicos
-- Listagem de perfis
-
----
-
-## 📚 Documentação de Produto
-
-A documentação detalhada do projeto está organizada em [`/doc/`]:
+### Produto
 
 | Documento | Descrição |
 |---|---|
-| [PRD.md](product/PRD.md) | **Product Requirements Document** — Visão do produto, módulos detalhados com campos e regras de negócio, priorização MoSCoW e roadmap de entregas |
-| [USER_STORIES.md](product/USER_STORIES.md) | **User Stories** — 25 histórias de usuário organizadas por módulo, com critérios de aceite em checklist |
-| [DATA_MODEL.md](product/DATA_MODEL.md) | **Data Model** — Modelagem de banco PostgreSQL com 6 tabelas, índices, constraints e regras de integridade |
-| [API_CONTRACT.md](product/API_CONTRACT.md) | **API Contract** — 28 endpoints RESTful documentados com request/response, validações e códigos de erro |
+| [PRD.md](doc/PRD.md) | **Product Requirements** — Visão do produto, dois tipos de usuário, módulos detalhados, priorização MoSCoW e roadmap |
+| [USER_STORIES.md](doc/USER_STORIES.md) | **User Stories** — 42 histórias organizadas por módulo, com critérios de aceite |
+| [DATA_MODEL.md](doc/DATA_MODEL.md) | **Data Model** — 10 tabelas PostgreSQL com UUID, índices, constraints e regras de integridade |
+| [API_CONTRACT.md](doc/API_CONTRACT.md) | **API Contract** — 40 endpoints RESTful com request/response, validações e códigos de erro |
+
+### Técnico
+
+| Documento | Descrição |
+|---|---|
+| [ARCHITECTURE.md](doc/ARCHITECTURE.md) | **Arquitetura** — Estrutura de pastas, camadas, decisões (TypeORM, JWT, Redis, Standalone Components), fluxos |
+| [CODING_STANDARDS.md](doc/CODING_STANDARDS.md) | **Padrões de código** — Nomenclatura, exemplos por camada, regras TypeScript, checklist de review |
 
 ---
 
-## 🧱 Estrutura Técnica (visão geral)
+## Estrutura do Projeto
 
-O projeto será desenvolvido utilizando **Laravel**, com foco em:
-
-- CRUD completo
-- Organização em camadas (Controllers, Services, etc.)
-- Boas práticas de código
-- Relacionamentos entre entidades
-
----
-
-## 🎨 Identidade Visual
-
-### Tema
-- Náutico / marítimo
-
-### Direção visual
-- Interface leve e fluida
-- Cores baseadas em oceano:
-  - Azul escuro (principal)
-  - Azul médio (ação)
-  - Tons neutros (areia / cinza)
+```
+devport/
+├── backend/             # NestJS API (:3000)
+├── frontend/            # Angular SPA (:4200)
+├── doc/                 # Documentação completa
+├── docker-compose.yml   # PostgreSQL + Redis + Backend + Frontend
+└── README.md
+```
 
 ---
 
-## 🚀 Escopo do Projeto
+## Identidade Visual
 
-O Dev Port não tem como objetivo inicial ser um produto comercial, mas sim:
-
-- Servir como projeto de estudo
-- Consolidar conhecimentos técnicos
-- Explorar integração com APIs externas
-- Criar um sistema completo do zero
-
----
-
-## 📌 Possíveis Evoluções Futuras
-
-- Score automático baseado em GitHub
-- Dashboard de atividades
-- Sistema de recomendações
-- Match com vagas
+| Elemento | Direção |
+|---|---|
+| Tema | Náutico / marítimo |
+| Cor principal | Azul escuro (navy) |
+| Cor de ação | Azul médio |
+| Tons neutros | Areia / cinza |
+| Estilo | Corporativo, limpo, profissional |
 
 ---
 
-## 🧠 Filosofia do Projeto
+## Escopo e Filosofia
+
+O Dev Port é um projeto de estudo — não tem como objetivo ser um produto comercial.
 
 > "Fazer simples, bem feito e bem estruturado."
 
 - Evitar complexidade desnecessária
 - Priorizar clareza e organização
-- Focar em aprendizado real
+- Focar em aprendizado real das tecnologias
 
 ---
+
+## Possíveis Evoluções Futuras
+
+- OAuth (GitHub / Google)
+- Chat entre dev e empresa
+- Candidatura formal a vagas
+- Notificações (e-mail, push)
+- Score automático baseado em GitHub
+- Dashboard de analytics
+- Painel administrativo para skill tree

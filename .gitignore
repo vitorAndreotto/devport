@@ -1,0 +1,28 @@
+/.claude
+
+# Dependencies
+node_modules/
+
+# Environment
+.env
+!.env.example
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Build
+dist/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Docker volumes
+docker-data/

@@ -1,0 +1,48 @@
+<div class="city-search">
+  <label class="city-search__label">Cidade</label>
+
+  <div class="city-search__wrapper">
+    <div class="city-search__input-wrap">
+      <lucide-icon name="search" [size]="16" class="city-search__icon"></lucide-icon>
+      <input
+        class="city-search__input"
+        type="text"
+        [value]="searchText()"
+        (input)="onInput($event)"
+        (focus)="onFocus()"
+        (blur)="onBlur()"
+        placeholder="Digite para buscar..."
+        [disabled]="!stateId()"
+      >
+      @if (isSearching()) {
+        <lucide-icon name="loader-2" [size]="16" class="city-search__spinner spin"></lucide-icon>
+      }
+      @if (selectedName() && !isSearching()) {
+        <button type="button" class="city-search__clear" (click)="clear()">
+          <lucide-icon name="x" [size]="14"></lucide-icon>
+        </button>
+      }
+    </div>
+
+    @if (isOpen() && results().length > 0) {
+      <ul class="city-search__dropdown">
+        @for (city of results(); track city.id) {
+          <li class="city-search__option" (mousedown)="selectCity(city)">
+            <span class="city-search__option-name">{{ city.name }}</span>
+            @if (city.isCapital) {
+              <span class="city-search__option-badge">Capital</span>
+            }
+          </li>
+        }
+      </ul>
+    }
+
+    @if (isOpen() && searchText().length >= 2 && results().length === 0 && !isSearching()) {
+      <div class="city-search__empty">Nenhuma cidade encontrada</div>
+    }
+  </div>
+
+  @if (!stateId()) {
+    <span class="city-search__hint">Selecione o estado primeiro</span>
+  }
+</div>

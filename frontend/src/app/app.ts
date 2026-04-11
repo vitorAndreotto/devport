@@ -25,6 +25,6 @@ export class App {
 
   showLayout = computed(() => {
     const url = this.currentUrl();
-    return !url.startsWith('/auth');
+    return !url.startsWith('/auth') && !url.startsWith('/dev');
   });
 }

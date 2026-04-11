@@ -18,6 +18,12 @@ export class CreateDevProfilesTable1744300000002 implements MigrationInterface {
             isUnique: true,
           },
           {
+            name: 'handle',
+            type: 'varchar',
+            length: '40',
+            isUnique: true,
+          },
+          {
             name: 'full_name',
             type: 'varchar',
             length: '255',
@@ -93,6 +99,10 @@ export class CreateDevProfilesTable1744300000002 implements MigrationInterface {
 
     await queryRunner.createIndex('dev_profiles', new TableIndex({ columnNames: ['full_name'] }));
     await queryRunner.createIndex('dev_profiles', new TableIndex({ columnNames: ['github_username'] }));
+
+    await queryRunner.query(
+      `ALTER TABLE dev_profiles ADD CONSTRAINT dev_profiles_handle_check CHECK (handle ~ '^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$')`,
+    );
 
     await queryRunner.query(
       `ALTER TABLE dev_profiles ADD CONSTRAINT dev_profiles_work_mode_check CHECK (work_mode IN ('onsite', 'hybrid', 'remote') OR work_mode IS NULL)`,

@@ -1,0 +1,67 @@
+<div class="dashboard">
+  <div class="dashboard__header">
+    <h1 class="dashboard__title">
+      Olá, <span class="dashboard__name">{{ profileName() }}</span>
+    </h1>
+    <p class="dashboard__subtitle">Aqui está um resumo do seu porto.</p>
+  </div>
+
+  <!-- Placeholder indicators -->
+  <div class="dashboard__stats">
+    <div class="stat-card">
+      <div class="stat-card__icon">
+        <lucide-icon name="puzzle" [size]="22"></lucide-icon>
+      </div>
+      <div class="stat-card__info">
+        <span class="stat-card__value">—</span>
+        <span class="stat-card__label">Skills</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__icon">
+        <lucide-icon name="briefcase" [size]="22"></lucide-icon>
+      </div>
+      <div class="stat-card__info">
+        <span class="stat-card__value">—</span>
+        <span class="stat-card__label">Experiências</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__icon">
+        <lucide-icon name="folder-git-2" [size]="22"></lucide-icon>
+      </div>
+      <div class="stat-card__info">
+        <span class="stat-card__value">—</span>
+        <span class="stat-card__label">Projetos</span>
+      </div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-card__icon">
+        <lucide-icon name="compass" [size]="22"></lucide-icon>
+      </div>
+      <div class="stat-card__info">
+        <span class="stat-card__value">—</span>
+        <span class="stat-card__label">Match score</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick actions -->
+  <h2 class="dashboard__section-title">Ações rápidas</h2>
+  <div class="dashboard__actions">
+    @for (action of quickActions; track action.path) {
+      <a [routerLink]="action.path" class="action-card">
+        <div class="action-card__icon">
+          <lucide-icon [name]="action.icon" [size]="22"></lucide-icon>
+        </div>
+        <div class="action-card__content">
+          <span class="action-card__label">{{ action.label }}</span>
+          <span class="action-card__description">{{ action.description }}</span>
+        </div>
+      </a>
+    }
+  </div>
+</div>

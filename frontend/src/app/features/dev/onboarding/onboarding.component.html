@@ -1,0 +1,48 @@
+<div class="onboarding">
+  <div class="onboarding__card">
+    <div class="onboarding__header">
+      <div class="onboarding__icon">
+        <lucide-icon name="anchor" [size]="32"></lucide-icon>
+      </div>
+      <h1 class="onboarding__title">Bem-vindo ao Dev Port!</h1>
+      <p class="onboarding__subtitle">Complete seu perfil para começar a navegar.</p>
+    </div>
+
+    @if (apiError()) {
+      <div class="onboarding__alert">{{ apiError() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="onboarding__form">
+      <app-handle-input
+        [control]="form.controls.handle"
+        (statusChange)="onHandleStatus($event)"
+      />
+
+      <app-form-field label="Nome completo" [control]="form.controls.full_name" [required]="true">
+        <input class="input" type="text" formControlName="full_name" placeholder="Seu nome completo">
+      </app-form-field>
+
+      <app-form-field label="Cargo / Título" [control]="form.controls.title" [required]="true">
+        <input class="input" type="text" formControlName="title" placeholder="Ex: Desenvolvedor Full Stack">
+      </app-form-field>
+
+      <app-form-field label="Bio" [control]="form.controls.bio" [required]="true">
+        <textarea class="input input--textarea" formControlName="bio" placeholder="Conte um pouco sobre você (max 500 caracteres)" rows="3"></textarea>
+      </app-form-field>
+
+      <app-form-field label="E-mail de contato" [control]="form.controls.email_contact" [required]="true">
+        <input class="input" type="email" formControlName="email_contact" placeholder="contato@seusite.dev">
+      </app-form-field>
+
+      <button type="submit" class="onboarding__submit" [disabled]="!canSubmit">
+        @if (isLoading()) {
+          <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+          Criando perfil...
+        } @else {
+          <lucide-icon name="anchor" [size]="18"></lucide-icon>
+          Ancorar meu perfil
+        }
+      </button>
+    </form>
+  </div>
+</div>

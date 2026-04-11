@@ -18,6 +18,12 @@ export class CreateCompanyProfilesTable1744300000003 implements MigrationInterfa
             isUnique: true,
           },
           {
+            name: 'handle',
+            type: 'varchar',
+            length: '40',
+            isUnique: true,
+          },
+          {
             name: 'company_name',
             type: 'varchar',
             length: '255',
@@ -91,6 +97,10 @@ export class CreateCompanyProfilesTable1744300000003 implements MigrationInterfa
     );
 
     await queryRunner.createIndex('company_profiles', new TableIndex({ columnNames: ['company_name'] }));
+
+    await queryRunner.query(
+      `ALTER TABLE company_profiles ADD CONSTRAINT company_profiles_handle_check CHECK (handle ~ '^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$')`,
+    );
 
     await queryRunner.query(
       `ALTER TABLE company_profiles ADD CONSTRAINT company_profiles_size_check CHECK (size IN ('startup', 'small', 'medium', 'large', 'enterprise'))`,

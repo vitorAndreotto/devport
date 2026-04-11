@@ -10,6 +10,7 @@ import { AbstractControl } from '@angular/forms';
 export class FormFieldComponent {
   label = input.required<string>();
   control = input.required<AbstractControl>();
+  required = input<boolean>(false);
   type = input<string>('text');
   placeholder = input<string>('');
   mask = input<string>('');

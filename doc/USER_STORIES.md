@@ -76,11 +76,13 @@
 **Como** dev, **quero** criar meu perfil profissional, **para** ter uma página pública que represente minha trajetória.
 
 **Critérios de aceite:**
-- [ ] Preencher: nome completo, título/cargo, bio, e-mail de contato
+- [ ] Preencher: handle (identificador único), nome completo, título/cargo, bio, e-mail de contato
+- [ ] Handle: 3-40 caracteres, apenas letras minúsculas, números e hífens, único global
+- [ ] Handle usado na URL pública do perfil (`/developers/{handle}`)
 - [ ] Campos opcionais: avatar (URL), localização, modelo preferido, links externos
 - [ ] Bio aceita no máximo 500 caracteres
 - [ ] Cada dev possui apenas 1 perfil
-- [ ] Retorna 409 se perfil já existir
+- [ ] Retorna 409 se perfil ou handle já existir
 
 ---
 
@@ -95,9 +97,10 @@
 ---
 
 ### US-102 — Visualizar perfil público 🔴
-**Como** visitante, **quero** acessar o perfil de um dev, **para** conhecer sua trajetória completa.
+**Como** visitante, **quero** acessar o perfil de um dev pela URL amigável, **para** conhecer sua trajetória completa.
 
 **Critérios de aceite:**
+- [ ] Perfil acessível via `/developers/{handle}` (ex: `/developers/vitorsantos`)
 - [ ] Exibe: dados pessoais, skills, formação, experiência e projetos
 - [ ] Acessível sem autenticação
 - [ ] Seções sem dados não são exibidas
@@ -306,12 +309,14 @@
 **Como** empresa, **quero** criar meu perfil corporativo, **para** apresentar minha organização e publicar vagas.
 
 **Critérios de aceite:**
-- [ ] Preencher: nome da empresa, CNPJ, descrição, setor de atuação, tamanho, localização
+- [ ] Preencher: handle (identificador único), nome da empresa, CNPJ, descrição, setor de atuação, tamanho, localização
+- [ ] Handle: mesmas regras do dev (3-40 chars, lowercase, único global)
+- [ ] Handle usado na URL pública (`/companies/{handle}`)
 - [ ] Campos opcionais: logo (URL), site, links
 - [ ] CNPJ deve ser único
 - [ ] Descrição limitada a 1000 caracteres
 - [ ] Cada empresa possui apenas 1 perfil
-- [ ] Retorna 409 se perfil já existir
+- [ ] Retorna 409 se perfil ou handle já existir
 
 ---
 
@@ -325,9 +330,10 @@
 ---
 
 ### US-702 — Visualizar perfil público da empresa 🔴
-**Como** visitante, **quero** ver o perfil de uma empresa, **para** conhecer a organização e suas vagas ativas.
+**Como** visitante, **quero** ver o perfil de uma empresa pela URL amigável, **para** conhecer a organização e suas vagas ativas.
 
 **Critérios de aceite:**
+- [ ] Perfil acessível via `/companies/{handle}` (ex: `/companies/techcorp`)
 - [ ] Exibe: dados da empresa + lista de vagas abertas
 - [ ] Acessível sem autenticação
 - [ ] Faixa salarial **não** é exibida

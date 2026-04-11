@@ -1,0 +1,47 @@
+<div class="handle-input">
+  <label class="handle-input__label">Handle <span class="handle-input__required">*</span></label>
+
+  <div class="handle-input__field" [class]="'handle-input__field--' + status()">
+    <span class="handle-input__prefix">@</span>
+    <input
+      class="handle-input__input"
+      type="text"
+      [formControl]="control()"
+      placeholder="seu-handle"
+      autocomplete="off"
+      (focus)="onFocus()"
+      (blur)="onBlur()"
+    >
+    <div class="handle-input__status">
+      @switch (status()) {
+        @case ('checking') {
+          <lucide-icon name="loader-2" [size]="16" class="spin"></lucide-icon>
+        }
+        @case ('available') {
+          <lucide-icon name="check" [size]="16" class="handle-input__icon--ok"></lucide-icon>
+        }
+        @case ('taken') {
+          <lucide-icon name="x" [size]="16" class="handle-input__icon--error"></lucide-icon>
+        }
+      }
+    </div>
+  </div>
+
+  <div class="handle-input__footer">
+    <span class="handle-input__preview">{{ previewUrl }}</span>
+
+    @switch (status()) {
+      @case ('taken') {
+        <span class="handle-input__message handle-input__message--error">Handle indisponível</span>
+      }
+      @case ('available') {
+        <span class="handle-input__message handle-input__message--ok">Handle disponível</span>
+      }
+      @case ('invalid') {
+        @if (control().value && control().value!.length > 0) {
+          <span class="handle-input__message handle-input__message--error">Mín. 3 caracteres, apenas letras minúsculas, números e hífens</span>
+        }
+      }
+    }
+  </div>
+</div>

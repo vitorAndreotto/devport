@@ -1,0 +1,80 @@
+<div class="register-form">
+  <div class="register-form__card">
+    <button class="register-form__back" (click)="goBack()">
+      <lucide-icon name="arrow-left" [size]="16"></lucide-icon>
+      Voltar
+    </button>
+
+    <div class="register-form__header">
+      <div class="register-form__role-icon">
+        <lucide-icon [name]="role() === 'dev' ? 'code' : 'building-2'" [size]="32"></lucide-icon>
+      </div>
+      <h2 class="register-form__title">Registro {{ roleLabel }}</h2>
+      <p class="register-form__subtitle">Preencha seus dados para criar sua conta.</p>
+    </div>
+
+    @if (apiError()) {
+      <div class="register-form__alert">
+        {{ apiError() }}
+      </div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="register-form__body">
+      <app-form-field label="Nome" [control]="form.controls.name">
+        <input
+          class="input"
+          type="text"
+          formControlName="name"
+          [placeholder]="role() === 'dev' ? 'Seu nome completo' : 'Nome da empresa'"
+          autocomplete="name"
+        >
+      </app-form-field>
+
+      <app-form-field label="E-mail" [control]="form.controls.email">
+        <input
+          class="input"
+          type="email"
+          formControlName="email"
+          placeholder="seu@email.com"
+          autocomplete="email"
+        >
+      </app-form-field>
+
+      <app-form-field label="Senha" [control]="form.controls.password">
+        <input
+          class="input"
+          type="password"
+          formControlName="password"
+          placeholder="Mínimo 8 caracteres"
+          autocomplete="new-password"
+        >
+      </app-form-field>
+
+      <app-form-field label="Confirmar senha" [control]="form.controls.password_confirmation">
+        <input
+          class="input"
+          type="password"
+          formControlName="password_confirmation"
+          placeholder="Repita a senha"
+          autocomplete="new-password"
+        >
+      </app-form-field>
+
+      <button
+        type="submit"
+        class="register-form__submit"
+        [disabled]="isLoading()"
+      >
+        @if (isLoading()) {
+          Criando conta...
+        } @else {
+          Criar conta
+        }
+      </button>
+    </form>
+
+    <p class="register-form__footer">
+      Já tem uma conta? <a routerLink="/auth/login" class="register-form__link">Entrar</a>
+    </p>
+  </div>
+</div>

@@ -1,0 +1,46 @@
+<div class="register">
+  <div class="register__card">
+    <a routerLink="/" class="register__logo">
+      <lucide-icon name="anchor" [size]="24"></lucide-icon>
+      Dev<span class="register__logo-accent">Port</span>
+    </a>
+
+    <!-- Step 1: Role Selection -->
+    @if (!selectedRole()) {
+      <div class="register__step">
+        <h1 class="register__title">Criar conta</h1>
+        <p class="register__subtitle">Selecione seu tipo de perfil para começar.</p>
+
+        <div class="role-selector">
+          <button class="role-card" (click)="selectRole('dev')">
+            <div class="role-card__icon">
+              <lucide-icon name="code" [size]="32"></lucide-icon>
+            </div>
+            <span class="role-card__title">Desenvolvedor</span>
+            <span class="role-card__description">Crie seu perfil profissional, adicione skills e encontre vagas.</span>
+          </button>
+
+          <button class="role-card" (click)="selectRole('company')">
+            <div class="role-card__icon">
+              <lucide-icon name="building-2" [size]="32"></lucide-icon>
+            </div>
+            <span class="role-card__title">Empresa</span>
+            <span class="role-card__description">Publique vagas e encontre os melhores candidatos para seu time.</span>
+          </button>
+        </div>
+
+        <p class="register__footer">
+          Já tem uma conta? <a routerLink="/auth/login" class="register__link">Entrar</a>
+        </p>
+      </div>
+    }
+
+    <!-- Step 2: Registration Form -->
+    @if (selectedRole()) {
+      <app-register-form
+        [role]="selectedRole()!"
+        (back)="goBack()"
+      />
+    }
+  </div>
+</div>

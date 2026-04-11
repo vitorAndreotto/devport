@@ -1,0 +1,33 @@
+.footer {
+  background: var(--navy-950);
+  padding: 2.5rem 0;
+
+  &__inner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  &__brand {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+
+  &__icon {
+    color: var(--navy-500);
+  }
+
+  &__name {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--navy-300);
+  }
+
+  &__copy {
+    font-size: 0.875rem;
+    color: var(--navy-500);
+  }
+}

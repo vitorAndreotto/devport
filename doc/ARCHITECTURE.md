@@ -614,3 +614,66 @@ services:
 ```
 
 Cada serviço roda em container próprio, comunicação via rede interna do Docker.
+
+---
+
+## 12. Estratégia de Testes
+
+### 12.1 Tipos de Teste
+
+| Tipo | Escopo | Ferramenta | Local |
+|---|---|---|---|
+| **E2E (API)** | Fluxo completo: HTTP → Controller → Service → DB | Jest + Supertest | `test/*.e2e-spec.ts` |
+| **Unit** | Service isolado com mocks de dependências | Jest | `src/**/*.spec.ts` |
+| **Frontend Unit** | Components e services Angular | Jest/Karma | `*.spec.ts` ao lado do arquivo |
+
+### 12.2 E2E Tests (prioridade no MVP)
+
+Testam o fluxo real da API contra um banco PostgreSQL de teste.
+
+**Setup:**
+- Usam `AppModule` real (sem mocks)
+- `ValidationPipe` global configurado identicamente ao `main.ts`
+- Banco de teste limpo antes de cada suite (`beforeAll`)
+- App fechado após cada suite (`afterAll`)
+
+**O que testar por endpoint:**
+- Happy path (request válida → response esperada)
+- Validação de campos (campos ausentes, inválidos → 400/422)
+- Regras de negócio (duplicatas → 409, não encontrado → 404)
+- Autenticação (sem token → 401, role errado → 403)
+- Formato do response (estrutura JSON conforme API Contract)
+
+**Naming:**
+```
+describe('Auth (e2e)')
+  describe('POST /api/v1/auth/register/dev')
+    it('should register a new dev')
+    it('should return 409 if email already exists')
+    it('should return 400 if password confirmation does not match')
+```
+
+### 12.3 Unit Tests (services)
+
+Testam lógica de negócio isolada, com repositories mockados.
+
+**O que testar:**
+- Regras condicionais (limite de skills, ongoing + end_date)
+- Cálculos (matching score)
+- Edge cases (null, vazio, limites)
+
+### 12.4 Cobertura Mínima por Módulo
+
+| Módulo | E2E | Unit |
+|---|---|---|
+| Auth | Todos os endpoints | AuthService (register, login, refresh) |
+| Dev Profile | CRUD completo | — |
+| Skills | CRUD + limite 50 | — |
+| Education | CRUD + regras condicionais | — |
+| Experience | CRUD + regras condicionais | — |
+| Projects | CRUD | — |
+| GitHub | Listar, importar, sync | GitHubService (mock HTTP) |
+| Company Profile | CRUD | — |
+| Jobs | CRUD + close | — |
+| Matching | — | MatchingService (cálculo de score) |
+| Search | Busca com filtros | — |

@@ -1,0 +1,25 @@
+<nav class="navbar">
+    <div class="navbar__inner container">
+        <a routerLink="/" class="navbar__logo">
+            <img src="devport-logo-black.png" alt="Dev Port" class="navbar__logo-img">
+            <span class="navbar__logo-text">Dev<span class="navbar__logo-accent">Port</span></span>
+        </a>
+
+        <div class="navbar__links">
+            <a href="#features" class="navbar__link">Funcionalidades</a>
+            <a href="#how-it-works" class="navbar__link">Como funciona</a>
+            <a href="#cta" class="navbar__link">Desenvolvedores</a>
+        </div>
+
+        <div class="navbar__actions">
+            <a routerLink="/auth/login" class="navbar__btn navbar__btn--ghost">
+                <lucide-icon name="log-in" [size]="16"></lucide-icon>
+                <span class="navbar__btn-label">Entrar</span>
+            </a>
+            <a routerLink="/auth/register" class="navbar__btn navbar__btn--primary">
+                <lucide-icon name="user-plus" [size]="16"></lucide-icon>
+                <span class="navbar__btn-label">Registrar</span>
+            </a>
+        </div>
+    </div>
+</nav>

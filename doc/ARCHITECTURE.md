@@ -1,6 +1,6 @@
 # Architecture — Dev Port
 
-> Versão: 2.0
+> Versão: 3.0
 > Data: 2026-04-11
 > Status: Draft
 > Stack: NestJS · Angular · PostgreSQL · Redis
@@ -25,6 +25,7 @@ O Dev Port é composto por uma **API RESTful** (NestJS) e uma **SPA** (Angular),
 │                  /api/v1/*                           │
 ├─────────────────────────────────────────────────────┤
 │  Guards → Pipes → Controller → Service → Repository │
+│  TransformInterceptor ← HttpExceptionFilter         │
 └──────────┬──────────────────────────────┬───────────┘
            │                              │
            ▼                              ▼
@@ -49,7 +50,8 @@ backend/
 │   ├── common/                          # Compartilhado entre módulos
 │   │   ├── decorators/
 │   │   │   ├── current-user.decorator.ts
-│   │   │   └── roles.decorator.ts
+│   │   │   ├── roles.decorator.ts
+│   │   │   └── skip-transform.decorator.ts
 │   │   ├── guards/
 │   │   │   ├── jwt-auth.guard.ts
 │   │   │   ├── refresh-auth.guard.ts
@@ -207,80 +209,74 @@ backend/
 frontend/
 ├── src/
 │   ├── app/
-│   │   ├── app.component.ts
-│   │   ├── app.config.ts
-│   │   ├── app.routes.ts
+│   │   ├── app.ts                        # Root component
+│   │   ├── app.html
+│   │   ├── app.scss
+│   │   ├── app.config.ts                 # Providers, interceptors, icons
+│   │   ├── app.routes.ts                 # Main routes (lazy loading)
 │   │   │
-│   │   ├── core/                        # Singleton services, guards, interceptors
+│   │   ├── core/                         # Singleton — carregado uma vez
 │   │   │   ├── auth/
-│   │   │   │   ├── auth.service.ts
-│   │   │   │   ├── auth.guard.ts
-│   │   │   │   ├── role.guard.ts
-│   │   │   │   └── auth.interceptor.ts
+│   │   │   │   ├── auth.service.ts       # JWT, login, register, logout (Signals)
+│   │   │   │   └── auth.interceptor.ts   # Injeta Bearer token
 │   │   │   ├── api/
-│   │   │   │   └── api.service.ts
-│   │   │   └── models/
-│   │   │       ├── user.model.ts
-│   │   │       ├── dev-profile.model.ts
-│   │   │       ├── company-profile.model.ts
-│   │   │       ├── job.model.ts
-│   │   │       └── skill.model.ts
+│   │   │   │   ├── api.service.ts        # Wrapper HTTP genérico
+│   │   │   │   ├── api-error.util.ts     # extractErrorMessage() — DRY
+│   │   │   │   └── error.interceptor.ts  # 401 auto-logout, erros centralizados
+│   │   │   ├── guards/
+│   │   │   │   ├── auth.guard.ts         # authGuard, devGuard, guestGuard
+│   │   │   │   └── profile.guard.ts      # hasProfileGuard, noProfileGuard
+│   │   │   ├── services/
+│   │   │   │   ├── dev-profile.service.ts  # Profile CRUD + cache via Signal
+│   │   │   │   ├── skill.service.ts        # Skill CRUD + tree cache em memória
+│   │   │   │   ├── location.service.ts     # States, cities API
+│   │   │   │   ├── viacep.service.ts       # CEP → endereço (API externa)
+│   │   │   │   └── notification.service.ts # Toast centralizado (Signal queue)
+│   │   │   ├── models/
+│   │   │   │   ├── user.model.ts
+│   │   │   │   ├── dev-profile.model.ts
+│   │   │   │   ├── skill.model.ts
+│   │   │   │   └── location.model.ts
+│   │   │   └── icons.ts                  # Registro de ícones Lucide
 │   │   │
-│   │   ├── shared/                      # Componentes, pipes, directives reutilizáveis
+│   │   ├── shared/                       # Componentes, pipes, directives reutilizáveis
 │   │   │   ├── components/
 │   │   │   │   ├── navbar/
 │   │   │   │   ├── footer/
-│   │   │   │   ├── skill-badge/
-│   │   │   │   ├── match-score/
-│   │   │   │   └── pagination/
-│   │   │   ├── pipes/
+│   │   │   │   ├── toast/                # ToastComponent — global, via NotificationService
+│   │   │   │   ├── form-field/           # Wrapper de input com label + erros
+│   │   │   │   ├── handle-input/         # Validação async de handle (disponibilidade)
+│   │   │   │   └── city-search/          # Autocomplete de cidades com debounce
 │   │   │   └── directives/
+│   │   │       └── cep-mask.directive.ts # Máscara XXXXX-XXX
 │   │   │
-│   │   ├── features/                    # Feature modules (lazy loaded)
+│   │   ├── features/                     # Feature modules (lazy loaded)
 │   │   │   ├── landing/
-│   │   │   │   ├── landing.component.ts
-│   │   │   │   └── landing.routes.ts
+│   │   │   │   └── landing.component.ts
 │   │   │   ├── auth/
 │   │   │   │   ├── login/
-│   │   │   │   ├── register-dev/
-│   │   │   │   ├── register-company/
-│   │   │   │   └── auth.routes.ts
+│   │   │   │   └── register/
+│   │   │   │       └── register-form/    # Sub-componente de formulário
 │   │   │   ├── dev/
-│   │   │   │   ├── dashboard/
-│   │   │   │   ├── profile/
-│   │   │   │   ├── skills/
-│   │   │   │   ├── education/
-│   │   │   │   ├── experience/
-│   │   │   │   ├── projects/
-│   │   │   │   ├── github/
-│   │   │   │   ├── job-search/
-│   │   │   │   └── dev.routes.ts
-│   │   │   ├── company/
-│   │   │   │   ├── dashboard/
-│   │   │   │   ├── profile/
-│   │   │   │   ├── jobs/
-│   │   │   │   ├── dev-search/
-│   │   │   │   └── company.routes.ts
-│   │   │   └── public/
-│   │   │       ├── dev-profile/
-│   │   │       ├── company-profile/
-│   │   │       ├── job-detail/
-│   │   │       ├── developers/
-│   │   │       └── public.routes.ts
+│   │   │   │   ├── dev.routes.ts         # Child routes com guards
+│   │   │   │   ├── onboarding/           # Primeiro acesso (noProfileGuard)
+│   │   │   │   ├── dashboard/            # Stats reais + ações rápidas
+│   │   │   │   ├── profile/              # Edição completa (endereço, links, CEP)
+│   │   │   │   └── skills/               # Smart component
+│   │   │   │       ├── skills.component.ts           # Orquestrador (smart)
+│   │   │   │       └── components/
+│   │   │   │           ├── skill-card/               # Dumb: view/edit de uma skill
+│   │   │   │           └── skill-add-modal/          # Dumb: busca + config de nova skill
+│   │   │   ├── not-found/               # 404 (wildcard route)
+│   │   │   ├── company/                 # (planejado)
+│   │   │   └── public/                  # (planejado)
 │   │   │
 │   │   └── layouts/
-│   │       ├── main-layout/
-│   │       ├── dev-layout/
-│   │       └── company-layout/
+│   │       └── dev-layout/              # Sidebar + header + router-outlet
 │   │
 │   ├── environments/
-│   │   ├── environment.ts
-│   │   └── environment.prod.ts
-│   │
-│   ├── styles/
-│   │   ├── _variables.scss
-│   │   ├── _theme.scss
-│   │   └── styles.scss
+│   │   ├── environment.ts               # apiUrl: http://localhost:3000/api/v1
+│   │   └── environment.prod.ts          # apiUrl: /api/v1 (relativo)
 │   │
 │   └── index.html
 │
@@ -320,24 +316,91 @@ Validação automática via `class-validator` + `class-transformer`.
 
 ---
 
-### 3.3 Controllers
+### 3.3 Interceptors
+
+Transformam a response **na saída** do controller.
+
+| Interceptor | Responsabilidade |
+|---|---|
+| `TransformInterceptor` | Wrapa toda response em `{ data: ... }` automaticamente |
+
+**Regras:**
+- Registrado globalmente no `main.ts`
+- Controllers retornam dados puros — **nunca** fazem `return { data: ... }` manualmente
+- Para endpoints que precisam de formato diferente (ex: logout retorna `{ message }`), usar `@SkipTransform()` no método
+
+```typescript
+// ✅ Controller retorna dados puros — o interceptor cuida do wrapper
+@Get()
+async list() {
+  return this.myService.findAll();
+}
+// Response: { "data": [...] }
+
+// ✅ Exceção: endpoint com formato customizado
+@Post('logout')
+@SkipTransform()
+async logout() {
+  await this.authService.logout(user.id);
+  return { message: 'Logout realizado com sucesso.' };
+}
+// Response: { "message": "..." }
+```
+
+---
+
+### 3.4 Filters
+
+Interceptam **exceptions** e padronizam a response de erro.
+
+| Filter | Responsabilidade |
+|---|---|
+| `HttpExceptionFilter` | Formata todas as exceptions no padrão `{ statusCode, message, errors }` |
+
+**Regras:**
+- Registrado globalmente no `main.ts`
+- Erros de validação (array de mensagens do `ValidationPipe`) são agrupados por campo em `errors`
+- Exceptions simples retornam apenas `statusCode` e `message`
+
+```json
+// Erro de validação (422)
+{
+  "statusCode": 422,
+  "message": "Erro de validação.",
+  "errors": {
+    "email": ["email must be an email"],
+    "password": ["password must be longer than or equal to 8 characters"]
+  }
+}
+
+// Erro simples (404)
+{
+  "statusCode": 404,
+  "message": "Perfil não encontrado."
+}
+```
+
+---
+
+### 3.5 Controllers
 
 Camada fina que recebe a request validada e delega ao service.
 
 **Responsabilidades:**
 - Receber a request (já validada pelo Pipe/DTO)
 - Delegar ao Service
-- Retornar response com status HTTP correto
+- Retornar dados puros (o `TransformInterceptor` cuida do wrapper `{ data }`)
 
 **Regras:**
 - Controllers são magros — sem lógica de negócio
 - Sem queries diretas ao banco
 - Um controller por módulo
 - Decorators definem rota, método, guards e swagger
+- **Nunca** retornar `{ data: ... }` manualmente — o interceptor global faz isso
 
 ---
 
-### 3.4 Services
+### 3.6 Services
 
 Camada de lógica de negócio.
 
@@ -355,7 +418,7 @@ Camada de lógica de negócio.
 
 ---
 
-### 3.5 Repositories
+### 3.7 Repositories
 
 Camada de acesso a dados via TypeORM.
 
@@ -372,7 +435,7 @@ Camada de acesso a dados via TypeORM.
 
 ---
 
-### 3.6 Entities
+### 3.8 Entities
 
 Representação das tabelas via TypeORM.
 
@@ -387,7 +450,7 @@ Representação das tabelas via TypeORM.
 
 ---
 
-### 3.7 DTOs
+### 3.9 DTOs
 
 Data Transfer Objects para validação de entrada.
 
@@ -409,45 +472,119 @@ Data Transfer Objects para validação de entrada.
 
 Serviços singleton, guards e interceptors carregados uma vez.
 
-| Elemento | Responsabilidade |
+#### Interceptors
+
+| Interceptor | Responsabilidade |
 |---|---|
-| `AuthService` | Login, registro, refresh, estado de autenticação |
-| `AuthGuard` | Protege rotas autenticadas |
-| `RoleGuard` | Protege rotas por tipo de usuário |
-| `AuthInterceptor` | Injeta Bearer token em requests, faz refresh automático |
-| `ApiService` | Wrapper HTTP com base URL e error handling |
+| `authInterceptor` | Injeta `Authorization: Bearer {token}` em toda request |
+| `errorInterceptor` | Intercepta `401` em rotas não-auth e faz auto-logout + redirect |
+
+Ambos são **funções** (`HttpInterceptorFn`), registrados em `app.config.ts` via `withInterceptors([...])`.
+
+#### Guards
+
+| Guard | Responsabilidade | Tipo |
+|---|---|---|
+| `authGuard` | Requer autenticação (qualquer role) | `CanActivateFn` |
+| `devGuard` | Requer autenticação + role `dev` | `CanActivateFn` |
+| `guestGuard` | Bloqueia usuários autenticados (login/register) | `CanActivateFn` |
+| `hasProfileGuard` | Requer perfil completo, senão redireciona para onboarding | `CanActivateFn` |
+| `noProfileGuard` | Requer SEM perfil (onboarding), senão redireciona para dashboard | `CanActivateFn` |
+
+#### Services
+
+| Service | Responsabilidade | Estado |
+|---|---|---|
+| `AuthService` | Login, registro, logout, estado JWT | Signals: `user`, `isAuthenticated`, `userRole` |
+| `ApiService` | Wrapper HTTP genérico com base URL e error handling | Sem estado |
+| `DevProfileService` | Profile CRUD, cache do perfil atual | Signal: `currentProfile` |
+| `SkillService` | Skill tree + dev skills CRUD | Cache em memória para tree e categories |
+| `LocationService` | States e cities da API | Sem estado |
+| `ViaCepService` | Busca endereço por CEP (API externa) | Sem estado |
+| `NotificationService` | Toast centralizado (success/error/info) | Signal queue com auto-dismiss |
+
+#### Utilities
+
+| Utilitário | Responsabilidade |
+|---|---|
+| `extractErrorMessage()` | Extrai mensagem de `ApiError` (string ou array) — evita duplicação |
 
 ---
 
 ### 4.2 Shared
 
-Componentes, pipes e directives reutilizáveis entre features.
+Componentes, directives e pipes reutilizáveis entre features.
+
+#### Componentes
+
+| Componente | Responsabilidade |
+|---|---|
+| `NavbarComponent` | Barra de navegação pública |
+| `FooterComponent` | Rodapé com ano dinâmico |
+| `ToastComponent` | Renderiza notificações globais via `NotificationService` |
+| `FormFieldComponent` | Wrapper de input com label, erros, validação automática |
+| `HandleInputComponent` | Input especializado com validação regex + check assíncrono de disponibilidade |
+| `CitySearchComponent` | Autocomplete de cidades com debounce, requer estado selecionado |
+
+#### Directives
+
+| Directive | Responsabilidade |
+|---|---|
+| `CepMaskDirective` | Máscara de input `XXXXX-XXX` para campos de CEP |
 
 ---
 
 ### 4.3 Features (lazy loaded)
 
-Cada feature é um módulo independente carregado sob demanda.
+Cada feature é carregada sob demanda via `loadChildren`.
 
-| Feature | Rotas | Quem acessa |
-|---|---|---|
-| `landing` | `/` | Público |
-| `auth` | `/auth/*` | Público |
-| `dev` | `/dev/*` | Role `dev` |
-| `company` | `/company/*` | Role `company` |
-| `public` | `/developers/*`, `/companies/*`, `/jobs/*` | Público |
+| Feature | Rotas | Quem acessa | Guard |
+|---|---|---|---|
+| `landing` | `/` | Público | — |
+| `auth` | `/auth/login`, `/auth/register` | Público (não logado) | `guestGuard` |
+| `dev` | `/dev/*` | Role `dev` | `devGuard` + `hasProfileGuard` |
+| `not-found` | `**` (wildcard) | Público | — |
+| `company` | `/company/*` (planejado) | Role `company` | — |
+| `public` | `/developers/*` (planejado) | Público | — |
+
+#### Padrão Smart/Dumb dentro de Features
+
+Features complexas devem seguir o padrão **Smart/Dumb** (Container/Presentational):
+
+```
+skills/
+├── skills.component.ts           # Smart: orquestra estado, chama services
+├── skills.component.html          # Template delega para sub-componentes
+└── components/
+    ├── skill-card/                # Dumb: recebe @input, emite @output
+    │   ├── skill-card.component.ts
+    │   ├── skill-card.component.html
+    │   └── skill-card.component.scss
+    └── skill-add-modal/           # Dumb: recebe dados, emite confirm/close
+        ├── skill-add-modal.component.ts
+        ├── skill-add-modal.component.html
+        └── skill-add-modal.component.scss
+```
+
+**Smart Component** (orquestrador):
+- Injeta services, gerencia estado global da feature
+- Usa `NotificationService` para feedback ao usuário
+- Usa `extractErrorMessage()` para tratamento de erros
+- Passa dados via `input()` e escuta `output()` dos filhos
+
+**Dumb Component** (apresentação):
+- Recebe dados via `input()`, emite eventos via `output()`
+- Sem injeção de services de domínio
+- Gerencia apenas estado local de UI (ex: `isEditing`, `searchQuery`)
+- Reutilizável e testável de forma isolada
 
 ---
 
 ### 4.4 Layouts
 
-Templates de página que envolvem as features.
-
 | Layout | Uso |
 |---|---|
-| `MainLayout` | Landing, páginas públicas |
-| `DevLayout` | Painel do dev (sidebar, navbar autenticada) |
-| `CompanyLayout` | Painel da empresa (sidebar, navbar autenticada) |
+| `DevLayout` | Painel do dev: sidebar com nav, header mobile, avatar, logout |
 
 ---
 
@@ -507,14 +644,17 @@ POST /api/v1/dev/skills
 Authorization: Bearer {access_token}
 Body: { "skill_id": "uuid", "level": "advanced", "years_experience": 4 }
 
-1. JwtAuthGuard     → valida access token, extrai payload
-2. RolesGuard       → verifica role = 'dev'
-3. ValidationPipe   → valida body contra CreateDevSkillDto
-4. DevSkillController → this.devSkillService.create(user, dto)
-5. DevSkillService  → verifica limite 50, verifica duplicata
-6. DevSkillRepository → salva no banco via TypeORM
-7. Controller       → retorna entity, status 201
-8. TransformInterceptor → formata response padrão { data: ... }
+1. JwtAuthGuard         → valida access token, extrai payload
+2. RolesGuard           → verifica role = 'dev'
+3. ValidationPipe       → valida body contra CreateDevSkillDto
+4. DevSkillController   → this.devSkillService.create(user.id, dto)
+5. DevSkillService      → verifica limite 50, verifica duplicata
+6. Repository (TypeORM) → salva no banco
+7. Controller           → retorna dados puros, status 201
+8. TransformInterceptor → wrapa em { data: ... }
+
+// Em caso de erro em qualquer etapa:
+X. HttpExceptionFilter  → formata em { statusCode, message, errors? }
 ```
 
 ---
@@ -596,9 +736,14 @@ Controller → GitHubService → GitHub REST API (pública)
 | Não autenticado | Guard | `UnauthorizedException` | `401` |
 | Role errado | Guard | `ForbiddenException` | `403` |
 
-O `HttpExceptionFilter` global formata todas as exceptions no padrão:
+O `HttpExceptionFilter` global (registrado no `main.ts`) formata todas as exceptions no padrão:
 ```json
-{ "statusCode": 422, "message": "...", "errors": { ... } }
+{ "statusCode": 422, "message": "Erro de validação.", "errors": { "campo": ["mensagem"] } }
+```
+
+Para exceptions simples (sem array de validação), retorna apenas `statusCode` e `message`:
+```json
+{ "statusCode": 404, "message": "Perfil não encontrado." }
 ```
 
 ---

@@ -1,6 +1,6 @@
 # Coding Standards — Dev Port
 
-> Versão: 2.0
+> Versão: 3.0
 > Data: 2026-04-11
 > Status: Draft
 > Stack: NestJS · Angular · TypeScript
@@ -113,8 +113,9 @@ export class DevSkillController {
   async create(
     @CurrentUser() user: User,
     @Body() dto: CreateDevSkillDto,
-  ): Promise<DevSkill> {
-    return this.devSkillService.create(user, dto);
+  ) {
+    // ✅ Retorna dados puros — TransformInterceptor wrapa em { data }
+    return this.devSkillService.create(user.id, dto);
   }
 
   @Delete(':devSkillId')
@@ -123,7 +124,7 @@ export class DevSkillController {
     @CurrentUser() user: User,
     @Param('devSkillId', ParseUUIDPipe) devSkillId: string,
   ): Promise<void> {
-    await this.devSkillService.remove(user, devSkillId);
+    await this.devSkillService.remove(user.id, devSkillId);
   }
 }
 ```
@@ -132,8 +133,32 @@ export class DevSkillController {
 - Guards no nível da classe (quando todas as rotas exigem)
 - `@HttpCode()` explícito quando diferente de 200
 - `@CurrentUser()` decorator customizado para extrair o user do token
-- Tipagem de retorno em todos os métodos
 - Sem lógica de negócio
+- **Nunca** retornar `{ data: ... }` manualmente — o `TransformInterceptor` global faz isso
+- Para endpoints com formato diferente (ex: logout `{ message }`), usar `@SkipTransform()`
+
+```typescript
+// ❌ ERRADO — duplica o wrapper
+@Get()
+async list() {
+  const items = await this.service.findAll();
+  return { data: items };  // resulta em { data: { data: items } }
+}
+
+// ✅ CORRETO — interceptor cuida do wrapper
+@Get()
+async list() {
+  return this.service.findAll();  // resulta em { data: items }
+}
+
+// ✅ EXCEÇÃO — endpoint sem wrapper padrão
+@Post('logout')
+@SkipTransform()
+async logout(@CurrentUser() user: User) {
+  await this.authService.logout(user.id);
+  return { message: 'Logout realizado com sucesso.' };
+}
+```
 
 ---
 
@@ -313,25 +338,28 @@ export class DevSkillRepository {
 
 ```typescript
 @Component({
-  selector: 'app-skill-badge',
+  selector: 'app-skill-card',
   standalone: true,
-  imports: [CommonModule],
-  template: `
-    <span class="badge" [class]="levelClass()">
-      {{ skill().name }} — {{ skill().level }}
-    </span>
-  `,
+  imports: [FormsModule, LucideAngularModule],
+  templateUrl: './skill-card.component.html',
+  styleUrl: './skill-card.component.scss',
 })
-export class SkillBadgeComponent {
+export class SkillCardComponent {
   skill = input.required<DevSkill>();
+  saving = input(false);
 
+  edit = output<{ level: string; years_experience: number | null }>();
+  remove = output<void>();
+
+  isEditing = signal(false);
   levelClass = computed(() => `badge-${this.skill().level}`);
 }
 ```
 
 **Regras:**
 - Todos os components são `standalone: true`
-- Usar Signals (`input`, `computed`, `signal`) em vez de `@Input()/@Output()`
+- Usar Signals (`input`, `computed`, `signal`) em vez de `@Input()/@Output()` decorators
+- Usar `output()` em vez de `@Output()` decorator
 - Template inline para componentes pequenos, arquivo separado para maiores
 - Styles com `styleUrl` apontando para SCSS
 
@@ -344,12 +372,13 @@ export class SkillBadgeComponent {
 export class DevProfileService {
   private readonly api = inject(ApiService);
 
-  getProfile(): Observable<DevProfile> {
-    return this.api.get<DevProfile>('/dev/profile');
-  }
+  private readonly profile = signal<DevProfile | null>(null);
+  readonly currentProfile = this.profile.asReadonly();
 
-  updateProfile(data: UpdateDevProfileDto): Observable<DevProfile> {
-    return this.api.put<DevProfile>('/dev/profile', data);
+  loadProfile(): Observable<DevProfile | null> {
+    return this.api.get<{ data: DevProfile }>('/dev/profile').pipe(
+      tap((res) => this.profile.set(res.data)),
+    );
   }
 }
 ```
@@ -357,6 +386,7 @@ export class DevProfileService {
 **Regras:**
 - `inject()` em vez de constructor injection (padrão Angular 17+)
 - `providedIn: 'root'` para singletons
+- Estado reativo via `signal()` + `asReadonly()` para expor
 - Retorno `Observable<T>` tipado
 - Services de feature ficam na pasta da feature
 
@@ -366,19 +396,199 @@ export class DevProfileService {
 
 ```typescript
 this.form = this.fb.group({
-  fullName: ['', [Validators.required, Validators.maxLength(255)]],
+  full_name: ['', [Validators.required, Validators.maxLength(255)]],
   title: ['', [Validators.required, Validators.maxLength(255)]],
   bio: ['', [Validators.required, Validators.maxLength(500)]],
-  emailContact: ['', [Validators.required, Validators.email]],
-  location: [''],
-  workMode: [null],
+  email_contact: ['', [Validators.required, Validators.email]],
+  work_mode: [null as string | null],
 });
 ```
 
 **Regras:**
 - Sempre `ReactiveFormsModule` (não template-driven)
 - Validações no form, não no template
-- Nomes dos controls em camelCase
+- Nomes dos controls em snake_case (alinhado com a API)
+
+---
+
+### 4.4 Notificações (Toast)
+
+Feedback ao usuário é centralizado no `NotificationService`. **Nunca** usar `setTimeout` manual ou signals locais de `successMessage`/`apiError` para toasts.
+
+```typescript
+// No smart component:
+private readonly notify = inject(NotificationService);
+
+onSave(): void {
+  this.myService.save(data).subscribe({
+    next: () => this.notify.success('Salvo com sucesso!'),
+    error: (err: ApiError) => this.notify.error(extractErrorMessage(err)),
+  });
+}
+```
+
+**Regras:**
+- `notify.success()` para operações concluídas
+- `notify.error()` para erros de API
+- `notify.info()` para mensagens informativas
+- O `ToastComponent` global no root renderiza automaticamente
+- Auto-dismiss em 4 segundos
+
+---
+
+### 4.5 Tratamento de Erros no Frontend
+
+Todo erro de API deve ser extraído com a utility `extractErrorMessage()` para evitar duplicação.
+
+```typescript
+import { extractErrorMessage } from '../../../core/api/api-error.util';
+import { ApiError } from '../../../core/api/api.service';
+
+// Em vez de repetir isto em cada component:
+// ❌ const msg = Array.isArray(err.message) ? err.message[0] : err.message;
+
+// Usar:
+// ✅ this.notify.error(extractErrorMessage(err));
+```
+
+**Fluxo de erro:**
+1. `ApiService.handleError()` — formata `HttpErrorResponse` → `ApiError`
+2. `errorInterceptor` — intercepta 401 em rotas não-auth → auto-logout
+3. `extractErrorMessage()` — extrai string de `ApiError.message` (string ou array)
+4. `NotificationService` — exibe toast de erro
+
+---
+
+### 4.6 Smart/Dumb Components
+
+Features complexas devem separar **orquestração** de **apresentação**.
+
+**Smart Component (Container):**
+```typescript
+@Component({ /* ... */ })
+export class SkillsComponent {
+  private readonly skillService = inject(SkillService);
+  private readonly notify = inject(NotificationService);
+
+  mySkills = signal<DevSkill[]>([]);
+
+  onAddSkill(payload: SkillAddPayload): void {
+    this.skillService.addSkill({ ... })
+      .subscribe({
+        next: (added) => {
+          this.mySkills.update((s) => [...s, added]);
+          this.notify.success('Skill adicionada!');
+        },
+        error: (err: ApiError) => this.notify.error(extractErrorMessage(err)),
+      });
+  }
+}
+```
+
+**Dumb Component (Presentational):**
+```typescript
+@Component({ /* ... */ })
+export class SkillCardComponent {
+  skill = input.required<DevSkill>();      // Dados de entrada
+  saving = input(false);                    // Estado de UI do pai
+
+  edit = output<{ level: string }>();       // Emite para o pai
+  remove = output<void>();                  // Emite para o pai
+
+  isEditing = signal(false);                // Estado local de UI apenas
+}
+```
+
+**Regras:**
+- Smart: injeta services, gerencia estado, trata erros
+- Dumb: recebe `input()`, emite `output()`, sem injeção de services de domínio
+- Dumb pode ter estado local de UI (ex: `isEditing`, `searchQuery`)
+- Sub-componentes ficam em `components/` dentro da feature
+
+---
+
+### 4.7 Guards
+
+Todos os guards são **funções** (`CanActivateFn`), não classes.
+
+```typescript
+export const guestGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (!authService.isAuthenticated()) {
+    return true;
+  }
+
+  router.navigate(['/dev']);
+  return false;
+};
+```
+
+**Guards disponíveis:**
+
+| Guard | Protege | Redireciona para |
+|---|---|---|
+| `authGuard` | Rotas autenticadas | `/auth/login` |
+| `devGuard` | Rotas de dev | `/` |
+| `guestGuard` | Rotas de login/register (logados) | `/dev` |
+| `hasProfileGuard` | Rotas que exigem perfil | `/dev/onboarding` |
+| `noProfileGuard` | Rota de onboarding (com perfil) | `/dev` |
+
+---
+
+### 4.8 Cache em Services
+
+Dados que mudam raramente (skill tree, categorias) devem ser cacheados no service.
+
+```typescript
+@Injectable({ providedIn: 'root' })
+export class SkillService {
+  private cachedTree: SkillTree[] | null = null;
+
+  getSkillTree(): Observable<SkillTree[]> {
+    if (this.cachedTree) {
+      return of(this.cachedTree);
+    }
+
+    return this.api.get<{ data: SkillTree[] }>('/skills').pipe(
+      map((res) => res.data),
+      tap((tree) => this.cachedTree = tree),
+    );
+  }
+}
+```
+
+**Regras:**
+- Cache em memória (propriedade privada) para dados de referência
+- Retorna `of(cached)` se disponível, senão faz HTTP e armazena
+- Dados mutáveis do usuário (perfil, skills do dev) usam `signal()` em vez de cache manual
+- Cache é limpo automaticamente no reload da SPA
+
+---
+
+### 4.9 Rotas
+
+```typescript
+export const routes: Routes = [
+  { path: '', component: LandingComponent },
+  { path: 'auth/login', component: LoginComponent, canActivate: [guestGuard] },
+  { path: 'auth/register', component: RegisterComponent, canActivate: [guestGuard] },
+  {
+    path: 'dev',
+    canActivate: [devGuard],
+    loadChildren: () => import('./features/dev/dev.routes').then((m) => m.devRoutes),
+  },
+  { path: '**', component: NotFoundComponent },
+];
+```
+
+**Regras:**
+- Features lazy-loaded via `loadChildren`
+- Rotas públicas de auth protegidas com `guestGuard`
+- Rotas autenticadas protegidas com guard de role
+- Sempre incluir rota wildcard `**` para 404
+- Child routes usam `hasProfileGuard`/`noProfileGuard` para onboarding flow
 
 ---
 
@@ -396,8 +606,11 @@ this.form = this.fb.group({
 ```typescript
 import { Test, TestingModule } from '@nestjs/testing';
 import { INestApplication, ValidationPipe } from '@nestjs/common';
+import { Reflector } from '@nestjs/core';
 import request from 'supertest';
 import { AppModule } from '../src/app.module';
+import { TransformInterceptor } from '../src/common/interceptors/transform.interceptor';
+import { HttpExceptionFilter } from '../src/common/filters/http-exception.filter';
 import { DataSource } from 'typeorm';
 
 describe('Auth (e2e)', () => {
@@ -416,6 +629,8 @@ describe('Auth (e2e)', () => {
       forbidNonWhitelisted: true,
       transform: true,
     }));
+    app.useGlobalInterceptors(new TransformInterceptor(app.get(Reflector)));
+    app.useGlobalFilters(new HttpExceptionFilter());
     await app.init();
 
     dataSource = app.get(DataSource);
@@ -511,7 +726,76 @@ cd backend && npm run test:cov
 
 ---
 
-## 6. Enums — Referência Completa
+## 6. Interceptors e Filters Globais
+
+### 6.1 TransformInterceptor
+
+Registrado no `main.ts`, wrapa automaticamente toda response em `{ data: ... }`.
+
+```typescript
+// main.ts
+app.useGlobalInterceptors(new TransformInterceptor(app.get(Reflector)));
+```
+
+**Impacto:** controllers retornam dados puros. O interceptor adiciona o envelope.
+
+**Exceções via `@SkipTransform()`:**
+```typescript
+import { SkipTransform } from '../common/decorators/skip-transform.decorator.js';
+
+@Post('logout')
+@SkipTransform()
+async logout() { ... }
+```
+
+### 6.2 HttpExceptionFilter
+
+Registrado no `main.ts`, padroniza **todas** as respostas de erro.
+
+```typescript
+// main.ts
+app.useGlobalFilters(new HttpExceptionFilter());
+```
+
+**Formato padrão de erro:**
+```json
+{
+  "statusCode": 422,
+  "message": "Erro de validação.",
+  "errors": {
+    "email": ["email must be an email"],
+    "password": ["password must be longer than or equal to 8 characters"]
+  }
+}
+```
+
+**Regras:**
+- Erros de validação (array do `ValidationPipe`) são agrupados por campo em `errors`
+- Exceptions simples (`NotFoundException`, `ConflictException`, etc.) retornam apenas `statusCode` + `message`
+- O campo `errors` só aparece quando há erros de validação
+
+### 6.3 Registro no main.ts
+
+```typescript
+import { NestFactory, Reflector } from '@nestjs/core';
+import { ValidationPipe } from '@nestjs/common';
+import { TransformInterceptor } from './common/interceptors/transform.interceptor';
+import { HttpExceptionFilter } from './common/filters/http-exception.filter';
+
+async function bootstrap() {
+  const app = await NestFactory.create(AppModule);
+  app.setGlobalPrefix('api/v1');
+  app.useGlobalPipes(new ValidationPipe({ whitelist: true, forbidNonWhitelisted: true, transform: true }));
+  app.useGlobalInterceptors(new TransformInterceptor(app.get(Reflector)));
+  app.useGlobalFilters(new HttpExceptionFilter());
+  app.enableCors();
+  await app.listen(process.env.PORT ?? 3000);
+}
+```
+
+---
+
+## 7. Enums — Referência Completa
 
 | Enum | Valores |
 |---|---|
@@ -527,7 +811,7 @@ cd backend && npm run test:cov
 
 ---
 
-## 7. Imports — Ordem
+## 8. Imports — Ordem
 
 ```typescript
 // 1. Node / terceiros
@@ -546,7 +830,7 @@ import { DevSkill } from './dev-skill.entity';
 
 ---
 
-## 8. Regras Gerais
+## 9. Regras Gerais
 
 | Regra | Detalhe |
 |---|---|
@@ -564,10 +848,12 @@ import { DevSkill } from './dev-skill.entity';
 
 ---
 
-## 9. Checklist de Code Review
+## 10. Checklist de Code Review
 
 ### Backend
 - [ ] Controller magro (sem lógica de negócio)
+- [ ] Controller retorna dados puros (sem `{ data: ... }` manual)
+- [ ] `@SkipTransform()` usado apenas quando necessário (ex: logout)
 - [ ] DTO com validações completas (`class-validator`)
 - [ ] Entity com tipos corretos e nomes de coluna mapeados
 - [ ] Service lança exceptions do NestJS
@@ -577,10 +863,16 @@ import { DevSkill } from './dev-skill.entity';
 - [ ] Guards aplicados corretamente
 
 ### Frontend
-- [ ] Componentes standalone
-- [ ] Signals em vez de `@Input()/@Output()` decorators
+- [ ] Componentes standalone com `input()`/`output()` (não `@Input()/@Output()`)
 - [ ] Reactive forms (não template-driven)
-- [ ] Services usam `inject()`
-- [ ] Tipagem completa nos models
+- [ ] Services usam `inject()` e `providedIn: 'root'`
+- [ ] Tipagem completa nos models — sem `any`
 - [ ] Lazy loading nas rotas de feature
 - [ ] Sem lógica pesada no template
+- [ ] Feedback via `NotificationService` (não signals locais de toast)
+- [ ] Erros extraídos com `extractErrorMessage()` (não inline)
+- [ ] Features complexas seguem Smart/Dumb pattern
+- [ ] Rotas autenticadas com guard, rotas de auth com `guestGuard`
+- [ ] Rota wildcard `**` presente para 404
+- [ ] Dados de referência cacheados no service
+- [ ] `takeUntilDestroyed(this.destroyRef)` em toda subscription de component

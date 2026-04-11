@@ -9,7 +9,9 @@ import { CepMaskDirective } from '../../../shared/directives/cep-mask.directive'
 import { DevProfileService } from '../../../core/services/dev-profile.service';
 import { LocationService } from '../../../core/services/location.service';
 import { ViaCepService } from '../../../core/services/viacep.service';
+import { NotificationService } from '../../../core/services/notification.service';
 import { ApiError } from '../../../core/api/api.service';
+import { extractErrorMessage } from '../../../core/api/api-error.util';
 import { State } from '../../../core/models/location.model';
 
 @Component({
@@ -25,14 +27,13 @@ export class ProfileComponent implements OnInit {
   private readonly locationService = inject(LocationService);
   private readonly viaCepService = inject(ViaCepService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly notify = inject(NotificationService);
 
   citySearch = viewChild<CitySearchComponent>('citySearch');
 
   isLoading = signal(false);
   isSaving = signal(false);
   isFetchingCep = signal(false);
-  apiError = signal<string | null>(null);
-  successMessage = signal<string | null>(null);
   handleAvailable = signal(true);
   states = signal<State[]>([]);
 
@@ -142,8 +143,6 @@ export class ProfileComponent implements OnInit {
     }
 
     this.isSaving.set(true);
-    this.apiError.set(null);
-    this.successMessage.set(null);
 
     const data = this.form.getRawValue();
 
@@ -166,13 +165,11 @@ export class ProfileComponent implements OnInit {
     }).subscribe({
       next: () => {
         this.isSaving.set(false);
-        this.successMessage.set('Perfil atualizado com sucesso!');
-        setTimeout(() => this.successMessage.set(null), 4000);
+        this.notify.success('Perfil atualizado com sucesso!');
       },
       error: (err: ApiError) => {
         this.isSaving.set(false);
-        const msg = Array.isArray(err.message) ? err.message[0] : err.message;
-        this.apiError.set(msg);
+        this.notify.error(extractErrorMessage(err));
       },
     });
   }

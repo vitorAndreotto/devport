@@ -1,7 +1,9 @@
-import { Component, inject, computed } from '@angular/core';
+import { Component, inject, computed, signal, OnInit, DestroyRef } from '@angular/core';
 import { RouterLink } from '@angular/router';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule } from 'lucide-angular';
 import { DevProfileService } from '../../../core/services/dev-profile.service';
+import { SkillService } from '../../../core/services/skill.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -10,10 +12,13 @@ import { DevProfileService } from '../../../core/services/dev-profile.service';
   templateUrl: './dashboard.component.html',
   styleUrl: './dashboard.component.scss',
 })
-export class DashboardComponent {
+export class DashboardComponent implements OnInit {
   private readonly profileService = inject(DevProfileService);
+  private readonly skillService = inject(SkillService);
+  private readonly destroyRef = inject(DestroyRef);
 
   profileName = computed(() => this.profileService.currentProfile()?.full_name ?? '');
+  skillCount = signal(0);
 
   readonly quickActions = [
     { path: '/dev/profile', label: 'Editar perfil', icon: 'user', description: 'Atualize suas informações profissionais' },
@@ -22,4 +27,10 @@ export class DashboardComponent {
     { path: '/dev/projects', label: 'Projetos', icon: 'folder-git-2', description: 'Gerencie seus projetos e repos' },
     { path: '/dev/jobs', label: 'Buscar vagas', icon: 'briefcase', description: 'Encontre vagas com match' },
   ];
+
+  ngOnInit(): void {
+    this.skillService.getMySkills()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((skills) => this.skillCount.set(skills.length));
+  }
 }

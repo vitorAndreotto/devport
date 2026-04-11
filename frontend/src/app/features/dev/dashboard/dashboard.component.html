@@ -6,17 +6,16 @@
     <p class="dashboard__subtitle">Aqui está um resumo do seu porto.</p>
   </div>
 
-  <!-- Placeholder indicators -->
   <div class="dashboard__stats">
-    <div class="stat-card">
+    <a routerLink="/dev/skills" class="stat-card stat-card--link">
       <div class="stat-card__icon">
         <lucide-icon name="puzzle" [size]="22"></lucide-icon>
       </div>
       <div class="stat-card__info">
-        <span class="stat-card__value">—</span>
+        <span class="stat-card__value">{{ skillCount() }}</span>
         <span class="stat-card__label">Skills</span>
       </div>
-    </div>
+    </a>
 
     <div class="stat-card">
       <div class="stat-card__icon">
@@ -49,7 +48,6 @@
     </div>
   </div>
 
-  <!-- Quick actions -->
   <h2 class="dashboard__section-title">Ações rápidas</h2>
   <div class="dashboard__actions">
     @for (action of quickActions; track action.path) {

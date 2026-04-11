@@ -15,8 +15,7 @@ export class LocationController {
 
   @Get('states')
   async listStates() {
-    const states = await this.stateRepo.find({ order: { name: 'ASC' } });
-    return { data: states };
+    return this.stateRepo.find({ order: { name: 'ASC' } });
   }
 
   @Get('cities/:cityId')
@@ -30,7 +29,7 @@ export class LocationController {
       throw new NotFoundException('Cidade não encontrada.');
     }
 
-    return { data: city };
+    return city;
   }
 
   @Get('states/:stateId/cities')
@@ -43,12 +42,10 @@ export class LocationController {
       where['name'] = ILike(`%${query}%`);
     }
 
-    const cities = await this.cityRepo.find({
+    return this.cityRepo.find({
       where,
       order: { name: 'ASC' },
       take: 50,
     });
-
-    return { data: cities };
   }
 }

@@ -25,3 +25,16 @@ export const devGuard: CanActivateFn = () => {
   router.navigate(['/']);
   return false;
 };
+
+export const guestGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (!authService.isAuthenticated()) {
+    return true;
+  }
+
+  const role = authService.userRole();
+  router.navigate([role === 'dev' ? '/dev' : '/']);
+  return false;
+};

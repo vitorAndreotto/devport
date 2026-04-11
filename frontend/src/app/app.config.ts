@@ -5,13 +5,14 @@ import { LUCIDE_ICONS, LucideIconProvider } from 'lucide-angular';
 
 import { routes } from './app.routes';
 import { authInterceptor } from './core/auth/auth.interceptor';
+import { errorInterceptor } from './core/api/error.interceptor';
 import { APP_ICONS } from './core/icons';
 
 export const appConfig: ApplicationConfig = {
   providers: [
     provideBrowserGlobalErrorListeners(),
     provideRouter(routes),
-    provideHttpClient(withInterceptors([authInterceptor])),
+    provideHttpClient(withInterceptors([authInterceptor, errorInterceptor])),
     {
       provide: LUCIDE_ICONS,
       multi: true,

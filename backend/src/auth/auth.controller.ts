@@ -14,6 +14,7 @@ import { UserRole } from '../common/enums/user-role.enum.js';
 import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { JwtRefreshGuard } from '../common/guards/jwt-refresh.guard.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import { SkipTransform } from '../common/decorators/skip-transform.decorator.js';
 import { User } from '../users/user.entity.js';
 
 @Controller('auth')
@@ -23,22 +24,19 @@ export class AuthController {
   @Post('register/dev')
   @HttpCode(HttpStatus.CREATED)
   async registerDev(@Body() dto: RegisterDto) {
-    const result = await this.authService.register(dto, UserRole.Dev);
-    return { data: result };
+    return this.authService.register(dto, UserRole.Dev);
   }
 
   @Post('register/company')
   @HttpCode(HttpStatus.CREATED)
   async registerCompany(@Body() dto: RegisterDto) {
-    const result = await this.authService.register(dto, UserRole.Company);
-    return { data: result };
+    return this.authService.register(dto, UserRole.Company);
   }
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
   async login(@Body() dto: LoginDto) {
-    const result = await this.authService.login(dto);
-    return { data: result };
+    return this.authService.login(dto);
   }
 
   @Post('refresh')
@@ -48,13 +46,13 @@ export class AuthController {
     @CurrentUser() user: User & { currentRefreshToken: string },
     @Body() _dto: RefreshTokenDto,
   ) {
-    const result = await this.authService.refresh(user);
-    return { data: result };
+    return this.authService.refresh(user);
   }
 
   @Post('logout')
   @UseGuards(JwtAuthGuard)
   @HttpCode(HttpStatus.OK)
+  @SkipTransform()
   async logout(@CurrentUser() user: User) {
     await this.authService.logout(user.id);
     return { message: 'Logout realizado com sucesso.' };

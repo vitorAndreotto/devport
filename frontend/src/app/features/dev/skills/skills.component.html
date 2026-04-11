@@ -1,0 +1,58 @@
+<div class="skills-page">
+  <div class="skills-page__header">
+    <div>
+      <h1 class="skills-page__title">Minhas Skills</h1>
+      <p class="skills-page__subtitle">Gerencie suas habilidades técnicas e comportamentais.</p>
+    </div>
+    <button class="btn-add" (click)="openAddModal()">
+      <lucide-icon name="plus" [size]="18"></lucide-icon>
+      Adicionar skill
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="skills-loading">
+      <lucide-icon name="loader-2" [size]="24" class="spin"></lucide-icon>
+      <span>Carregando skills...</span>
+    </div>
+  } @else if (mySkills().length === 0) {
+    <div class="skills-empty">
+      <lucide-icon name="puzzle" [size]="48"></lucide-icon>
+      <h3>Nenhuma skill cadastrada</h3>
+      <p>Adicione suas primeiras habilidades para enriquecer seu perfil.</p>
+      <button class="btn-add" (click)="openAddModal()">
+        <lucide-icon name="plus" [size]="18"></lucide-icon>
+        Adicionar skill
+      </button>
+    </div>
+  } @else {
+    <div class="skills-groups">
+      @for (group of groupedSkills(); track group[0]) {
+        <div class="skill-group">
+          <h2 class="skill-group__title">{{ categoryLabels[group[0]] || group[0] }}</h2>
+          <div class="skill-group__list">
+            @for (devSkill of group[1]; track devSkill.id) {
+              <app-skill-card
+                [skill]="devSkill"
+                [saving]="isSavingEdit()"
+                (edit)="onEditSkill(devSkill, $event)"
+                (remove)="onRemoveSkill(devSkill)"
+              />
+            }
+          </div>
+        </div>
+      }
+    </div>
+  }
+</div>
+
+@if (showAddModal()) {
+  <app-skill-add-modal
+    [skillTree]="skillTree()"
+    [categories]="categories()"
+    [existingSkillIds]="existingSkillIds()"
+    [isAdding]="isAdding()"
+    (close)="closeAddModal()"
+    (confirm)="onAddSkill($event)"
+  />
+}

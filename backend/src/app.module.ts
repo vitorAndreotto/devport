@@ -5,6 +5,8 @@ import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { DevProfileModule } from './dev-profile/dev-profile.module.js';
 import { LocationModule } from './location/location.module.js';
+import { SkillTreeModule } from './skill-tree/skill-tree.module.js';
+import { DevSkillModule } from './dev-skill/dev-skill.module.js';
 
 @Module({
   imports: [
@@ -33,6 +35,8 @@ import { LocationModule } from './location/location.module.js';
     AuthModule,
     DevProfileModule,
     LocationModule,
+    SkillTreeModule,
+    DevSkillModule,
   ],
 })
 export class AppModule {}

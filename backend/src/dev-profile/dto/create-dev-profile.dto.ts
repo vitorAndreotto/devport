@@ -10,6 +10,7 @@ import {
   Matches,
   MaxLength,
   MinLength,
+  ArrayMaxSize,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -23,10 +24,12 @@ enum WorkMode {
 class LinkDto {
   @IsString()
   @IsNotEmpty()
+  @MaxLength(100)
   label: string;
 
   @IsUrl()
   @IsNotEmpty()
+  @MaxLength(2048)
   url: string;
 }
 
@@ -104,11 +107,15 @@ export class CreateDevProfileDto {
 
   @IsOptional()
   @IsString()
-  @MaxLength(255)
+  @MaxLength(39)
+  @Matches(/^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/, {
+    message: 'Username do GitHub inválido.',
+  })
   github_username?: string;
 
   @IsOptional()
   @IsArray()
+  @ArrayMaxSize(10)
   @ValidateNested({ each: true })
   @Type(() => LinkDto)
   links?: LinkDto[];

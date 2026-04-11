@@ -16,6 +16,7 @@ import { JwtAuthGuard } from '../common/guards/jwt-auth.guard.js';
 import { RolesGuard } from '../common/guards/roles.guard.js';
 import { Roles } from '../common/decorators/roles.decorator.js';
 import { CurrentUser } from '../common/decorators/current-user.decorator.js';
+import { ParseHandlePipe } from '../common/pipes/parse-handle.pipe.js';
 import { UserRole } from '../common/enums/user-role.enum.js';
 import { User } from '../users/user.entity.js';
 import { DevProfile } from './dev-profile.entity.js';
@@ -81,13 +82,13 @@ export class DeveloperProfileController {
   constructor(private readonly devProfileService: DevProfileService) {}
 
   @Get('check-handle/:handle')
-  async checkHandle(@Param('handle') handle: string) {
+  async checkHandle(@Param('handle', ParseHandlePipe) handle: string) {
     const profile = await this.devProfileService.findByHandle(handle);
     return { available: !profile };
   }
 
   @Get(':handle')
-  async findPublic(@Param('handle') handle: string) {
+  async findPublic(@Param('handle', ParseHandlePipe) handle: string) {
     const profile = await this.devProfileService.findPublicByHandle(handle);
     return {
       id: profile.id,

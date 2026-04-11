@@ -6,6 +6,7 @@ import {
   Post,
   UseGuards,
 } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import { AuthService } from './auth.service.js';
 import { RegisterDto } from './dto/register.dto.js';
 import { LoginDto } from './dto/login.dto.js';
@@ -18,6 +19,8 @@ import { SkipTransform } from '../common/decorators/skip-transform.decorator.js'
 import { User } from '../users/user.entity.js';
 
 @Controller('auth')
+@UseGuards(ThrottlerGuard)
+@Throttle({ auth: { ttl: 60000, limit: 10 } })
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 

@@ -3,6 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository, ILike } from 'typeorm';
 import { State } from './state.entity.js';
 import { City } from './city.entity.js';
+import { ListCitiesQueryDto } from './dto/list-cities-query.dto.js';
 
 @Controller('locations')
 export class LocationController {
@@ -35,11 +36,11 @@ export class LocationController {
   @Get('states/:stateId/cities')
   async listCities(
     @Param('stateId', ParseIntPipe) stateId: number,
-    @Query('q') query?: string,
+    @Query() query: ListCitiesQueryDto,
   ) {
     const where: Record<string, unknown> = { stateId };
-    if (query) {
-      where['name'] = ILike(`%${query}%`);
+    if (query.q) {
+      where['name'] = ILike(`%${query.q}%`);
     }
 
     return this.cityRepo.find({

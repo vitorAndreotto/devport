@@ -24,6 +24,8 @@ O Dev Port é composto por uma **API RESTful** (NestJS) e uma **SPA** (Angular),
 │              http://localhost:3000                   │
 │                  /api/v1/*                           │
 ├─────────────────────────────────────────────────────┤
+│  Helmet → CORS → ThrottlerGuard                     │
+│  SanitizePipe → ValidationPipe                      │
 │  Guards → Pipes → Controller → Service → Repository │
 │  TransformInterceptor ← HttpExceptionFilter         │
 └──────────┬──────────────────────────────┬───────────┘
@@ -57,6 +59,8 @@ backend/
 │   │   │   ├── refresh-auth.guard.ts
 │   │   │   └── roles.guard.ts
 │   │   ├── pipes/
+│   │   │   ├── sanitize.pipe.ts         # XSS: escapa HTML em todo body
+│   │   │   ├── parse-handle.pipe.ts     # Valida formato de handle em params
 │   │   │   └── uuid-validation.pipe.ts
 │   │   ├── filters/
 │   │   │   └── http-exception.filter.ts
@@ -178,6 +182,8 @@ backend/
 │   │   ├── skill-tree.service.ts
 │   │   ├── skill-tree.entity.ts
 │   │   ├── skill-tree.repository.ts
+│   │   ├── dto/
+│   │   │   └── list-skills-query.dto.ts # Validação de query params
 │   │   └── seed/
 │   │       └── skill-tree.seed.ts
 │   │
@@ -305,14 +311,25 @@ Interceptam a request antes do controller.
 
 ---
 
-### 3.2 Pipes (Validação)
+### 3.2 Pipes (Validação e Sanitização)
 
-Validação automática via `class-validator` + `class-transformer`.
+Pipes globais e dedicados para validação e segurança.
+
+| Pipe | Escopo | Responsabilidade |
+|---|---|---|
+| `SanitizePipe` | Global (body) | Escapa HTML em todas as strings — previne XSS |
+| `ValidationPipe` | Global | Valida e transforma body/query via DTOs (`class-validator`) |
+| `ParseUUIDPipe` | Route param | Valida formato UUID |
+| `ParseIntPipe` | Route param | Valida e converte para inteiro |
+| `ParseHandlePipe` | Route param | Valida formato de handle (`^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$`) |
+
+**Ordem de execução no `main.ts`:** `SanitizePipe` → `ValidationPipe` (sanitiza antes de validar).
 
 **Regras:**
 - DTOs definem as regras com decorators (`@IsString()`, `@IsEnum()`, etc.)
-- `ValidationPipe` global transforma e valida automaticamente
-- Erros de validação retornam `422` no padrão definido
+- Query params de endpoints públicos **devem** ter um DTO dedicado com `@MaxLength()`
+- Route params devem usar pipes de validação (`ParseUUIDPipe`, `ParseHandlePipe`, etc.)
+- `ValidationPipe` com `whitelist` + `forbidNonWhitelisted` rejeita campos extras
 
 ---
 
@@ -644,14 +661,18 @@ POST /api/v1/dev/skills
 Authorization: Bearer {access_token}
 Body: { "skill_id": "uuid", "level": "advanced", "years_experience": 4 }
 
-1. JwtAuthGuard         → valida access token, extrai payload
-2. RolesGuard           → verifica role = 'dev'
-3. ValidationPipe       → valida body contra CreateDevSkillDto
-4. DevSkillController   → this.devSkillService.create(user.id, dto)
-5. DevSkillService      → verifica limite 50, verifica duplicata
-6. Repository (TypeORM) → salva no banco
-7. Controller           → retorna dados puros, status 201
-8. TransformInterceptor → wrapa em { data: ... }
+1. Helmet              → adiciona security headers
+2. CORS                → valida origin permitida
+3. ThrottlerGuard      → verifica rate limit por IP
+4. SanitizePipe        → escapa HTML no body
+5. ValidationPipe      → valida body contra CreateDevSkillDto
+6. JwtAuthGuard        → valida access token, extrai payload
+7. RolesGuard          → verifica role = 'dev'
+8. DevSkillController  → this.devSkillService.create(user.id, dto)
+9. DevSkillService     → verifica limite 50, verifica duplicata
+10. Repository (TypeORM) → salva no banco
+11. Controller          → retorna dados puros, status 201
+12. TransformInterceptor → wrapa em { data: ... }
 
 // Em caso de erro em qualquer etapa:
 X. HttpExceptionFilter  → formata em { statusCode, message, errors? }
@@ -735,6 +756,8 @@ Controller → GitHubService → GitHub REST API (pública)
 | Falha GitHub API | GitHubService | `HttpException(502)` | `502` |
 | Não autenticado | Guard | `UnauthorizedException` | `401` |
 | Role errado | Guard | `ForbiddenException` | `403` |
+| Rate limit excedido | ThrottlerGuard | `ThrottlerException` | `429` |
+| Handle inválido | ParseHandlePipe | `BadRequestException` | `400` |
 
 O `HttpExceptionFilter` global (registrado no `main.ts`) formata todas as exceptions no padrão:
 ```json
@@ -762,9 +785,96 @@ Cada serviço roda em container próprio, comunicação via rede interna do Dock
 
 ---
 
-## 12. Estratégia de Testes
+## 12. Segurança
 
-### 12.1 Tipos de Teste
+### 12.1 Middleware e Headers
+
+| Camada | Ferramenta | Função |
+|---|---|---|
+| Security headers | `helmet` | CSP, X-Frame-Options, HSTS, X-Content-Type-Options, etc. |
+| CORS | `app.enableCors()` | Origins restritas via `CORS_ORIGINS` env var |
+| Rate limiting | `@nestjs/throttler` | Limita requisições por IP por janela de tempo |
+
+**Configuração via env:**
+```bash
+CORS_ORIGINS=http://localhost:4200       # Comma-separated em produção
+THROTTLE_TTL=60000                        # Janela global: 60s
+THROTTLE_LIMIT=100                        # Limite global: 100 req/janela
+THROTTLE_AUTH_TTL=60000                   # Janela auth: 60s
+THROTTLE_AUTH_LIMIT=10                    # Limite auth: 10 req/janela
+```
+
+### 12.2 Rate Limiting
+
+Dois perfis de throttling configurados no `ThrottlerModule`:
+
+| Perfil | TTL | Limite | Onde se aplica |
+|---|---|---|---|
+| `default` | 60s | 100 req | Disponível para qualquer controller |
+| `auth` | 60s | 10 req | `AuthController` — login, register, refresh |
+
+O `AuthController` usa `@UseGuards(ThrottlerGuard)` + `@Throttle({ auth: { ... } })` para aplicar o perfil mais restritivo.
+
+### 12.3 Sanitização de Input (XSS)
+
+O `SanitizePipe` é registrado **globalmente antes do ValidationPipe** e escapa caracteres HTML perigosos em todo campo string do body:
+
+| Caractere | Escapado para |
+|---|---|
+| `<` | `&lt;` |
+| `>` | `&gt;` |
+| `"` | `&quot;` |
+| `'` | `&#x27;` |
+| `&` | `&amp;` |
+
+**Escopo:** apenas `body` (não afeta query params ou route params).
+**Recursivo:** percorre objetos e arrays aninhados.
+
+### 12.4 Validação de Input
+
+Defesa em profundidade — cada camada valida o que pode:
+
+| Camada | Mecanismo | Exemplo |
+|---|---|---|
+| **Route params** | Pipes dedicados | `ParseUUIDPipe`, `ParseIntPipe`, `ParseHandlePipe` |
+| **Query params** | DTOs com `class-validator` | `ListSkillsQueryDto` (maxLength, IsIn) |
+| **Body** | DTOs com `class-validator` | `@MaxLength`, `@IsEnum`, `@Matches`, `@ArrayMaxSize` |
+| **Global** | `ValidationPipe` com `whitelist` + `forbidNonWhitelisted` | Rejeita campos não declarados no DTO |
+
+### 12.5 Limites de Input
+
+| Campo | Limite | Motivo |
+|---|---|---|
+| `links[]` | Max 10 itens | Previne payload inflado |
+| `links[].label` | Max 100 chars | — |
+| `links[].url` | Max 2048 chars | Padrão de URL |
+| `github_username` | Max 39 chars + regex GitHub | Previne injection em futuras chamadas à API |
+| `query (q)` | Max 100 chars | Previne queries lentas via ILIKE |
+| `category` | `@IsIn([...])` | Aceita apenas valores válidos do enum |
+| Skills por perfil | Max 50 | Regra de negócio + previne abuso |
+
+### 12.6 Fluxo de Segurança de uma Request
+
+```
+Request HTTP
+  │
+  ├─ 1. Helmet          → adiciona security headers na response
+  ├─ 2. CORS            → rejeita origins não permitidas
+  ├─ 3. ThrottlerGuard  → rejeita se IP excedeu limite (429)
+  ├─ 4. SanitizePipe    → escapa HTML em strings do body
+  ├─ 5. ValidationPipe  → valida e transforma body/query via DTOs
+  ├─ 6. JwtAuthGuard    → valida access token (401 se inválido)
+  ├─ 7. RolesGuard      → verifica permissão de role (403 se negado)
+  ├─ 8. ParseHandlePipe → valida formato de :handle (400 se inválido)
+  │
+  └─ Controller → Service → Repository → DB
+```
+
+---
+
+## 13. Estratégia de Testes
+
+### 13.1 Tipos de Teste
 
 | Tipo | Escopo | Ferramenta | Local |
 |---|---|---|---|
@@ -772,7 +882,7 @@ Cada serviço roda em container próprio, comunicação via rede interna do Dock
 | **Unit** | Service isolado com mocks de dependências | Jest | `src/**/*.spec.ts` |
 | **Frontend Unit** | Components e services Angular | Jest/Karma | `*.spec.ts` ao lado do arquivo |
 
-### 12.2 E2E Tests (prioridade no MVP)
+### 13.2 E2E Tests (prioridade no MVP)
 
 Testam o fluxo real da API contra um banco PostgreSQL de teste.
 
@@ -798,7 +908,7 @@ describe('Auth (e2e)')
     it('should return 400 if password confirmation does not match')
 ```
 
-### 12.3 Unit Tests (services)
+### 13.3 Unit Tests (services)
 
 Testam lógica de negócio isolada, com repositories mockados.
 
@@ -807,7 +917,7 @@ Testam lógica de negócio isolada, com repositories mockados.
 - Cálculos (matching score)
 - Edge cases (null, vazio, limites)
 
-### 12.4 Cobertura Mínima por Módulo
+### 13.4 Cobertura Mínima por Módulo
 
 | Módulo | E2E | Unit |
 |---|---|---|

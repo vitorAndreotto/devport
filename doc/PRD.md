@@ -93,6 +93,7 @@ Dados centrais do desenvolvedor.
 
 | Campo | Tipo | Obrigatório |
 |---|---|---|
+| Handle (identificador único) | string | Sim |
 | Nome completo | string | Sim |
 | Título/Cargo atual | string | Sim |
 | Bio / Resumo profissional | text | Sim |
@@ -106,6 +107,7 @@ Dados centrais do desenvolvedor.
 - Cada usuário dev possui exatamente 1 perfil
 - O perfil é público por padrão
 - Bio limitada a 500 caracteres
+- Handle é único, usado na URL pública (`/developers/vitorsantos`), aceita apenas letras minúsculas, números e hífens, entre 3 e 40 caracteres
 
 ---
 
@@ -209,6 +211,7 @@ Sem alterações em relação à v1.
 
 | Campo | Tipo | Obrigatório |
 |---|---|---|
+| Handle (identificador único) | string | Sim |
 | Nome da empresa | string | Sim |
 | CNPJ | string | Sim |
 | Descrição / Sobre | text | Sim |
@@ -221,6 +224,7 @@ Sem alterações em relação à v1.
 
 **Regras:**
 - Cada usuário empresa possui exatamente 1 perfil
+- Handle é único, usado na URL pública (`/companies/techcorp`), mesmas regras do handle de dev
 - CNPJ deve ser único (sem duplicatas)
 - Descrição limitada a 1000 caracteres
 

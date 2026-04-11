@@ -1,0 +1,70 @@
+<div class="dev-layout">
+  <!-- Mobile header -->
+  <header class="dev-header">
+    <button class="dev-header__toggle" (click)="toggleSidebar()">
+      <lucide-icon name="menu" [size]="22"></lucide-icon>
+    </button>
+    <a routerLink="/dev" class="dev-header__logo">
+      <img src="devport-logo-black.png" alt="Dev Port" class="dev-header__logo-img">
+    </a>
+    <a routerLink="/dev/profile" class="dev-header__avatar">
+      @if (profileAvatar()) {
+        <img [src]="profileAvatar()" [alt]="profileName()" class="dev-header__avatar-img">
+      } @else {
+        <span class="dev-header__avatar-initial">{{ profileInitial() }}</span>
+      }
+    </a>
+  </header>
+
+  <!-- Backdrop -->
+  @if (sidebarOpen()) {
+    <div class="dev-layout__backdrop" (click)="closeSidebar()"></div>
+  }
+
+  <!-- Sidebar -->
+  <aside class="dev-sidebar" [class.dev-sidebar--open]="sidebarOpen()">
+    <div class="dev-sidebar__header">
+      <a routerLink="/dev" class="dev-sidebar__logo" (click)="closeSidebar()">
+        <img src="devport-logo-black.png" alt="Dev Port" class="dev-sidebar__logo-img">
+      </a>
+    </div>
+
+    <nav class="dev-sidebar__nav">
+      @for (item of navItems; track item.path) {
+        <a
+          [routerLink]="item.path"
+          routerLinkActive="dev-sidebar__link--active"
+          [routerLinkActiveOptions]="{ exact: item.exact }"
+          class="dev-sidebar__link"
+          (click)="closeSidebar()"
+        >
+          <lucide-icon [name]="item.icon" [size]="20"></lucide-icon>
+          <span>{{ item.label }}</span>
+        </a>
+      }
+    </nav>
+
+    <div class="dev-sidebar__footer">
+      <a routerLink="/dev/profile" class="dev-sidebar__profile" (click)="closeSidebar()">
+        <div class="dev-sidebar__profile-avatar">
+          @if (profileAvatar()) {
+            <img [src]="profileAvatar()" [alt]="profileName()">
+          } @else {
+            <span>{{ profileInitial() }}</span>
+          }
+        </div>
+        <div class="dev-sidebar__profile-info">
+          <span class="dev-sidebar__profile-name">{{ profileName() }}</span>
+        </div>
+      </a>
+      <button class="dev-sidebar__logout" (click)="logout()">
+        <lucide-icon name="log-out" [size]="18"></lucide-icon>
+      </button>
+    </div>
+  </aside>
+
+  <!-- Main content -->
+  <main class="dev-main">
+    <router-outlet />
+  </main>
+</div>

@@ -1,0 +1,57 @@
+<div class="login">
+  <div class="login__card">
+    <a routerLink="/" class="login__logo">
+      <img src="devport-logo-black.png" alt="Dev Port" class="login__logo-img">
+    </a>
+
+    <div class="login__form-wrapper">
+      <div class="login__header">
+        <div class="login__icon">
+          <lucide-icon name="log-in" [size]="28"></lucide-icon>
+        </div>
+        <h1 class="login__title">Entrar</h1>
+        <p class="login__subtitle">Acesse sua conta para continuar.</p>
+      </div>
+
+      @if (apiError()) {
+        <div class="login__alert">{{ apiError() }}</div>
+      }
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="login__form">
+        <app-form-field label="E-mail" [control]="form.controls.email">
+          <input
+            class="input"
+            type="email"
+            formControlName="email"
+            placeholder="seu@email.com"
+            autocomplete="email"
+          >
+        </app-form-field>
+
+        <app-form-field label="Senha" [control]="form.controls.password">
+          <input
+            class="input"
+            type="password"
+            formControlName="password"
+            placeholder="Sua senha"
+            autocomplete="current-password"
+          >
+        </app-form-field>
+
+        <button type="submit" class="login__submit" [disabled]="isLoading()">
+          @if (isLoading()) {
+            <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+            Entrando...
+          } @else {
+            <lucide-icon name="log-in" [size]="18"></lucide-icon>
+            Entrar
+          }
+        </button>
+      </form>
+
+      <p class="login__footer">
+        Não tem conta? <a routerLink="/auth/register" class="login__link">Registre-se</a>
+      </p>
+    </div>
+  </div>
+</div>

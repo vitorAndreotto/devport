@@ -76,7 +76,52 @@ Autenticação e acesso ao sistema. Suporta dois tipos de usuário.
 
 ---
 
-### 2.2 `dev_profiles`
+### 2.2 `states`
+
+Estados brasileiros (fonte: IBGE).
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `integer` (PK) | não | — | Código UF (IBGE) |
+| `abbr` | `varchar(2)` | não | — | Sigla (UF) |
+| `name` | `varchar(100)` | não | — | Nome do estado |
+| `latitude` | `decimal(10,6)` | não | — | Latitude do centróide |
+| `longitude` | `decimal(10,6)` | não | — | Longitude do centróide |
+| `region` | `varchar(20)` | não | — | Região (Norte, Nordeste, Sudeste, Sul, Centro-Oeste) |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `UNIQUE (abbr)`
+
+---
+
+### 2.3 `cities`
+
+Municípios brasileiros (fonte: IBGE).
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `integer` (PK) | não | — | Código IBGE do município |
+| `state_id` | `integer` (FK) | não | — | Código UF |
+| `name` | `varchar(255)` | não | — | Nome do município |
+| `latitude` | `decimal(10,6)` | não | — | Latitude |
+| `longitude` | `decimal(10,6)` | não | — | Longitude |
+| `is_capital` | `boolean` | não | false | É capital do estado |
+| `siafi_id` | `integer` | não | — | Código SIAFI |
+| `ddd` | `integer` | não | — | DDD telefônico |
+| `timezone` | `varchar(50)` | não | — | Fuso horário (ex: America/Sao_Paulo) |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `INDEX (state_id)`
+- `INDEX (name)`
+
+**Foreign Keys:**
+- `state_id → states(id)`
+
+---
+
+### 2.4 `dev_profiles`
 
 Dados profissionais do desenvolvedor.
 
@@ -84,12 +129,18 @@ Dados profissionais do desenvolvedor.
 |---|---|---|---|---|
 | `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
 | `user_id` | `uuid` (FK) | não | — | Referência ao usuário |
+| `handle` | `varchar(40)` | não | — | Identificador público (unique, URL-friendly) |
 | `full_name` | `varchar(255)` | não | — | Nome completo |
 | `title` | `varchar(255)` | não | — | Cargo/título atual |
 | `bio` | `varchar(500)` | não | — | Resumo profissional |
 | `avatar_url` | `varchar(2048)` | sim | null | URL do avatar |
 | `email_contact` | `varchar(255)` | não | — | E-mail público de contato |
-| `location` | `varchar(255)` | sim | null | Localização |
+| `city_id` | `integer` (FK) | sim | null | Referência ao município (IBGE) |
+| `zip_code` | `varchar(9)` | sim | null | CEP (formato 00000-000) |
+| `street` | `varchar(255)` | sim | null | Rua / Logradouro |
+| `neighborhood` | `varchar(255)` | sim | null | Bairro |
+| `number` | `varchar(20)` | sim | null | Número |
+| `complement` | `varchar(255)` | sim | null | Complemento |
 | `work_mode` | `varchar(10)` | sim | null | `onsite`, `hybrid`, `remote` |
 | `github_username` | `varchar(255)` | sim | null | Username do GitHub |
 | `links` | `jsonb` | sim | null | Links externos |
@@ -99,13 +150,17 @@ Dados profissionais do desenvolvedor.
 **Índices:**
 - `PRIMARY KEY (id)`
 - `UNIQUE (user_id)`
+- `UNIQUE (handle)` — URL pública: `/developers/{handle}`
 - `INDEX (full_name)` — busca por nome
+- `INDEX (city_id)` — busca por localização
 - `INDEX (github_username)`
 
 **Foreign Keys:**
 - `user_id → users(id) ON DELETE CASCADE`
+- `city_id → cities(id) ON DELETE SET NULL`
 
 **Check constraints:**
+- `handle ~ '^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$'` — 3-40 chars, lowercase, números e hífens, sem iniciar/terminar com hífen
 - `work_mode IN ('onsite', 'hybrid', 'remote') OR work_mode IS NULL`
 
 **Estrutura do campo `links` (jsonb):**
@@ -126,6 +181,7 @@ Dados da empresa.
 |---|---|---|---|---|
 | `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
 | `user_id` | `uuid` (FK) | não | — | Referência ao usuário |
+| `handle` | `varchar(40)` | não | — | Identificador público (unique, URL-friendly) |
 | `company_name` | `varchar(255)` | não | — | Nome da empresa |
 | `cnpj` | `varchar(18)` | não | — | CNPJ formatado (unique) |
 | `description` | `varchar(1000)` | não | — | Sobre a empresa |
@@ -141,6 +197,7 @@ Dados da empresa.
 **Índices:**
 - `PRIMARY KEY (id)`
 - `UNIQUE (user_id)`
+- `UNIQUE (handle)` — URL pública: `/companies/{handle}`
 - `UNIQUE (cnpj)`
 - `INDEX (company_name)`
 
@@ -148,6 +205,7 @@ Dados da empresa.
 - `user_id → users(id) ON DELETE CASCADE`
 
 **Check constraints:**
+- `handle ~ '^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$'` — mesma regra do dev
 - `size IN ('startup', 'small', 'medium', 'large', 'enterprise')`
 
 ---
@@ -376,6 +434,9 @@ Pivot: skills exigidas por uma vaga, com nível mínimo.
 |---|---|
 | 1 user = 1 dev_profile | `UNIQUE (user_id)` em dev_profiles |
 | 1 user = 1 company_profile | `UNIQUE (user_id)` em company_profiles |
+| Handle único (dev) | `UNIQUE (handle)` em dev_profiles — URL: `/developers/{handle}` |
+| Handle único (empresa) | `UNIQUE (handle)` em company_profiles — URL: `/companies/{handle}` |
+| Handle válido | CHECK regex `^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$` em ambas as tabelas |
 | CNPJ único | `UNIQUE (cnpj)` em company_profiles |
 | Skill única por dev | `UNIQUE (dev_profile_id, skill_id)` em dev_skills |
 | Skill única por vaga | `UNIQUE (job_id, skill_id)` em job_skills |

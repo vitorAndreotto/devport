@@ -1,0 +1,54 @@
+import { Controller, Get, Param, ParseIntPipe, Query, NotFoundException } from '@nestjs/common';
+import { InjectRepository } from '@nestjs/typeorm';
+import { Repository, ILike } from 'typeorm';
+import { State } from './state.entity.js';
+import { City } from './city.entity.js';
+
+@Controller('locations')
+export class LocationController {
+  constructor(
+    @InjectRepository(State)
+    private readonly stateRepo: Repository<State>,
+    @InjectRepository(City)
+    private readonly cityRepo: Repository<City>,
+  ) {}
+
+  @Get('states')
+  async listStates() {
+    const states = await this.stateRepo.find({ order: { name: 'ASC' } });
+    return { data: states };
+  }
+
+  @Get('cities/:cityId')
+  async getCity(@Param('cityId', ParseIntPipe) cityId: number) {
+    const city = await this.cityRepo.findOne({
+      where: { id: cityId },
+      relations: ['state'],
+    });
+
+    if (!city) {
+      throw new NotFoundException('Cidade não encontrada.');
+    }
+
+    return { data: city };
+  }
+
+  @Get('states/:stateId/cities')
+  async listCities(
+    @Param('stateId', ParseIntPipe) stateId: number,
+    @Query('q') query?: string,
+  ) {
+    const where: Record<string, unknown> = { stateId };
+    if (query) {
+      where['name'] = ILike(`%${query}%`);
+    }
+
+    const cities = await this.cityRepo.find({
+      where,
+      order: { name: 'ASC' },
+      take: 50,
+    });
+
+    return { data: cities };
+  }
+}

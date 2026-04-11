@@ -1,0 +1,148 @@
+.dashboard {
+  padding: 2rem 1.5rem;
+  max-width: 960px;
+  margin: 0 auto;
+
+  @media (min-width: 768px) {
+    padding: 2.5rem 2rem;
+  }
+
+  &__header {
+    margin-bottom: 2rem;
+  }
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--navy-950);
+
+    @media (min-width: 768px) {
+      font-size: 1.75rem;
+    }
+  }
+
+  &__name {
+    color: var(--navy-500);
+  }
+
+  &__subtitle {
+    font-size: 0.9375rem;
+    color: var(--navy-600);
+    margin-top: 0.25rem;
+  }
+
+  &__section-title {
+    font-size: 1.125rem;
+    font-weight: 600;
+    color: var(--navy-900);
+    margin: 2.5rem 0 1rem;
+  }
+
+  &__stats {
+    display: grid;
+    gap: 1rem;
+    grid-template-columns: repeat(2, 1fr);
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  &__actions {
+    display: grid;
+    gap: 0.75rem;
+
+    @media (min-width: 768px) {
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+  }
+}
+
+.stat-card {
+  background: white;
+  border: 1px solid var(--sand-200);
+  border-radius: 0.75rem;
+  padding: 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+
+  &__icon {
+    width: 2.75rem;
+    height: 2.75rem;
+    background: var(--navy-50);
+    border-radius: 0.625rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--navy-600);
+    flex-shrink: 0;
+
+    ::ng-deep lucide-icon { display: flex; }
+  }
+
+  &__info {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__value {
+    font-size: 1.25rem;
+    font-weight: 700;
+    color: var(--navy-950);
+  }
+
+  &__label {
+    font-size: 0.75rem;
+    color: var(--navy-500);
+    font-weight: 500;
+  }
+}
+
+.action-card {
+  background: white;
+  border: 1px solid var(--sand-200);
+  border-radius: 0.75rem;
+  padding: 1rem 1.25rem;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  transition: all 0.15s;
+
+  &:hover {
+    border-color: var(--navy-200);
+    background: var(--navy-50);
+  }
+
+  &__icon {
+    width: 2.5rem;
+    height: 2.5rem;
+    background: var(--navy-900);
+    border-radius: 0.5rem;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    flex-shrink: 0;
+
+    ::ng-deep lucide-icon { display: flex; }
+  }
+
+  &__content {
+    display: flex;
+    flex-direction: column;
+  }
+
+  &__label {
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--navy-950);
+  }
+
+  &__description {
+    font-size: 0.8125rem;
+    color: var(--navy-600);
+    margin-top: 0.125rem;
+  }
+}

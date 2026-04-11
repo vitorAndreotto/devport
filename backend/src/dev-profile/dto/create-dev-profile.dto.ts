@@ -1,0 +1,115 @@
+import {
+  IsString,
+  IsNotEmpty,
+  IsOptional,
+  IsEmail,
+  IsEnum,
+  IsInt,
+  IsArray,
+  IsUrl,
+  Matches,
+  MaxLength,
+  MinLength,
+  ValidateNested,
+} from 'class-validator';
+import { Type } from 'class-transformer';
+
+enum WorkMode {
+  Onsite = 'onsite',
+  Hybrid = 'hybrid',
+  Remote = 'remote',
+}
+
+class LinkDto {
+  @IsString()
+  @IsNotEmpty()
+  label: string;
+
+  @IsUrl()
+  @IsNotEmpty()
+  url: string;
+}
+
+export class CreateDevProfileDto {
+  @IsString()
+  @IsNotEmpty()
+  @MinLength(3)
+  @MaxLength(40)
+  @Matches(/^[a-z0-9][a-z0-9-]*[a-z0-9]$/, {
+    message: 'Handle deve conter apenas letras minúsculas, números e hífens, sem iniciar ou terminar com hífen.',
+  })
+  handle: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  full_name: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(255)
+  title: string;
+
+  @IsString()
+  @IsNotEmpty()
+  @MaxLength(500)
+  bio: string;
+
+  @IsOptional()
+  @IsUrl()
+  @MaxLength(2048)
+  avatar_url?: string;
+
+  @IsEmail()
+  @IsNotEmpty()
+  email_contact: string;
+
+  // --- Address ---
+
+  @IsOptional()
+  @IsInt()
+  @Type(() => Number)
+  city_id?: number;
+
+  @IsOptional()
+  @IsString()
+  @Matches(/^\d{5}-?\d{3}$/, { message: 'CEP inválido. Formato: 00000-000' })
+  zip_code?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  street?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  neighborhood?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(20)
+  number?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  complement?: string;
+
+  // ---
+
+  @IsOptional()
+  @IsEnum(WorkMode)
+  work_mode?: string;
+
+  @IsOptional()
+  @IsString()
+  @MaxLength(255)
+  github_username?: string;
+
+  @IsOptional()
+  @IsArray()
+  @ValidateNested({ each: true })
+  @Type(() => LinkDto)
+  links?: LinkDto[];
+}

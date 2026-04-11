@@ -9,6 +9,10 @@
     color: var(--navy-800);
   }
 
+  &__required {
+    color: #dc2626;
+  }
+
   &__error {
     font-size: 0.75rem;
     color: #dc2626;

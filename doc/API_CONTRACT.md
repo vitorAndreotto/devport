@@ -192,6 +192,7 @@ POST /dev/profile
 **Request:**
 ```json
 {
+  "handle": "vitorsantos",
   "full_name": "Vitor Santos",
   "title": "Desenvolvedor Full Stack",
   "bio": "Apaixonado por código limpo e boas práticas.",
@@ -213,6 +214,7 @@ POST /dev/profile
   "data": {
     "id": "660e8400-e29b-41d4-a716-446655440001",
     "user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "handle": "vitorsantos",
     "full_name": "Vitor Santos",
     "title": "Desenvolvedor Full Stack",
     "bio": "Apaixonado por código limpo e boas práticas.",
@@ -232,6 +234,7 @@ POST /dev/profile
 ```
 
 **Validações:**
+- `handle`: obrigatório, string, 3-40 chars, regex `^[a-z0-9][a-z0-9-]*[a-z0-9]$`, unique global
 - `full_name`: obrigatório, string, max 255
 - `title`: obrigatório, string, max 255
 - `bio`: obrigatório, string, max 500
@@ -1193,15 +1196,18 @@ GET /developers/search
 ### 11.5 Ver perfil público do dev
 
 ```
-GET /developers/{devProfileId}
+GET /developers/{handle}
 ```
 🔓
+
+> Busca pelo `handle` do dev (ex: `/developers/vitorsantos`).
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
     "id": "660e8400-e29b-41d4-a716-446655440001",
+    "handle": "vitorsantos",
     "full_name": "Vitor Santos",
     "title": "Desenvolvedor Full Stack",
     "bio": "Apaixonado por código limpo e boas práticas.",
@@ -1233,15 +1239,18 @@ GET /developers/{devProfileId}
 ### 11.6 Ver perfil público da empresa
 
 ```
-GET /companies/{companyProfileId}
+GET /companies/{handle}
 ```
 🔓
+
+> Busca pelo `handle` da empresa (ex: `/companies/techcorp`).
 
 **Response `200 OK`:**
 ```json
 {
   "data": {
     "id": "dd0e8400-e29b-41d4-a716-446655440070",
+    "handle": "techcorp",
     "company_name": "TechCorp",
     "cnpj": "12.345.678/0001-90",
     "description": "Empresa de tecnologia focada em soluções cloud.",
@@ -1361,8 +1370,8 @@ GET /companies/{companyProfileId}
 | 11.2 | GET | `/jobs/{id}` | 🔓* | Ver vaga |
 | 11.3 | GET | `/developers` | 🔒🏢 | Buscar devs (empresa) |
 | 11.4 | GET | `/developers/search` | 🔓 | Buscar devs (público) |
-| 11.5 | GET | `/developers/{id}` | 🔓 | Ver perfil dev público |
-| 11.6 | GET | `/companies/{id}` | 🔓 | Ver perfil empresa público |
+| 11.5 | GET | `/developers/{handle}` | 🔓 | Ver perfil dev público |
+| 11.6 | GET | `/companies/{handle}` | 🔓 | Ver perfil empresa público |
 
 > 🔓* = público, mas se dev autenticado, inclui `match_score`
 

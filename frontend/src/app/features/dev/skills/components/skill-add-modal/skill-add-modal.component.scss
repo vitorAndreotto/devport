@@ -3,6 +3,7 @@
   inset: 0;
   background: rgba(0, 0, 0, 0.4);
   z-index: 200;
+  animation: fadeIn 0.2s ease-out;
 }
 
 .modal {
@@ -15,9 +16,10 @@
   max-height: 80vh;
   background: white;
   border-radius: 1rem;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.15);
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.2);
   z-index: 201;
   display: flex;
+  animation: modalEnter 0.25s ease-out;
   flex-direction: column;
 
   &__header {
@@ -190,3 +192,8 @@
 
 .spin { animation: spin 1s linear infinite; }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+@keyframes modalEnter {
+  from { opacity: 0; transform: translate(-50%, -48%) scale(0.96); }
+  to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
+}

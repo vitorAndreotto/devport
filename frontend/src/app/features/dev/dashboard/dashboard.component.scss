@@ -67,6 +67,12 @@
   display: flex;
   align-items: center;
   gap: 1rem;
+  transition: all 0.25s ease;
+  animation: fadeInUp 0.4s ease-out backwards;
+
+  @for $i from 1 through 4 {
+    &:nth-child(#{$i}) { animation-delay: #{$i * 0.06}s; }
+  }
 
   &__icon {
     width: 2.75rem;
@@ -101,8 +107,11 @@
 
   &--link {
     cursor: pointer;
-    transition: all 0.15s;
-    &:hover { border-color: var(--navy-200); background: var(--navy-50); }
+    &:hover {
+      border-color: var(--navy-200);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(7, 30, 61, 0.08);
+    }
   }
 }
 
@@ -114,11 +123,17 @@
   display: flex;
   align-items: center;
   gap: 1rem;
-  transition: all 0.15s;
+  transition: all 0.25s ease;
+  animation: fadeInUp 0.4s ease-out backwards;
+
+  @for $i from 1 through 6 {
+    &:nth-child(#{$i}) { animation-delay: #{0.3 + $i * 0.06}s; }
+  }
 
   &:hover {
     border-color: var(--navy-200);
-    background: var(--navy-50);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(7, 30, 61, 0.08);
   }
 
   &__icon {
@@ -131,8 +146,13 @@
     justify-content: center;
     color: white;
     flex-shrink: 0;
+    transition: transform 0.25s ease;
 
     ::ng-deep lucide-icon { display: flex; }
+  }
+
+  &:hover &__icon {
+    transform: scale(1.08);
   }
 
   &__content {

@@ -11,6 +11,7 @@ $header-height: 56px;
     inset: 0;
     background: rgba(0, 0, 0, 0.3);
     z-index: 90;
+    animation: fadeIn 0.2s ease-out;
 
     @media (min-width: 1024px) {
       display: none;
@@ -139,7 +140,8 @@ $header-height: 56px;
     font-size: 0.9375rem;
     font-weight: 500;
     color: var(--navy-600);
-    transition: all 0.15s;
+    transition: all 0.2s ease;
+    position: relative;
 
     &:hover {
       background: var(--navy-50);
@@ -150,12 +152,29 @@ $header-height: 56px;
       background: var(--navy-50);
       color: var(--navy-900);
       font-weight: 600;
+
+      // Left accent bar
+      &::before {
+        content: '';
+        position: absolute;
+        left: 0;
+        top: 0.375rem;
+        bottom: 0.375rem;
+        width: 3px;
+        background: var(--navy-900);
+        border-radius: 0 2px 2px 0;
+      }
     }
 
     ::ng-deep lucide-icon {
       display: flex;
       align-items: center;
       justify-content: center;
+      transition: transform 0.2s ease;
+    }
+
+    &:hover ::ng-deep lucide-icon {
+      transform: translateX(1px);
     }
   }
 

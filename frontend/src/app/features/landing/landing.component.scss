@@ -8,7 +8,7 @@
   gap: 0.5rem;
   font-weight: 600;
   border-radius: 0.5rem;
-  transition: all 0.2s;
+  transition: all 0.25s ease;
   text-align: center;
   cursor: pointer;
   border: 2px solid transparent;
@@ -21,9 +21,12 @@
   &--primary {
     background: var(--navy-900);
     color: white;
+    box-shadow: 0 2px 8px rgba(11, 50, 96, 0.2);
 
     &:hover {
       background: var(--navy-800);
+      box-shadow: 0 4px 16px rgba(11, 50, 96, 0.3);
+      transform: translateY(-1px);
     }
   }
 
@@ -33,15 +36,19 @@
 
     &:hover {
       border-color: var(--navy-400);
+      background: var(--navy-50);
     }
   }
 
   &--white {
     background: white;
     color: var(--navy-900);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
 
     &:hover {
       background: var(--sand-100);
+      transform: translateY(-1px);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.15);
     }
   }
 
@@ -51,6 +58,7 @@
 
     &:hover {
       border-color: var(--navy-200);
+      background: rgba(255, 255, 255, 0.08);
     }
   }
 }
@@ -93,6 +101,20 @@
 // =============================================
 .hero {
   padding: 7rem 0 4rem;
+  position: relative;
+  overflow: hidden;
+
+  // Subtle gradient orb behind hero
+  &::before {
+    content: '';
+    position: absolute;
+    top: -200px;
+    right: -200px;
+    width: 600px;
+    height: 600px;
+    background: radial-gradient(circle, rgba(55, 98, 147, 0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
 
   @media (min-width: 768px) {
     padding: 10rem 0 7rem;
@@ -104,6 +126,8 @@
 
   &__content {
     max-width: 720px;
+    position: relative;
+    animation: fadeInUp 0.6s ease-out;
   }
 
   &__badge {
@@ -128,9 +152,10 @@
     &-dot {
       width: 0.5rem;
       height: 0.5rem;
-      background: var(--navy-500);
+      background: #16a34a;
       border-radius: 50%;
       flex-shrink: 0;
+      animation: pulse 2s ease-in-out infinite;
     }
   }
 
@@ -220,7 +245,13 @@
   border: 1px solid var(--sand-200);
   border-radius: 1rem;
   padding: 1.5rem;
-  transition: border-color 0.2s;
+  transition: all 0.3s ease;
+  animation: fadeInUp 0.5s ease-out backwards;
+
+  // Staggered entrance
+  @for $i from 1 through 6 {
+    &:nth-child(#{$i}) { animation-delay: #{$i * 0.08}s; }
+  }
 
   @media (min-width: 768px) {
     padding: 2rem;
@@ -228,6 +259,8 @@
 
   &:hover {
     border-color: var(--navy-200);
+    transform: translateY(-4px);
+    box-shadow: 0 8px 24px rgba(7, 30, 61, 0.08);
   }
 
   &__icon {
@@ -240,8 +273,8 @@
     justify-content: center;
     color: white;
     margin-bottom: 1.25rem;
+    transition: transform 0.3s ease;
 
-    // Fix Lucide icon vertical alignment
     ::ng-deep lucide-icon {
       display: flex;
       align-items: center;
@@ -251,6 +284,10 @@
     ::ng-deep svg {
       display: block;
     }
+  }
+
+  &:hover &__icon {
+    transform: scale(1.08);
   }
 
   &__title {
@@ -303,6 +340,25 @@
 
 .step {
   text-align: center;
+  position: relative;
+  animation: fadeInUp 0.5s ease-out backwards;
+
+  @for $i from 1 through 3 {
+    &:nth-child(#{$i}) { animation-delay: #{$i * 0.12}s; }
+  }
+
+  // Connector line between steps (desktop only)
+  @media (min-width: 768px) {
+    &:not(:last-child)::after {
+      content: '';
+      position: absolute;
+      top: 2rem;
+      right: -1rem;
+      width: calc(2rem);
+      height: 2px;
+      background: linear-gradient(to right, var(--navy-200), var(--sand-200));
+    }
+  }
 
   &__icon {
     width: 4rem;
@@ -314,8 +370,8 @@
     align-items: center;
     justify-content: center;
     margin: 0 auto 1.25rem;
+    transition: transform 0.3s ease, box-shadow 0.3s ease;
 
-    // Fix Lucide icon vertical alignment
     ::ng-deep lucide-icon {
       display: flex;
       align-items: center;
@@ -329,6 +385,11 @@
     @media (min-width: 768px) {
       margin-bottom: 1.5rem;
     }
+  }
+
+  &:hover &__icon {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(11, 50, 96, 0.25);
   }
 
   &__title {
@@ -361,7 +422,21 @@
 // =============================================
 .cta {
   padding: 4rem 0;
-  background: var(--navy-900);
+  background: linear-gradient(135deg, var(--navy-950) 0%, var(--navy-800) 100%);
+  position: relative;
+  overflow: hidden;
+
+  // Decorative orb
+  &::before {
+    content: '';
+    position: absolute;
+    bottom: -100px;
+    left: -100px;
+    width: 400px;
+    height: 400px;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.03) 0%, transparent 70%);
+    pointer-events: none;
+  }
 
   @media (min-width: 768px) {
     padding: 6rem 0;
@@ -375,6 +450,7 @@
     text-align: center;
     max-width: 640px;
     margin: 0 auto;
+    position: relative;
   }
 
   &__title {

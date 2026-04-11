@@ -2,6 +2,9 @@
 // Dev Port — Global Styles
 // =============================================
 
+// --- Font ---
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
+
 // --- Variables ---
 $navy-950: #071e3d;
 $navy-900: #0b3260;
@@ -55,6 +58,44 @@ img {
   display: block;
 }
 
+// --- Selection ---
+::selection {
+  background: rgba($navy-500, 0.2);
+  color: $navy-950;
+}
+
+// --- Focus ring (acessibilidade) ---
+:focus-visible {
+  outline: 2px solid $navy-400;
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+// --- Scrollbar ---
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: $navy-200;
+  border-radius: 999px;
+
+  &:hover {
+    background: $navy-300;
+  }
+}
+
+// Firefox
+* {
+  scrollbar-width: thin;
+  scrollbar-color: $navy-200 transparent;
+}
+
 // --- Utilities ---
 .container {
   max-width: 1200px;
@@ -62,7 +103,7 @@ img {
   padding: 0 1.5rem;
 }
 
-// --- CSS Custom Properties (usáveis nos componentes) ---
+// --- CSS Custom Properties ---
 :root {
   --navy-950: #{$navy-950};
   --navy-900: #{$navy-900};
@@ -81,4 +122,51 @@ img {
   --sand-300: #{$sand-300};
   --sand-400: #{$sand-400};
   --white: #{$white};
+}
+
+// =============================================
+// Global animation utilities
+// =============================================
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes scaleIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+@keyframes slideInRight {
+  from { opacity: 0; transform: translateX(16px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.spin { animation: spin 1s linear infinite; }
+
+// =============================================
+// Global input & form styles
+// =============================================
+input, select, textarea {
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+
+  &:focus {
+    border-color: var(--navy-400) !important;
+    box-shadow: 0 0 0 3px rgba(55, 98, 147, 0.1);
+    outline: none;
+  }
 }

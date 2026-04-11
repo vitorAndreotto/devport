@@ -7,10 +7,18 @@
   border: 1px solid var(--sand-200);
   border-radius: 0.625rem;
   padding: 0.875rem 1.25rem;
-  transition: border-color 0.15s;
+  transition: all 0.2s ease;
+  animation: fadeInUp 0.35s ease-out backwards;
 
-  &:hover { border-color: var(--navy-200); }
-  &--editing { border-color: var(--navy-400); background: var(--navy-50); }
+  &:hover {
+    border-color: var(--navy-200);
+    box-shadow: 0 2px 8px rgba(7, 30, 61, 0.06);
+  }
+  &--editing {
+    border-color: var(--navy-400);
+    background: var(--navy-50);
+    box-shadow: 0 2px 12px rgba(7, 30, 61, 0.08);
+  }
 
   &__info { display: flex; flex-direction: column; gap: 0.25rem; flex: 1; min-width: 0; }
   &__name { font-size: 0.9375rem; font-weight: 600; color: var(--navy-950); }

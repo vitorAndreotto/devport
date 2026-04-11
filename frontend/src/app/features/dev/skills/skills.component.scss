@@ -31,9 +31,15 @@
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.25s ease;
   white-space: nowrap;
-  &:hover { background: var(--navy-800); }
+  box-shadow: 0 2px 8px rgba(11, 50, 96, 0.2);
+
+  &:hover {
+    background: var(--navy-800);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(11, 50, 96, 0.3);
+  }
   ::ng-deep lucide-icon { display: flex; }
 }
 

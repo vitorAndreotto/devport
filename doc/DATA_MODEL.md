@@ -1,7 +1,7 @@
-# Data Model — Dev Port (MVP)
+# Data Model — Dev Port
 
-> Versão: 1.0
-> Data: 2026-04-09
+> Versão: 2.0
+> Data: 2026-04-11
 > Status: Draft
 > Banco: PostgreSQL
 > Referência: [PRD.md](PRD.md)
@@ -11,15 +11,41 @@
 ## 1. Diagrama de Relacionamentos (ER)
 
 ```
-┌──────────┐       ┌──────────────┐
-│  users   │1────1│   profiles   │
-└──────────┘       └──────┬───────┘
-                          │1
-            ┌─────────────┼─────────────┬──────────────┐
-            │N            │N            │N             │N
-     ┌──────┴──────┐ ┌────┴─────┐ ┌─────┴──────┐ ┌─────┴──────┐
-     │   skills    │ │educations│ │experiences │ │  projects  │
-     └─────────────┘ └──────────┘ └────────────┘ └────────────┘
+┌──────────┐       ┌───────────────┐
+│  users   │1────1│ dev_profiles  │  ← role = dev
+└────┬─────┘       └──────┬────────┘
+     │                    │1
+     │      ┌─────────────┼──────────────┬───────────────┬───────────────┐
+     │      │N            │N             │N              │N              │N
+     │ ┌────┴──────┐ ┌────┴─────┐ ┌──────┴──────┐ ┌──────┴──────┐ ┌─────┴──────┐
+     │ │ dev_skills│ │educations│ │ experiences │ │  projects   │ │  (github)  │
+     │ └─────┬─────┘ └──────────┘ └─────────────┘ └─────────────┘ └────────────┘
+     │       │N
+     │       │
+     │  ┌────┴──────────┐
+     │  │  skill_tree   │←──┐ (self-ref: parent)
+     │  └────┬──────────┘   │
+     │       │N             │0..1
+     │       └──────────────┘
+     │
+     │1      ┌──────────────────┐
+     └─────1│ company_profiles │  ← role = company
+             └──────┬───────────┘
+                    │1
+                    │N
+              ┌─────┴──────┐
+              │    jobs     │
+              └─────┬──────┘
+                    │N
+                    │N
+              ┌─────┴──────┐
+              │ job_skills  │ (pivot: job ↔ skill_tree + min_level)
+              └─────┬──────┘
+                    │N
+                    │1
+              ┌─────┴──────┐
+              │ skill_tree  │
+              └────────────┘
 ```
 
 ---
@@ -28,45 +54,47 @@
 
 ### 2.1 `users`
 
-Autenticação e acesso ao sistema.
+Autenticação e acesso ao sistema. Suporta dois tipos de usuário.
 
 | Coluna | Tipo | Nullable | Default | Descrição |
 |---|---|---|---|---|
-| `id` | `bigint` (PK) | não | auto_increment | Identificador único |
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
 | `name` | `varchar(255)` | não | — | Nome para login |
 | `email` | `varchar(255)` | não | — | E-mail (unique) |
-| `email_verified_at` | `timestamp` | sim | null | Data de verificação |
-| `password` | `varchar(255)` | não | — | Senha hash |
-| `remember_token` | `varchar(100)` | sim | null | Token de sessão |
-| `created_at` | `timestamp` | sim | now() | Criação do registro |
-| `updated_at` | `timestamp` | sim | now() | Última atualização |
+| `password_hash` | `varchar(255)` | não | — | Senha bcrypt |
+| `role` | `varchar(10)` | não | — | `dev` ou `company` |
+| `refresh_token` | `varchar(500)` | sim | null | Refresh token atual (hash) |
+| `created_at` | `timestamp` | não | now() | Criação do registro |
+| `updated_at` | `timestamp` | não | now() | Última atualização |
 
 **Índices:**
 - `PRIMARY KEY (id)`
 - `UNIQUE (email)`
 
-> Tabela padrão do Laravel (migration default).
+**Check constraints:**
+- `role IN ('dev', 'company')`
 
 ---
 
-### 2.2 `profiles`
+### 2.2 `dev_profiles`
 
 Dados profissionais do desenvolvedor.
 
 | Coluna | Tipo | Nullable | Default | Descrição |
 |---|---|---|---|---|
-| `id` | `bigint` (PK) | não | auto_increment | Identificador único |
-| `user_id` | `bigint` (FK) | não | — | Referência ao usuário |
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `user_id` | `uuid` (FK) | não | — | Referência ao usuário |
 | `full_name` | `varchar(255)` | não | — | Nome completo |
 | `title` | `varchar(255)` | não | — | Cargo/título atual |
 | `bio` | `varchar(500)` | não | — | Resumo profissional |
 | `avatar_url` | `varchar(2048)` | sim | null | URL do avatar |
 | `email_contact` | `varchar(255)` | não | — | E-mail público de contato |
 | `location` | `varchar(255)` | sim | null | Localização |
+| `work_mode` | `varchar(10)` | sim | null | `onsite`, `hybrid`, `remote` |
 | `github_username` | `varchar(255)` | sim | null | Username do GitHub |
 | `links` | `jsonb` | sim | null | Links externos |
-| `created_at` | `timestamp` | sim | now() | Criação do registro |
-| `updated_at` | `timestamp` | sim | now() | Última atualização |
+| `created_at` | `timestamp` | não | now() | Criação |
+| `updated_at` | `timestamp` | não | now() | Atualização |
 
 **Índices:**
 - `PRIMARY KEY (id)`
@@ -76,6 +104,9 @@ Dados profissionais do desenvolvedor.
 
 **Foreign Keys:**
 - `user_id → users(id) ON DELETE CASCADE`
+
+**Check constraints:**
+- `work_mode IN ('onsite', 'hybrid', 'remote') OR work_mode IS NULL`
 
 **Estrutura do campo `links` (jsonb):**
 ```json
@@ -87,103 +118,166 @@ Dados profissionais do desenvolvedor.
 
 ---
 
-### 2.3 `skills`
+### 2.3 `company_profiles`
 
-Habilidades técnicas e comportamentais.
+Dados da empresa.
 
 | Coluna | Tipo | Nullable | Default | Descrição |
 |---|---|---|---|---|
-| `id` | `bigint` (PK) | não | auto_increment | Identificador único |
-| `profile_id` | `bigint` (FK) | não | — | Referência ao perfil |
-| `name` | `varchar(100)` | não | — | Nome da skill |
-| `type` | `varchar(10)` | não | — | `hard` ou `soft` |
-| `level` | `varchar(20)` | sim | null | `beginner`, `intermediate`, `advanced` |
-| `created_at` | `timestamp` | sim | now() | Criação do registro |
-| `updated_at` | `timestamp` | sim | now() | Última atualização |
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `user_id` | `uuid` (FK) | não | — | Referência ao usuário |
+| `company_name` | `varchar(255)` | não | — | Nome da empresa |
+| `cnpj` | `varchar(18)` | não | — | CNPJ formatado (unique) |
+| `description` | `varchar(1000)` | não | — | Sobre a empresa |
+| `logo_url` | `varchar(2048)` | sim | null | URL do logo |
+| `website` | `varchar(2048)` | sim | null | Site da empresa |
+| `industry` | `varchar(255)` | não | — | Setor de atuação |
+| `size` | `varchar(20)` | não | — | Tamanho da empresa |
+| `location` | `varchar(255)` | não | — | Localização da sede |
+| `links` | `jsonb` | sim | null | Links externos |
+| `created_at` | `timestamp` | não | now() | Criação |
+| `updated_at` | `timestamp` | não | now() | Atualização |
 
 **Índices:**
 - `PRIMARY KEY (id)`
-- `UNIQUE (profile_id, name)` — impede duplicata por perfil
-- `INDEX (name)` — busca por skill
+- `UNIQUE (user_id)`
+- `UNIQUE (cnpj)`
+- `INDEX (company_name)`
 
 **Foreign Keys:**
-- `profile_id → profiles(id) ON DELETE CASCADE`
+- `user_id → users(id) ON DELETE CASCADE`
 
 **Check constraints:**
-- `type IN ('hard', 'soft')`
-- `level IN ('beginner', 'intermediate', 'advanced') OR level IS NULL`
+- `size IN ('startup', 'small', 'medium', 'large', 'enterprise')`
 
 ---
 
-### 2.4 `educations`
+### 2.4 `skill_tree`
+
+Catálogo hierárquico de skills padronizadas.
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `name` | `varchar(100)` | não | — | Nome da skill |
+| `slug` | `varchar(120)` | não | — | Slug (unique, para URLs e busca) |
+| `category` | `varchar(20)` | não | — | Categoria |
+| `parent_id` | `uuid` (FK) | sim | null | Skill pai (hierarquia) |
+| `created_at` | `timestamp` | não | now() | Criação |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `UNIQUE (slug)`
+- `INDEX (category)`
+- `INDEX (parent_id)`
+- `INDEX (name)`
+
+**Foreign Keys:**
+- `parent_id → skill_tree(id) ON DELETE SET NULL`
+
+**Check constraints:**
+- `category IN ('language', 'framework', 'database', 'devops', 'tool', 'methodology', 'soft_skill', 'other')`
+
+---
+
+### 2.5 `dev_skills`
+
+Skills selecionadas pelo dev, vinculadas à árvore.
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `dev_profile_id` | `uuid` (FK) | não | — | Referência ao perfil dev |
+| `skill_id` | `uuid` (FK) | não | — | Referência à árvore de skills |
+| `level` | `varchar(15)` | não | — | Nível de proficiência |
+| `years_experience` | `integer` | sim | null | Anos de experiência |
+| `created_at` | `timestamp` | não | now() | Criação |
+| `updated_at` | `timestamp` | não | now() | Atualização |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `UNIQUE (dev_profile_id, skill_id)` — impede duplicata
+- `INDEX (skill_id)` — busca por skill
+
+**Foreign Keys:**
+- `dev_profile_id → dev_profiles(id) ON DELETE CASCADE`
+- `skill_id → skill_tree(id) ON DELETE CASCADE`
+
+**Check constraints:**
+- `level IN ('beginner', 'intermediate', 'advanced', 'expert')`
+- `years_experience >= 0 OR years_experience IS NULL`
+
+---
+
+### 2.6 `educations`
 
 Formação acadêmica e certificações.
 
 | Coluna | Tipo | Nullable | Default | Descrição |
 |---|---|---|---|---|
-| `id` | `bigint` (PK) | não | auto_increment | Identificador único |
-| `profile_id` | `bigint` (FK) | não | — | Referência ao perfil |
-| `institution` | `varchar(255)` | não | — | Nome da instituição |
-| `course` | `varchar(255)` | não | — | Nome do curso/certificação |
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `dev_profile_id` | `uuid` (FK) | não | — | Referência ao perfil dev |
+| `institution` | `varchar(255)` | não | — | Instituição |
+| `course` | `varchar(255)` | não | — | Curso/certificação |
 | `type` | `varchar(20)` | não | — | Tipo de formação |
-| `workload_hours` | `integer` | sim | null | Carga horária em horas |
-| `start_date` | `date` | sim | null | Data de início |
-| `end_date` | `date` | sim | null | Data de conclusão |
+| `workload_hours` | `integer` | sim | null | Carga horária (horas) |
+| `start_date` | `date` | sim | null | Data início |
+| `end_date` | `date` | sim | null | Data conclusão |
 | `is_ongoing` | `boolean` | não | false | Em andamento |
-| `created_at` | `timestamp` | sim | now() | Criação do registro |
-| `updated_at` | `timestamp` | sim | now() | Última atualização |
+| `created_at` | `timestamp` | não | now() | Criação |
+| `updated_at` | `timestamp` | não | now() | Atualização |
 
 **Índices:**
 - `PRIMARY KEY (id)`
-- `INDEX (profile_id)`
+- `INDEX (dev_profile_id)`
 
 **Foreign Keys:**
-- `profile_id → profiles(id) ON DELETE CASCADE`
+- `dev_profile_id → dev_profiles(id) ON DELETE CASCADE`
 
 **Check constraints:**
 - `type IN ('technical', 'graduation', 'master', 'doctorate', 'postdoc', 'mba', 'course', 'certification')`
-- `NOT (is_ongoing = true AND end_date IS NOT NULL)` — em andamento não tem data fim
-- `NOT (type = 'course' AND workload_hours IS NULL)` — curso exige carga horária
+- `NOT (is_ongoing = true AND end_date IS NOT NULL)`
+- `NOT (type = 'course' AND workload_hours IS NULL)`
 
 ---
 
-### 2.5 `experiences`
+### 2.7 `experiences`
 
 Histórico profissional.
 
 | Coluna | Tipo | Nullable | Default | Descrição |
 |---|---|---|---|---|
-| `id` | `bigint` (PK) | não | auto_increment | Identificador único |
-| `profile_id` | `bigint` (FK) | não | — | Referência ao perfil |
-| `company` | `varchar(255)` | não | — | Nome da empresa |
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `dev_profile_id` | `uuid` (FK) | não | — | Referência ao perfil dev |
+| `company` | `varchar(255)` | não | — | Empresa |
 | `position` | `varchar(255)` | não | — | Cargo |
 | `description` | `text` | sim | null | Descrição das atividades |
-| `start_date` | `date` | não | — | Data de início |
-| `end_date` | `date` | sim | null | Data de fim |
+| `start_date` | `date` | não | — | Data início |
+| `end_date` | `date` | sim | null | Data fim |
 | `is_current` | `boolean` | não | false | Emprego atual |
-| `created_at` | `timestamp` | sim | now() | Criação do registro |
-| `updated_at` | `timestamp` | sim | now() | Última atualização |
+| `created_at` | `timestamp` | não | now() | Criação |
+| `updated_at` | `timestamp` | não | now() | Atualização |
 
 **Índices:**
 - `PRIMARY KEY (id)`
-- `INDEX (profile_id)`
+- `INDEX (dev_profile_id)`
 
 **Foreign Keys:**
-- `profile_id → profiles(id) ON DELETE CASCADE`
+- `dev_profile_id → dev_profiles(id) ON DELETE CASCADE`
 
 **Check constraints:**
-- `NOT (is_current = true AND end_date IS NOT NULL)` — atual não tem data fim
+- `NOT (is_current = true AND end_date IS NOT NULL)`
 
 ---
 
-### 2.6 `projects`
+### 2.8 `projects`
 
-Projetos do desenvolvedor (manuais e importados do GitHub).
+Projetos do desenvolvedor.
 
 | Coluna | Tipo | Nullable | Default | Descrição |
 |---|---|---|---|---|
-| `id` | `bigint` (PK) | não | auto_increment | Identificador único |
-| `profile_id` | `bigint` (FK) | não | — | Referência ao perfil |
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `dev_profile_id` | `uuid` (FK) | não | — | Referência ao perfil dev |
 | `name` | `varchar(255)` | não | — | Nome do projeto |
 | `description` | `text` | não | — | Descrição |
 | `technologies` | `jsonb` | sim | null | Lista de tecnologias |
@@ -192,26 +286,87 @@ Projetos do desenvolvedor (manuais e importados do GitHub).
 | `image_url` | `varchar(2048)` | sim | null | Imagem do projeto |
 | `source` | `varchar(10)` | não | 'manual' | `manual` ou `github` |
 | `github_repo_id` | `bigint` | sim | null | ID do repo no GitHub |
-| `github_stars` | `integer` | sim | null | Quantidade de stars |
+| `github_stars` | `integer` | sim | null | Stars |
 | `github_language` | `varchar(100)` | sim | null | Linguagem principal |
-| `created_at` | `timestamp` | sim | now() | Criação do registro |
-| `updated_at` | `timestamp` | sim | now() | Última atualização |
+| `created_at` | `timestamp` | não | now() | Criação |
+| `updated_at` | `timestamp` | não | now() | Atualização |
 
 **Índices:**
 - `PRIMARY KEY (id)`
-- `INDEX (profile_id)`
-- `UNIQUE (profile_id, github_repo_id)` — impede importação duplicada
+- `INDEX (dev_profile_id)`
+- `UNIQUE (dev_profile_id, github_repo_id)` — impede importação duplicada
 
 **Foreign Keys:**
-- `profile_id → profiles(id) ON DELETE CASCADE`
+- `dev_profile_id → dev_profiles(id) ON DELETE CASCADE`
 
 **Check constraints:**
 - `source IN ('manual', 'github')`
 
-**Estrutura do campo `technologies` (jsonb):**
-```json
-["Laravel", "PostgreSQL", "Vue.js", "Docker"]
-```
+---
+
+### 2.9 `jobs`
+
+Vagas publicadas por empresas.
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `company_profile_id` | `uuid` (FK) | não | — | Referência ao perfil empresa |
+| `title` | `varchar(255)` | não | — | Título da vaga |
+| `description` | `text` | não | — | Descrição |
+| `min_experience_years` | `integer` | não | — | Experiência mínima (anos) |
+| `contract_model` | `varchar(10)` | não | — | Modelo de contratação |
+| `salary_min` | `decimal(10,2)` | não | — | Faixa salarial mínima |
+| `salary_max` | `decimal(10,2)` | não | — | Faixa salarial máxima |
+| `work_mode` | `varchar(10)` | não | — | Modalidade |
+| `location` | `varchar(255)` | sim | null | Localização (presencial/híbrido) |
+| `status` | `varchar(10)` | não | 'open' | Status da vaga |
+| `created_at` | `timestamp` | não | now() | Criação |
+| `updated_at` | `timestamp` | não | now() | Atualização |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `INDEX (company_profile_id)`
+- `INDEX (status)`
+- `INDEX (work_mode)`
+- `INDEX (created_at)`
+
+**Foreign Keys:**
+- `company_profile_id → company_profiles(id) ON DELETE CASCADE`
+
+**Check constraints:**
+- `contract_model IN ('clt', 'pj', 'clt_pj')`
+- `work_mode IN ('onsite', 'hybrid', 'remote')`
+- `status IN ('open', 'closed')`
+- `salary_min >= 0`
+- `salary_max >= salary_min`
+- `NOT (work_mode IN ('onsite', 'hybrid') AND location IS NULL)` — presencial/híbrido exige localização
+
+---
+
+### 2.10 `job_skills`
+
+Pivot: skills exigidas por uma vaga, com nível mínimo.
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `job_id` | `uuid` (FK) | não | — | Referência à vaga |
+| `skill_id` | `uuid` (FK) | não | — | Referência à árvore de skills |
+| `min_level` | `varchar(15)` | não | — | Nível mínimo exigido |
+| `created_at` | `timestamp` | não | now() | Criação |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `UNIQUE (job_id, skill_id)` — impede duplicata
+- `INDEX (skill_id)`
+
+**Foreign Keys:**
+- `job_id → jobs(id) ON DELETE CASCADE`
+- `skill_id → skill_tree(id) ON DELETE CASCADE`
+
+**Check constraints:**
+- `min_level IN ('beginner', 'intermediate', 'advanced', 'expert')`
 
 ---
 
@@ -219,11 +374,17 @@ Projetos do desenvolvedor (manuais e importados do GitHub).
 
 | Regra | Implementação |
 |---|---|
-| 1 user = 1 profile | `UNIQUE (user_id)` em profiles |
-| Skill única por perfil | `UNIQUE (profile_id, name)` em skills |
-| Em andamento → sem data fim | CHECK constraint em educations e experiences |
-| Curso exige carga horária | CHECK constraint em educations |
-| Repo GitHub único por perfil | `UNIQUE (profile_id, github_repo_id)` em projects |
+| 1 user = 1 dev_profile | `UNIQUE (user_id)` em dev_profiles |
+| 1 user = 1 company_profile | `UNIQUE (user_id)` em company_profiles |
+| CNPJ único | `UNIQUE (cnpj)` em company_profiles |
+| Skill única por dev | `UNIQUE (dev_profile_id, skill_id)` em dev_skills |
+| Skill única por vaga | `UNIQUE (job_id, skill_id)` em job_skills |
+| Slug único na árvore | `UNIQUE (slug)` em skill_tree |
+| Em andamento → sem data fim | CHECK em educations e experiences |
+| Curso exige carga horária | CHECK em educations |
+| Presencial/híbrido exige localização | CHECK em jobs |
+| Salário max ≥ min | CHECK em jobs |
+| Repo GitHub único por dev | `UNIQUE (dev_profile_id, github_repo_id)` em projects |
 | Deletar user cascateia tudo | ON DELETE CASCADE em todas as FKs |
 
 ---
@@ -232,40 +393,70 @@ Projetos do desenvolvedor (manuais e importados do GitHub).
 
 | Tabela | Ordenação padrão |
 |---|---|
-| `skills` | `name ASC` |
+| `dev_skills` | `skill_tree.name ASC` (via join) |
 | `educations` | `is_ongoing DESC, start_date DESC NULLS LAST` |
 | `experiences` | `is_current DESC, start_date DESC` |
 | `projects` | `created_at DESC` |
+| `jobs` | `status ASC (open first), created_at DESC` |
+| `skill_tree` | `category ASC, name ASC` |
 
 ---
 
-## 5. Considerações para a Busca
-
-A busca de desenvolvedores utiliza consultas diretas no PostgreSQL:
+## 5. Considerações para Buscas
 
 ```sql
--- Busca por nome (case-insensitive)
-SELECT * FROM profiles WHERE full_name ILIKE '%termo%';
+-- Busca de devs por nome
+SELECT * FROM dev_profiles WHERE full_name ILIKE '%termo%';
 
--- Busca por skill
-SELECT DISTINCT p.* FROM profiles p
-JOIN skills s ON s.profile_id = p.id
-WHERE s.name ILIKE '%termo%';
+-- Busca de devs por skill
+SELECT DISTINCT dp.* FROM dev_profiles dp
+JOIN dev_skills ds ON ds.dev_profile_id = dp.id
+JOIN skill_tree st ON st.id = ds.skill_id
+WHERE st.name ILIKE '%termo%';
+
+-- Busca de vagas por título/descrição
+SELECT * FROM jobs
+WHERE status = 'open'
+AND (title ILIKE '%termo%' OR description ILIKE '%termo%');
+
+-- Busca de vagas por skill exigida
+SELECT DISTINCT j.* FROM jobs j
+JOIN job_skills js ON js.job_id = j.id
+JOIN skill_tree st ON st.id = js.skill_id
+WHERE j.status = 'open'
+AND st.name ILIKE '%termo%';
 ```
 
-> Para o MVP, `ILIKE` é suficiente. Em evolução futura, considerar `pg_trgm` ou full-text search para melhor performance.
+> Para o MVP, `ILIKE` é suficiente. Evolução futura: `pg_trgm` ou full-text search.
 
 ---
 
-## 6. Migration Order (Laravel)
+## 6. Migration Order
 
-Ordem de criação das migrations para respeitar as dependências:
+Ordem de criação respeitando dependências:
 
 ```
-1. create_users_table
-2. create_profiles_table
-3. create_skills_table
-4. create_educations_table
-5. create_experiences_table
-6. create_projects_table
+1. users
+2. dev_profiles
+3. company_profiles
+4. skill_tree
+5. dev_skills
+6. educations
+7. experiences
+8. projects
+9. jobs
+10. job_skills
 ```
+
+---
+
+## 7. Notas sobre UUID
+
+Todas as tabelas usam `uuid` como primary key em vez de `bigint` auto-increment.
+
+**Por quê:**
+- Segurança: IDs não sequenciais, não expõem volume de dados
+- Distribuição: compatível com sistemas distribuídos (futuro)
+- NestJS/TypeORM: suporte nativo e idiomático
+
+**Geração:** `gen_random_uuid()` no PostgreSQL (v13+), sem dependência de extensão.

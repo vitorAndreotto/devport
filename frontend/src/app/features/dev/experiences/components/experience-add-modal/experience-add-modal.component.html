@@ -1,0 +1,52 @@
+<div class="modal-backdrop" (click)="onClose()"></div>
+<div class="modal">
+  <div class="modal__header">
+    <h2 class="modal__title">Adicionar experiência</h2>
+    <button class="modal__close" (click)="onClose()">
+      <lucide-icon name="x" [size]="20"></lucide-icon>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <div class="modal__field">
+      <label>Empresa *</label>
+      <input class="modal__input" [ngModel]="company()" (ngModelChange)="company.set($event)" placeholder="Nome da empresa" maxlength="255" />
+    </div>
+
+    <div class="modal__field">
+      <label>Cargo *</label>
+      <input class="modal__input" [ngModel]="position()" (ngModelChange)="position.set($event)" placeholder="Ex: Desenvolvedor Pleno" maxlength="255" />
+    </div>
+
+    <div class="modal__field">
+      <label>Descrição (opcional)</label>
+      <textarea class="modal__textarea" [ngModel]="description()" (ngModelChange)="description.set($event)" placeholder="Descreva suas atividades..." rows="3"></textarea>
+    </div>
+
+    <div class="modal__row">
+      <div class="modal__field modal__field--flex">
+        <label>Data de início *</label>
+        <input class="modal__input" type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" />
+      </div>
+      <div class="modal__field modal__field--flex">
+        <label>Data de término</label>
+        <input class="modal__input" type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" [disabled]="isCurrent()" />
+      </div>
+    </div>
+
+    <label class="modal__check">
+      <input type="checkbox" [checked]="isCurrent()" (change)="onCurrentChange($any($event.target).checked)" />
+      Trabalho aqui atualmente
+    </label>
+
+    <button class="modal__confirm" (click)="onConfirm()" [disabled]="!isValid || isAdding()">
+      @if (isAdding()) {
+        <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+        Adicionando...
+      } @else {
+        <lucide-icon name="plus" [size]="18"></lucide-icon>
+        Adicionar experiência
+      }
+    </button>
+  </div>
+</div>

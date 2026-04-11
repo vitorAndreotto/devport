@@ -1,0 +1,48 @@
+<div class="experiences-page">
+  <div class="experiences-page__header">
+    <div>
+      <h1 class="experiences-page__title">Experiências</h1>
+      <p class="experiences-page__subtitle">Gerencie seu histórico profissional.</p>
+    </div>
+    <button class="btn-add" (click)="openAddModal()">
+      <lucide-icon name="plus" [size]="18"></lucide-icon>
+      Adicionar experiência
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="experiences-loading">
+      <lucide-icon name="loader-2" [size]="24" class="spin"></lucide-icon>
+      <span>Carregando experiências...</span>
+    </div>
+  } @else if (experiences().length === 0) {
+    <div class="experiences-empty">
+      <lucide-icon name="briefcase" [size]="48"></lucide-icon>
+      <h3>Nenhuma experiência cadastrada</h3>
+      <p>Adicione suas experiências profissionais para enriquecer seu perfil.</p>
+      <button class="btn-add" (click)="openAddModal()">
+        <lucide-icon name="plus" [size]="18"></lucide-icon>
+        Adicionar experiência
+      </button>
+    </div>
+  } @else {
+    <div class="experiences-list">
+      @for (exp of experiences(); track exp.id) {
+        <app-experience-card
+          [experience]="exp"
+          [saving]="isSavingEdit()"
+          (edit)="onEditExperience(exp, $event)"
+          (remove)="onRemoveExperience(exp)"
+        />
+      }
+    </div>
+  }
+</div>
+
+@if (showAddModal()) {
+  <app-experience-add-modal
+    [isAdding]="isAdding()"
+    (close)="closeAddModal()"
+    (confirm)="onAddExperience($event)"
+  />
+}

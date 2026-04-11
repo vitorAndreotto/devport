@@ -26,9 +26,10 @@ export class DevLayoutComponent {
     { path: '/dev', label: 'Início', icon: 'layout-dashboard', exact: true },
     { path: '/dev/profile', label: 'Perfil', icon: 'user', exact: false },
     { path: '/dev/skills', label: 'Skills', icon: 'puzzle', exact: false },
+    { path: '/dev/experiences', label: 'Experiências', icon: 'briefcase', exact: false },
     { path: '/dev/education', label: 'Formação', icon: 'graduation-cap', exact: false },
     { path: '/dev/projects', label: 'Projetos', icon: 'folder-git-2', exact: false },
-    { path: '/dev/jobs', label: 'Vagas', icon: 'briefcase', exact: false },
+    { path: '/dev/jobs', label: 'Vagas', icon: 'compass', exact: false },
   ];
 
   toggleSidebar(): void {

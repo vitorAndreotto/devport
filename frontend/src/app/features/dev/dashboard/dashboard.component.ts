@@ -6,6 +6,7 @@ import { DevProfileService } from '../../../core/services/dev-profile.service';
 import { SkillService } from '../../../core/services/skill.service';
 import { ExperienceService } from '../../../core/services/experience.service';
 import { EducationService } from '../../../core/services/education.service';
+import { ProjectService } from '../../../core/services/project.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -19,12 +20,14 @@ export class DashboardComponent implements OnInit {
   private readonly skillService = inject(SkillService);
   private readonly experienceService = inject(ExperienceService);
   private readonly educationService = inject(EducationService);
+  private readonly projectService = inject(ProjectService);
   private readonly destroyRef = inject(DestroyRef);
 
   profileName = computed(() => this.profileService.currentProfile()?.full_name ?? '');
   skillCount = signal(0);
   experienceCount = signal(0);
   educationCount = signal(0);
+  projectCount = signal(0);
 
   readonly quickActions = [
     { path: '/dev/profile', label: 'Editar perfil', icon: 'user', description: 'Atualize suas informações profissionais' },
@@ -47,5 +50,9 @@ export class DashboardComponent implements OnInit {
     this.educationService.getMyEducations()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((educations) => this.educationCount.set(educations.length));
+
+    this.projectService.getMyProjects()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((projects) => this.projectCount.set(projects.length));
   }
 }

@@ -1,0 +1,63 @@
+<div class="projects-page">
+  <div class="projects-page__header">
+    <div>
+      <h1 class="projects-page__title">
+        <lucide-icon name="folder-git-2" [size]="22"></lucide-icon>
+        Porto de Cargas
+      </h1>
+      <p class="projects-page__subtitle">Cada projeto é uma carga valiosa no seu porto.</p>
+    </div>
+    <button class="btn-add" (click)="openAddModal()">
+      <lucide-icon name="plus" [size]="18"></lucide-icon>
+      Registrar carga
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="projects-loading">
+      <lucide-icon name="loader-2" [size]="24" class="spin"></lucide-icon>
+      <span>Carregando cargas...</span>
+    </div>
+  } @else if (projects().length === 0) {
+    <div class="projects-empty">
+      <div class="projects-empty__icon">
+        <lucide-icon name="folder-git-2" [size]="32"></lucide-icon>
+      </div>
+      <h3>Nenhuma carga registrada</h3>
+      <p>Registre seus projetos para mostrar o que você já construiu ao longo da jornada.</p>
+      <button class="btn-add" (click)="openAddModal()">
+        <lucide-icon name="plus" [size]="18"></lucide-icon>
+        Registrar primeiro projeto
+      </button>
+    </div>
+  } @else {
+    <!-- Stats -->
+    <div class="projects-stats">
+      <div class="projects-stats__item">
+        <span class="projects-stats__value">{{ projects().length }}</span>
+        <span class="projects-stats__label">cargas registradas</span>
+      </div>
+    </div>
+
+    <!-- Grid -->
+    <div class="projects-grid">
+      @for (project of projects(); track project.id; let i = $index) {
+        <app-project-card
+          [project]="project"
+          [saving]="isSavingEdit()"
+          [style.animation-delay]="i * 0.06 + 's'"
+          (edit)="onEditProject(project, $event)"
+          (remove)="onRemoveProject(project)"
+        />
+      }
+    </div>
+  }
+</div>
+
+@if (showAddModal()) {
+  <app-project-add-modal
+    [isAdding]="isAdding()"
+    (close)="closeAddModal()"
+    (confirm)="onAddProject($event)"
+  />
+}

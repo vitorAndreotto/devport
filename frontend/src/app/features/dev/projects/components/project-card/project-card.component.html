@@ -1,0 +1,87 @@
+<div class="project-card" [class.project-card--editing]="isEditing()" [class.project-card--github]="project().source === 'github'">
+  @if (isEditing()) {
+    <div class="project-card__form">
+      <input class="project-card__input" [(ngModel)]="editName" placeholder="Nome do projeto" maxlength="255" />
+      <textarea class="project-card__textarea" [(ngModel)]="editDescription" placeholder="Descrição do projeto" rows="3"></textarea>
+      <input class="project-card__input" [(ngModel)]="editTechnologies" placeholder="Tecnologias (separadas por vírgula)" />
+      <input class="project-card__input" [(ngModel)]="editRepoUrl" placeholder="URL do repositório (opcional)" type="url" />
+      <input class="project-card__input" [(ngModel)]="editDemoUrl" placeholder="URL demo (opcional)" type="url" />
+      <input class="project-card__input" [(ngModel)]="editImageUrl" placeholder="URL da imagem (opcional)" type="url" />
+      <div class="project-card__form-actions">
+        <button class="project-card__btn project-card__btn--save" (click)="saveEdit()" [disabled]="saving() || !editName() || !editDescription()">
+          <lucide-icon name="check" [size]="16"></lucide-icon>
+          Salvar
+        </button>
+        <button class="project-card__btn project-card__btn--cancel" (click)="cancelEdit()">
+          <lucide-icon name="x" [size]="16"></lucide-icon>
+          Cancelar
+        </button>
+      </div>
+    </div>
+  } @else {
+    <!-- Source badge -->
+    <div class="project-card__source">
+      @if (project().source === 'github') {
+        <lucide-icon name="github" [size]="14"></lucide-icon>
+      } @else {
+        <lucide-icon name="anchor" [size]="14"></lucide-icon>
+      }
+    </div>
+
+    <div class="project-card__body">
+      <div class="project-card__header">
+        <h3 class="project-card__name">{{ project().name }}</h3>
+        <div class="project-card__actions">
+          <button class="project-card__btn project-card__btn--edit" (click)="startEdit()">
+            <lucide-icon name="edit-3" [size]="14"></lucide-icon>
+          </button>
+          <button class="project-card__btn project-card__btn--delete" (click)="remove.emit()">
+            <lucide-icon name="trash-2" [size]="14"></lucide-icon>
+          </button>
+        </div>
+      </div>
+
+      <p class="project-card__description">{{ project().description }}</p>
+
+      @if (project().technologies?.length) {
+        <div class="project-card__techs">
+          @for (tech of project().technologies; track tech) {
+            <span class="project-card__tech">{{ tech }}</span>
+          }
+        </div>
+      }
+
+      <div class="project-card__footer">
+        <!-- GitHub meta -->
+        @if (project().github_language) {
+          <span class="project-card__meta">
+            <span class="project-card__lang-dot"></span>
+            {{ project().github_language }}
+          </span>
+        }
+        @if (project().github_stars !== null && project().github_stars! > 0) {
+          <span class="project-card__meta">
+            <lucide-icon name="anchor" [size]="12"></lucide-icon>
+            {{ project().github_stars }}
+          </span>
+        }
+
+        <!-- Links -->
+        <div class="project-card__links">
+          @if (project().repository_url) {
+            <a [href]="project().repository_url" target="_blank" rel="noopener" class="project-card__link">
+              <lucide-icon name="github" [size]="14"></lucide-icon>
+              Repo
+            </a>
+          }
+          @if (project().demo_url) {
+            <a [href]="project().demo_url" target="_blank" rel="noopener" class="project-card__link project-card__link--demo">
+              <lucide-icon name="compass" [size]="14"></lucide-icon>
+              Demo
+            </a>
+          }
+        </div>
+      </div>
+    </div>
+  }
+</div>

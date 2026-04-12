@@ -37,15 +37,15 @@
       </div>
     </a>
 
-    <div class="stat-card">
+    <a routerLink="/dev/projects" class="stat-card stat-card--link">
       <div class="stat-card__icon">
         <lucide-icon name="folder-git-2" [size]="22"></lucide-icon>
       </div>
       <div class="stat-card__info">
-        <span class="stat-card__value">—</span>
+        <span class="stat-card__value">{{ projectCount() }}</span>
         <span class="stat-card__label">Projetos</span>
       </div>
-    </div>
+    </a>
 
     <div class="stat-card">
       <div class="stat-card__icon">

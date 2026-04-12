@@ -58,6 +58,10 @@ Pessoa física que monta seu perfil profissional e busca vagas.
 - Buscar e visualizar vagas
 - Ver score de compatibilidade com vagas
 - Buscar outros devs
+- Candidatar-se a vagas abertas
+- Retirar candidatura
+- Listar suas candidaturas e acompanhar status
+- Definir situação profissional (`looking` ou `employed`)
 
 **Não pode:**
 - Publicar vagas
@@ -72,10 +76,12 @@ Pessoa jurídica que publica vagas e busca candidatos.
 
 **Pode:**
 - Criar e gerenciar perfil da empresa
-- Publicar, editar e encerrar vagas
+- Publicar, editar, fechar e reabrir vagas
 - Buscar devs por skills e compatibilidade com suas vagas
 - Ver score de compatibilidade dos devs com suas vagas
 - Definir faixa salarial (visível apenas internamente)
+- Ver candidatos de suas vagas e aceitar/rejeitar candidaturas
+- Salvar devs em shortlist vinculada a vagas específicas (registro interno)
 
 **Não pode:**
 - Criar perfil de dev
@@ -101,6 +107,7 @@ Dados centrais do desenvolvedor.
 | E-mail de contato | string | Sim |
 | Localização | string | Não |
 | Modelo preferido | enum: `onsite`, `hybrid`, `remote` | Não |
+| Situação profissional | enum: `looking`, `employed` | Não |
 | Links externos (GitHub, LinkedIn, site) | json/array | Não |
 
 **Regras:**
@@ -108,6 +115,7 @@ Dados centrais do desenvolvedor.
 - O perfil é público por padrão
 - Bio limitada a 500 caracteres
 - Handle é único, usado na URL pública (`/developers/vitorsantos`), aceita apenas letras minúsculas, números e hífens, entre 3 e 40 caracteres
+- Situação profissional é informativa (visível no perfil público). Serve como alerta para empresas — devs empregados podem representar um empecilho na contratação
 
 ---
 
@@ -253,6 +261,48 @@ Sem alterações em relação à v1.
 - Uma empresa pode ter múltiplas vagas ativas
 - Ordenação: vagas abertas primeiro, mais recentes primeiro
 - Vaga fechada não aparece na busca pública
+- Empresa pode reabrir vaga fechada (status volta para `open`)
+
+---
+
+#### 6.2.3 Candidaturas (`job-applications`)
+
+Sistema de candidatura de devs a vagas.
+
+| Campo | Tipo | Obrigatório |
+|---|---|---|
+| Dev (referência ao perfil) | FK → dev_profiles | Sim |
+| Vaga (referência à vaga) | FK → jobs | Sim |
+| Status | enum: `pending`, `accepted`, `rejected`, `withdrawn` | Sim |
+
+**Regras:**
+- Dev só pode se candidatar a vagas com status `open`
+- Não permite candidatura duplicada (mesmo dev + mesma vaga)
+- Candidatura criada com status `pending`
+- Dev pode retirar candidatura (status → `withdrawn`)
+- Empresa pode aceitar (`accepted`) ou rejeitar (`rejected`) candidatura
+- Dev tem acesso à listagem de suas candidaturas com status atualizado
+- Empresa vê lista de candidatos por vaga
+- Situação profissional do dev (`employment_status`) é visível para a empresa ao consultar candidatos — serve como alerta informativo
+
+---
+
+#### 6.2.4 Devs Salvos (`saved-developers`)
+
+Shortlist interna da empresa para registros por vaga.
+
+| Campo | Tipo | Obrigatório |
+|---|---|---|
+| Empresa (referência ao perfil) | FK → company_profiles | Sim |
+| Dev (referência ao perfil) | FK → dev_profiles | Sim |
+| Vaga (referência à vaga) | FK → jobs | Sim |
+
+**Regras:**
+- Empresa salva um dev vinculado a uma vaga específica (registro interno)
+- Não é candidatura oficial — apenas marcação para controle da empresa
+- Não permite duplicata (mesmo dev + mesma vaga)
+- Empresa pode listar e remover devs salvos por vaga
+- Dev não é notificado e não sabe que foi salvo
 
 ---
 
@@ -376,7 +426,7 @@ Mantém a busca existente da v1 — qualquer visitante busca devs por nome ou sk
 
 - Autenticação com OAuth (GitHub/Google)
 - Chat/mensageria entre dev e empresa
-- Candidatura formal a vagas (apply)
+- ~~Candidatura formal a vagas (apply)~~ — agora no escopo
 - Notificações (e-mail, push)
 - Score automático baseado em GitHub
 - Dashboard de analytics
@@ -414,6 +464,11 @@ DevProfile (1) ── (N) Project
 
 CompanyProfile (1) ── (N) Job
 Job (N) ── (N) SkillTree          ← skills exigidas (com nível mínimo)
+Job (1) ── (N) JobApplication     ← candidaturas recebidas
+Job (1) ── (N) SavedDeveloper     ← devs salvos pela empresa
+
+DevProfile (1) ── (N) JobApplication  ← candidaturas do dev
+DevProfile (1) ── (N) SavedDeveloper  ← dev salvo por empresas
 
 DevSkill (N) ── (1) SkillTree     ← skill selecionada da árvore
 SkillTree (N) ── (0..1) SkillTree ← hierarquia pai/filho
@@ -425,13 +480,15 @@ SkillTree (N) ── (0..1) SkillTree ← hierarquia pai/filho
 
 ### Must Have
 - Registro/login com dois tipos de usuário (dev e empresa)
-- CRUD de Perfil do Dev
+- CRUD de Perfil do Dev (com situação profissional)
 - CRUD de Skills do Dev (vinculadas à árvore)
 - CRUD de Formação
 - CRUD de Experiência
 - CRUD de Projetos
 - CRUD de Perfil da Empresa
-- CRUD de Vagas
+- CRUD de Vagas (com reabrir vaga)
+- Candidaturas (dev aplica/retira, empresa aceita/rejeita)
+- Devs salvos (shortlist interna da empresa por vaga)
 - Árvore de skills (seed)
 - Visualização pública de perfis (dev e empresa)
 
@@ -449,7 +506,6 @@ SkillTree (N) ── (0..1) SkillTree ← hierarquia pai/filho
 ### Won't Have (neste MVP)
 - OAuth
 - Chat/mensageria
-- Candidatura a vagas
 - Notificações
 - Upload de arquivos
 - Painel admin

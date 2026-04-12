@@ -27,6 +27,16 @@
       </div>
     </a>
 
+    <a routerLink="/dev/education" class="stat-card stat-card--link">
+      <div class="stat-card__icon">
+        <lucide-icon name="graduation-cap" [size]="22"></lucide-icon>
+      </div>
+      <div class="stat-card__info">
+        <span class="stat-card__value">{{ educationCount() }}</span>
+        <span class="stat-card__label">Formações</span>
+      </div>
+    </a>
+
     <div class="stat-card">
       <div class="stat-card__icon">
         <lucide-icon name="folder-git-2" [size]="22"></lucide-icon>

@@ -1,0 +1,54 @@
+<div class="education-page">
+  <div class="education-page__header">
+    <div>
+      <h1 class="education-page__title">
+        <lucide-icon name="graduation-cap" [size]="22"></lucide-icon>
+        Carta Náutica
+      </h1>
+      <p class="education-page__subtitle">Suas certificações e formações que guiam a rota profissional.</p>
+    </div>
+    <button class="btn-add" (click)="openAddModal()">
+      <lucide-icon name="plus" [size]="18"></lucide-icon>
+      Nova formação
+    </button>
+  </div>
+
+  @if (isLoading()) {
+    <div class="education-loading">
+      <lucide-icon name="loader-2" [size]="24" class="spin"></lucide-icon>
+      <span>Carregando formações...</span>
+    </div>
+  } @else if (educations().length === 0) {
+    <div class="education-empty">
+      <div class="education-empty__icon">
+        <lucide-icon name="graduation-cap" [size]="32"></lucide-icon>
+      </div>
+      <h3>Nenhuma formação registrada</h3>
+      <p>Adicione suas graduações, cursos e certificações para completar sua carta náutica.</p>
+      <button class="btn-add" (click)="openAddModal()">
+        <lucide-icon name="plus" [size]="18"></lucide-icon>
+        Registrar primeira formação
+      </button>
+    </div>
+  } @else {
+    <div class="timeline">
+      @for (edu of educations(); track edu.id; let i = $index) {
+        <app-education-card
+          [education]="edu"
+          [saving]="isSavingEdit()"
+          [style.animation-delay]="i * 0.08 + 's'"
+          (edit)="onEditEducation(edu, $event)"
+          (remove)="onRemoveEducation(edu)"
+        />
+      }
+    </div>
+  }
+</div>
+
+@if (showAddModal()) {
+  <app-education-add-modal
+    [isAdding]="isAdding()"
+    (close)="closeAddModal()"
+    (confirm)="onAddEducation($event)"
+  />
+}

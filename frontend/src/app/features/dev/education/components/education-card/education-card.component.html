@@ -1,0 +1,88 @@
+<div class="timeline-item" [class.timeline-item--ongoing]="education().is_ongoing" [class.timeline-item--editing]="isEditing()">
+
+  <div class="timeline-item__node">
+    @if (education().is_ongoing) {
+      <div class="timeline-item__anchor">
+        <lucide-icon name="graduation-cap" [size]="14"></lucide-icon>
+      </div>
+    } @else {
+      <div class="timeline-item__dot"></div>
+    }
+  </div>
+
+  <div class="timeline-item__period">
+    <span class="timeline-item__period-text">{{ formatPeriod(education()) }}</span>
+  </div>
+
+  <div class="timeline-item__card">
+    @if (isEditing()) {
+      <div class="edu-card__form">
+        <div class="edu-card__row">
+          <input class="edu-card__input edu-card__input--wide" [(ngModel)]="editInstitution" placeholder="Instituição" />
+          <input class="edu-card__input edu-card__input--wide" [(ngModel)]="editCourse" placeholder="Curso / Certificação" />
+        </div>
+        <div class="edu-card__row">
+          <select class="edu-card__select" [(ngModel)]="editType">
+            @for (t of types; track t.value) {
+              <option [value]="t.value">{{ t.label }}</option>
+            }
+          </select>
+          @if (editType() === 'course') {
+            <input class="edu-card__input" type="number" [(ngModel)]="editWorkloadHours" placeholder="Carga horária (h)" min="1" />
+          }
+        </div>
+        <div class="edu-card__row">
+          <input class="edu-card__input" type="date" [(ngModel)]="editStartDate" />
+          <input class="edu-card__input" type="date" [(ngModel)]="editEndDate" [disabled]="editIsOngoing()" />
+          <label class="edu-card__check">
+            <input type="checkbox" [checked]="editIsOngoing()" (change)="onOngoingChange($any($event.target).checked)" />
+            Cursando
+          </label>
+        </div>
+        <div class="edu-card__form-actions">
+          <button class="edu-card__btn edu-card__btn--save" (click)="saveEdit()" [disabled]="saving() || !editInstitution() || !editCourse() || !editType()">
+            <lucide-icon name="check" [size]="16"></lucide-icon>
+            Salvar
+          </button>
+          <button class="edu-card__btn edu-card__btn--cancel" (click)="cancelEdit()">
+            <lucide-icon name="x" [size]="16"></lucide-icon>
+            Cancelar
+          </button>
+        </div>
+      </div>
+    } @else {
+      <div class="edu-card__content">
+        <div class="edu-card__info">
+          <div class="edu-card__header">
+            <span class="edu-card__course">{{ education().course }}</span>
+            @if (education().is_ongoing) {
+              <span class="edu-card__badge">
+                <span class="edu-card__badge-dot"></span>
+                Cursando
+              </span>
+            }
+          </div>
+          <span class="edu-card__institution">
+            <lucide-icon name="building-2" [size]="13"></lucide-icon>
+            {{ education().institution }}
+          </span>
+          <div class="edu-card__meta">
+            <span class="edu-card__type">{{ getTypeLabel(education().type) }}</span>
+            @if (education().workload_hours) {
+              <span class="edu-card__workload">{{ education().workload_hours }}h</span>
+            }
+          </div>
+          <span class="edu-card__period-mobile">{{ formatPeriod(education()) }}</span>
+        </div>
+        <div class="edu-card__actions">
+          <button class="edu-card__btn edu-card__btn--edit" (click)="startEdit()">
+            <lucide-icon name="edit-3" [size]="15"></lucide-icon>
+          </button>
+          <button class="edu-card__btn edu-card__btn--delete" (click)="remove.emit()">
+            <lucide-icon name="trash-2" [size]="15"></lucide-icon>
+          </button>
+        </div>
+      </div>
+    }
+  </div>
+</div>

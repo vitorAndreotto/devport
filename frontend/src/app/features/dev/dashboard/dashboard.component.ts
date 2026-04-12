@@ -5,6 +5,7 @@ import { LucideAngularModule } from 'lucide-angular';
 import { DevProfileService } from '../../../core/services/dev-profile.service';
 import { SkillService } from '../../../core/services/skill.service';
 import { ExperienceService } from '../../../core/services/experience.service';
+import { EducationService } from '../../../core/services/education.service';
 
 @Component({
   selector: 'app-dashboard',
@@ -17,11 +18,13 @@ export class DashboardComponent implements OnInit {
   private readonly profileService = inject(DevProfileService);
   private readonly skillService = inject(SkillService);
   private readonly experienceService = inject(ExperienceService);
+  private readonly educationService = inject(EducationService);
   private readonly destroyRef = inject(DestroyRef);
 
   profileName = computed(() => this.profileService.currentProfile()?.full_name ?? '');
   skillCount = signal(0);
   experienceCount = signal(0);
+  educationCount = signal(0);
 
   readonly quickActions = [
     { path: '/dev/profile', label: 'Editar perfil', icon: 'user', description: 'Atualize suas informações profissionais' },
@@ -40,5 +43,9 @@ export class DashboardComponent implements OnInit {
     this.experienceService.getMyExperiences()
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((experiences) => this.experienceCount.set(experiences.length));
+
+    this.educationService.getMyEducations()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((educations) => this.educationCount.set(educations.length));
   }
 }

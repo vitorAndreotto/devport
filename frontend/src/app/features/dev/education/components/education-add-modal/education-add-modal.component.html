@@ -1,0 +1,64 @@
+<div class="modal-backdrop" (click)="onClose()"></div>
+<div class="modal">
+  <div class="modal__header">
+    <h2 class="modal__title">Adicionar formação</h2>
+    <button class="modal__close" (click)="onClose()">
+      <lucide-icon name="x" [size]="20"></lucide-icon>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <div class="modal__field">
+      <label>Instituição *</label>
+      <input class="modal__input" [ngModel]="institution()" (ngModelChange)="institution.set($event)" placeholder="Nome da instituição" maxlength="255" />
+    </div>
+
+    <div class="modal__field">
+      <label>Curso / Certificação *</label>
+      <input class="modal__input" [ngModel]="course()" (ngModelChange)="course.set($event)" placeholder="Ex: Análise e Desenvolvimento de Sistemas" maxlength="255" />
+    </div>
+
+    <div class="modal__row">
+      <div class="modal__field modal__field--flex">
+        <label>Tipo *</label>
+        <select class="modal__select" [ngModel]="type()" (ngModelChange)="type.set($event)">
+          @for (t of types; track t.value) {
+            <option [value]="t.value">{{ t.label }}</option>
+          }
+        </select>
+      </div>
+      @if (isCourse()) {
+        <div class="modal__field modal__field--flex">
+          <label>Carga horária *</label>
+          <input class="modal__input" type="number" [ngModel]="workloadHours()" (ngModelChange)="workloadHours.set($event)" placeholder="Horas" min="1" />
+        </div>
+      }
+    </div>
+
+    <div class="modal__row">
+      <div class="modal__field modal__field--flex">
+        <label>Data de início</label>
+        <input class="modal__input" type="date" [ngModel]="startDate()" (ngModelChange)="startDate.set($event)" />
+      </div>
+      <div class="modal__field modal__field--flex">
+        <label>Data de término</label>
+        <input class="modal__input" type="date" [ngModel]="endDate()" (ngModelChange)="endDate.set($event)" [disabled]="isOngoing()" />
+      </div>
+    </div>
+
+    <label class="modal__check">
+      <input type="checkbox" [checked]="isOngoing()" (change)="onOngoingChange($any($event.target).checked)" />
+      Cursando atualmente
+    </label>
+
+    <button class="modal__confirm" (click)="onConfirm()" [disabled]="!isValid || isAdding()">
+      @if (isAdding()) {
+        <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+        Adicionando...
+      } @else {
+        <lucide-icon name="plus" [size]="18"></lucide-icon>
+        Adicionar formação
+      }
+    </button>
+  </div>
+</div>

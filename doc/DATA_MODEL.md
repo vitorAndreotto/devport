@@ -50,6 +50,19 @@
               ┌─────┴──────┐
               │ skill_tree  │
               └────────────┘
+
+┌───────────────┐       ┌──────────────────┐       ┌─────────┐
+│ dev_profiles  │N────N│ job_applications  │N────1│  jobs    │
+└───────────────┘       └──────────────────┘       └─────────┘
+
+┌──────────────────┐       ┌───────────────────┐       ┌─────────┐
+│ company_profiles │1────N│ saved_developers   │N────1│  jobs    │
+└──────────────────┘       └────────┬──────────┘       └─────────┘
+                                    │N
+                                    │1
+                           ┌────────┴──────┐
+                           │ dev_profiles   │
+                           └───────────────┘
 ```
 
 ---
@@ -146,6 +159,7 @@ Dados profissionais do desenvolvedor.
 | `number` | `varchar(20)` | sim | null | Número |
 | `complement` | `varchar(255)` | sim | null | Complemento |
 | `work_mode` | `varchar(10)` | sim | null | `onsite`, `hybrid`, `remote` |
+| `employment_status` | `varchar(10)` | sim | null | `looking`, `employed` |
 | `github_username` | `varchar(255)` | sim | null | Username do GitHub |
 | `links` | `jsonb` | sim | null | Links externos |
 | `created_at` | `timestamp` | não | now() | Criação |
@@ -166,6 +180,7 @@ Dados profissionais do desenvolvedor.
 **Check constraints:**
 - `handle ~ '^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$'` — 3-40 chars, lowercase, números e hífens, sem iniciar/terminar com hífen
 - `work_mode IN ('onsite', 'hybrid', 'remote') OR work_mode IS NULL`
+- `employment_status IN ('looking', 'employed') OR employment_status IS NULL`
 
 **Estrutura do campo `links` (jsonb):**
 ```json
@@ -454,6 +469,59 @@ Pivot: skills exigidas por uma vaga, com nível mínimo.
 
 ---
 
+### 2.12 `job_applications`
+
+Candidaturas de devs a vagas.
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `dev_profile_id` | `uuid` (FK) | não | — | Referência ao perfil dev |
+| `job_id` | `uuid` (FK) | não | — | Referência à vaga |
+| `status` | `varchar(10)` | não | 'pending' | Status da candidatura |
+| `created_at` | `timestamp` | não | now() | Data da candidatura |
+| `updated_at` | `timestamp` | não | now() | Última atualização |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `UNIQUE (dev_profile_id, job_id)` — impede candidatura duplicada
+- `INDEX (job_id, status)` — busca de candidatos por vaga
+- `INDEX (dev_profile_id)` — listagem de candidaturas do dev
+
+**Foreign Keys:**
+- `dev_profile_id → dev_profiles(id) ON DELETE CASCADE`
+- `job_id → jobs(id) ON DELETE CASCADE`
+
+**Check constraints:**
+- `status IN ('pending', 'accepted', 'rejected', 'withdrawn')`
+
+---
+
+### 2.13 `saved_developers`
+
+Shortlist interna da empresa — devs salvos por vaga.
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `company_profile_id` | `uuid` (FK) | não | — | Referência ao perfil empresa |
+| `dev_profile_id` | `uuid` (FK) | não | — | Referência ao perfil dev |
+| `job_id` | `uuid` (FK) | não | — | Referência à vaga |
+| `created_at` | `timestamp` | não | now() | Data do salvamento |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `UNIQUE (company_profile_id, dev_profile_id, job_id)` — impede duplicata
+- `INDEX (company_profile_id, job_id)` — listagem por vaga
+- `INDEX (dev_profile_id)` — consulta reversa
+
+**Foreign Keys:**
+- `company_profile_id → company_profiles(id) ON DELETE CASCADE`
+- `dev_profile_id → dev_profiles(id) ON DELETE CASCADE`
+- `job_id → jobs(id) ON DELETE CASCADE`
+
+---
+
 ## 3. Regras de Integridade Resumidas
 
 | Regra | Implementação |
@@ -473,6 +541,8 @@ Pivot: skills exigidas por uma vaga, com nível mínimo.
 | Presencial/híbrido exige localização | CHECK em jobs |
 | Salário max ≥ min | CHECK em jobs |
 | Repo GitHub único por dev | `UNIQUE (dev_profile_id, github_repo_id)` em projects |
+| Candidatura única por dev+vaga | `UNIQUE (dev_profile_id, job_id)` em job_applications |
+| Dev salvo único por empresa+dev+vaga | `UNIQUE (company_profile_id, dev_profile_id, job_id)` em saved_developers |
 | Deletar user cascateia tudo | ON DELETE CASCADE em todas as FKs |
 
 ---
@@ -486,6 +556,8 @@ Pivot: skills exigidas por uma vaga, com nível mínimo.
 | `experiences` | `is_current DESC, start_date DESC` |
 | `projects` | `created_at DESC` |
 | `jobs` | `status ASC (open first), created_at DESC` |
+| `job_applications` | `created_at DESC` |
+| `saved_developers` | `created_at DESC` |
 | `skill_tree` | `category ASC, name ASC` |
 
 ---
@@ -535,6 +607,8 @@ Ordem de criação respeitando dependências:
 9. projects
 10. jobs
 11. job_skills
+12. job_applications
+13. saved_developers
 ```
 
 ---

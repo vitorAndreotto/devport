@@ -222,6 +222,7 @@ POST /dev/profile
     "email_contact": "contato@vitor.dev",
     "location": "São Paulo, SP",
     "work_mode": "remote",
+    "employment_status": "looking",
     "github_username": "vitorsantos",
     "links": [
       { "label": "LinkedIn", "url": "https://linkedin.com/in/vitorsantos" },
@@ -936,10 +937,348 @@ PATCH /company/jobs/{jobId}/close
 
 ---
 
-### 9.5 Remover vaga
+### 9.5 Reabrir vaga
+
+```
+PATCH /company/jobs/{jobId}/reopen
+```
+🔒🏢
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "id": "ee0e8400-e29b-41d4-a716-446655440080",
+    "status": "open",
+    "updated_at": "2026-04-11T16:00:00Z"
+  }
+}
+```
+
+**Regras:**
+- Apenas vagas com status `closed` podem ser reabertas
+- Retorna `422` se vaga já estiver `open`
+
+---
+
+### 9.6 Remover vaga
 
 ```
 DELETE /company/jobs/{jobId}
+```
+🔒🏢
+
+**Response `204 No Content`**
+
+---
+
+## 9A. Job Applications (Candidaturas)
+
+### 9A.1 Candidatar-se a vaga
+
+```
+POST /dev/applications
+```
+🔒🧑‍💻
+
+**Request:**
+```json
+{
+  "job_id": "ee0e8400-e29b-41d4-a716-446655440080"
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "data": {
+    "id": "ff0e8400-e29b-41d4-a716-446655440090",
+    "job_id": "ee0e8400-e29b-41d4-a716-446655440080",
+    "status": "pending",
+    "job": {
+      "id": "ee0e8400-e29b-41d4-a716-446655440080",
+      "title": "Desenvolvedor Angular Pleno",
+      "company": {
+        "company_name": "TechCorp",
+        "logo_url": "https://example.com/logo.png"
+      }
+    },
+    "created_at": "2026-04-11T10:00:00Z"
+  }
+}
+```
+
+**Validações:**
+- `job_id`: obrigatório, uuid, deve existir
+- Vaga deve ter status `open` (senão `422`)
+- Candidatura duplicada retorna `409`
+
+---
+
+### 9A.2 Listar minhas candidaturas
+
+```
+GET /dev/applications
+```
+🔒🧑‍💻
+
+**Query Parameters:**
+
+| Param | Tipo | Descrição |
+|---|---|---|
+| `status` | string | Filtra por status (`pending`, `accepted`, `rejected`, `withdrawn`) |
+| `page` | integer | Página (default: 1) |
+| `limit` | integer | Itens por página (default: 12, max: 50) |
+
+**Response `200 OK`:**
+```json
+{
+  "data": [
+    {
+      "id": "ff0e8400-e29b-41d4-a716-446655440090",
+      "status": "pending",
+      "job": {
+        "id": "ee0e8400-e29b-41d4-a716-446655440080",
+        "title": "Desenvolvedor Angular Pleno",
+        "work_mode": "hybrid",
+        "contract_model": "clt",
+        "location": "São Paulo, SP",
+        "status": "open",
+        "company": {
+          "company_name": "TechCorp",
+          "logo_url": "https://example.com/logo.png"
+        }
+      },
+      "created_at": "2026-04-11T10:00:00Z",
+      "updated_at": "2026-04-11T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "limit": 12,
+    "total": 5,
+    "last_page": 1
+  }
+}
+```
+
+> Ordenação: `created_at DESC`
+
+---
+
+### 9A.3 Retirar candidatura
+
+```
+PATCH /dev/applications/{applicationId}/withdraw
+```
+🔒🧑‍💻
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "id": "ff0e8400-e29b-41d4-a716-446655440090",
+    "status": "withdrawn",
+    "updated_at": "2026-04-11T12:00:00Z"
+  }
+}
+```
+
+**Regras:**
+- Apenas candidaturas com status `pending` podem ser retiradas
+- Retorna `422` se status não for `pending`
+
+---
+
+### 9A.4 Listar candidatos da vaga
+
+```
+GET /company/jobs/{jobId}/applications
+```
+🔒🏢
+
+**Query Parameters:**
+
+| Param | Tipo | Descrição |
+|---|---|---|
+| `status` | string | Filtra por status |
+| `page` | integer | Página (default: 1) |
+| `limit` | integer | Itens por página (default: 12, max: 50) |
+
+**Response `200 OK`:**
+```json
+{
+  "data": [
+    {
+      "id": "ff0e8400-e29b-41d4-a716-446655440090",
+      "status": "pending",
+      "dev": {
+        "id": "660e8400-e29b-41d4-a716-446655440001",
+        "full_name": "Vitor Santos",
+        "title": "Desenvolvedor Full Stack",
+        "avatar_url": "https://example.com/avatar.jpg",
+        "employment_status": "employed",
+        "skills": [
+          { "name": "Angular", "level": "advanced" },
+          { "name": "TypeScript", "level": "advanced" }
+        ]
+      },
+      "created_at": "2026-04-11T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "limit": 12,
+    "total": 8,
+    "last_page": 1
+  }
+}
+```
+
+> `employment_status` visível como alerta informativo para a empresa. Apenas a empresa dona da vaga pode acessar.
+
+---
+
+### 9A.5 Aceitar candidatura
+
+```
+PATCH /company/jobs/{jobId}/applications/{applicationId}/accept
+```
+🔒🏢
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "id": "ff0e8400-e29b-41d4-a716-446655440090",
+    "status": "accepted",
+    "updated_at": "2026-04-11T14:00:00Z"
+  }
+}
+```
+
+**Regras:**
+- Apenas candidaturas `pending` podem ser aceitas
+- Retorna `422` se status não for `pending`
+
+---
+
+### 9A.6 Rejeitar candidatura
+
+```
+PATCH /company/jobs/{jobId}/applications/{applicationId}/reject
+```
+🔒🏢
+
+**Response `200 OK`:**
+```json
+{
+  "data": {
+    "id": "ff0e8400-e29b-41d4-a716-446655440090",
+    "status": "rejected",
+    "updated_at": "2026-04-11T14:00:00Z"
+  }
+}
+```
+
+**Regras:**
+- Apenas candidaturas `pending` podem ser rejeitadas
+- Retorna `422` se status não for `pending`
+
+---
+
+## 9B. Saved Developers (Devs Salvos)
+
+### 9B.1 Salvar dev para vaga
+
+```
+POST /company/jobs/{jobId}/saved-developers
+```
+🔒🏢
+
+**Request:**
+```json
+{
+  "dev_profile_id": "660e8400-e29b-41d4-a716-446655440001"
+}
+```
+
+**Response `201 Created`:**
+```json
+{
+  "data": {
+    "id": "aa0e8400-e29b-41d4-a716-446655440091",
+    "job_id": "ee0e8400-e29b-41d4-a716-446655440080",
+    "dev": {
+      "id": "660e8400-e29b-41d4-a716-446655440001",
+      "full_name": "Vitor Santos",
+      "title": "Desenvolvedor Full Stack",
+      "avatar_url": "https://example.com/avatar.jpg",
+      "employment_status": "looking"
+    },
+    "created_at": "2026-04-11T10:00:00Z"
+  }
+}
+```
+
+**Validações:**
+- `dev_profile_id`: obrigatório, uuid, deve existir
+- Duplicata retorna `409`
+- Apenas a empresa dona da vaga pode salvar
+
+---
+
+### 9B.2 Listar devs salvos por vaga
+
+```
+GET /company/jobs/{jobId}/saved-developers
+```
+🔒🏢
+
+**Query Parameters:**
+
+| Param | Tipo | Descrição |
+|---|---|---|
+| `page` | integer | Página (default: 1) |
+| `limit` | integer | Itens por página (default: 12, max: 50) |
+
+**Response `200 OK`:**
+```json
+{
+  "data": [
+    {
+      "id": "aa0e8400-e29b-41d4-a716-446655440091",
+      "dev": {
+        "id": "660e8400-e29b-41d4-a716-446655440001",
+        "full_name": "Vitor Santos",
+        "title": "Desenvolvedor Full Stack",
+        "avatar_url": "https://example.com/avatar.jpg",
+        "employment_status": "looking",
+        "skills": [
+          { "name": "Angular", "level": "advanced" },
+          { "name": "TypeScript", "level": "advanced" }
+        ]
+      },
+      "created_at": "2026-04-11T10:00:00Z"
+    }
+  ],
+  "meta": {
+    "current_page": 1,
+    "limit": 12,
+    "total": 3,
+    "last_page": 1
+  }
+}
+```
+
+> Apenas a empresa dona da vaga pode acessar. Ordenação: `created_at DESC`
+
+---
+
+### 9B.3 Remover dev salvo
+
+```
+DELETE /company/jobs/{jobId}/saved-developers/{savedDevId}
 ```
 🔒🏢
 
@@ -1159,6 +1498,7 @@ GET /developers
       "avatar_url": "https://example.com/avatar.jpg",
       "location": "São Paulo, SP",
       "work_mode": "remote",
+      "employment_status": "looking",
       "skills": [
         { "name": "Angular", "level": "advanced" },
         { "name": "TypeScript", "level": "advanced" }
@@ -1221,6 +1561,7 @@ GET /developers/{handle}
     "email_contact": "contato@vitor.dev",
     "location": "São Paulo, SP",
     "work_mode": "remote",
+    "employment_status": "looking",
     "github_username": "vitorsantos",
     "links": [
       { "label": "LinkedIn", "url": "https://linkedin.com/in/vitorsantos" }
@@ -1326,7 +1667,7 @@ GET /companies/{handle}
 | 1.4 | POST | `/auth/refresh` | 🔓 | Renovar token |
 | 1.5 | POST | `/auth/logout` | 🔒 | Logout |
 
-### Dev (18 endpoints autenticados)
+### Dev (25 endpoints autenticados)
 
 | # | Método | Endpoint | Auth | Descrição |
 |---|---|---|---|---|
@@ -1352,8 +1693,11 @@ GET /companies/{handle}
 | 7.1 | GET | `/dev/github/repositories` | 🔒🧑‍💻 | Listar repos GitHub |
 | 7.2 | POST | `/dev/github/import` | 🔒🧑‍💻 | Importar repos |
 | 7.3 | POST | `/dev/github/sync` | 🔒🧑‍💻 | Sincronizar repos |
+| 9A.1 | POST | `/dev/applications` | 🔒🧑‍💻 | Candidatar-se a vaga |
+| 9A.2 | GET | `/dev/applications` | 🔒🧑‍💻 | Listar candidaturas |
+| 9A.3 | PATCH | `/dev/applications/{id}/withdraw` | 🔒🧑‍💻 | Retirar candidatura |
 
-### Company (7 endpoints autenticados)
+### Company (16 endpoints autenticados)
 
 | # | Método | Endpoint | Auth | Descrição |
 |---|---|---|---|---|
@@ -1364,7 +1708,14 @@ GET /companies/{handle}
 | 9.2 | POST | `/company/jobs` | 🔒🏢 | Publicar vaga |
 | 9.3 | PUT | `/company/jobs/{id}` | 🔒🏢 | Atualizar vaga |
 | 9.4 | PATCH | `/company/jobs/{id}/close` | 🔒🏢 | Fechar vaga |
-| 9.5 | DELETE | `/company/jobs/{id}` | 🔒🏢 | Remover vaga |
+| 9.5 | PATCH | `/company/jobs/{id}/reopen` | 🔒🏢 | Reabrir vaga |
+| 9.6 | DELETE | `/company/jobs/{id}` | 🔒🏢 | Remover vaga |
+| 9A.4 | GET | `/company/jobs/{id}/applications` | 🔒🏢 | Listar candidatos |
+| 9A.5 | PATCH | `/company/jobs/{id}/applications/{id}/accept` | 🔒🏢 | Aceitar candidatura |
+| 9A.6 | PATCH | `/company/jobs/{id}/applications/{id}/reject` | 🔒🏢 | Rejeitar candidatura |
+| 9B.1 | POST | `/company/jobs/{id}/saved-developers` | 🔒🏢 | Salvar dev |
+| 9B.2 | GET | `/company/jobs/{id}/saved-developers` | 🔒🏢 | Listar devs salvos |
+| 9B.3 | DELETE | `/company/jobs/{id}/saved-developers/{id}` | 🔒🏢 | Remover dev salvo |
 
 ### Público (8 endpoints)
 
@@ -1381,4 +1732,4 @@ GET /companies/{handle}
 
 > 🔓* = público, mas se dev autenticado, inclui `match_score`
 
-> **Total: 40 endpoints** — 11 públicos, 22 dev, 8 empresa
+> **Total: 51 endpoints** — 11 públicos, 25 dev, 16 empresa

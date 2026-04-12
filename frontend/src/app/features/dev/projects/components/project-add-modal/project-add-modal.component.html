@@ -1,0 +1,61 @@
+<div class="modal-backdrop" (click)="onClose()"></div>
+<div class="modal">
+  <div class="modal__header">
+    <h2 class="modal__title">
+      <lucide-icon name="anchor" [size]="18"></lucide-icon>
+      Registrar carga
+    </h2>
+    <button class="modal__close" (click)="onClose()">
+      <lucide-icon name="x" [size]="20"></lucide-icon>
+    </button>
+  </div>
+
+  <div class="modal__body">
+    <div class="modal__field">
+      <label>Nome do projeto *</label>
+      <input class="modal__input" [ngModel]="name()" (ngModelChange)="name.set($event)" placeholder="Ex: Dev Port" maxlength="255" />
+    </div>
+
+    <div class="modal__field">
+      <label>Descrição *</label>
+      <textarea class="modal__textarea" [ngModel]="description()" (ngModelChange)="description.set($event)" placeholder="O que este projeto faz?" rows="3"></textarea>
+    </div>
+
+    <div class="modal__field">
+      <label>Tecnologias (separadas por vírgula)</label>
+      <input class="modal__input" [ngModel]="technologies()" (ngModelChange)="technologies.set($event)" placeholder="Angular, NestJS, PostgreSQL" />
+    </div>
+
+    <div class="modal__row">
+      <div class="modal__field modal__field--flex">
+        <label>
+          <lucide-icon name="github" [size]="14"></lucide-icon>
+          URL repositório
+        </label>
+        <input class="modal__input" [ngModel]="repositoryUrl()" (ngModelChange)="repositoryUrl.set($event)" placeholder="https://github.com/..." type="url" />
+      </div>
+      <div class="modal__field modal__field--flex">
+        <label>
+          <lucide-icon name="compass" [size]="14"></lucide-icon>
+          URL demo
+        </label>
+        <input class="modal__input" [ngModel]="demoUrl()" (ngModelChange)="demoUrl.set($event)" placeholder="https://..." type="url" />
+      </div>
+    </div>
+
+    <div class="modal__field">
+      <label>URL da imagem (opcional)</label>
+      <input class="modal__input" [ngModel]="imageUrl()" (ngModelChange)="imageUrl.set($event)" placeholder="https://exemplo.com/imagem.png" type="url" />
+    </div>
+
+    <button class="modal__confirm" (click)="onConfirm()" [disabled]="!isValid || isAdding()">
+      @if (isAdding()) {
+        <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+        Registrando...
+      } @else {
+        <lucide-icon name="plus" [size]="18"></lucide-icon>
+        Registrar projeto
+      }
+    </button>
+  </div>
+</div>

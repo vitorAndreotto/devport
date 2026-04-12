@@ -79,7 +79,8 @@
 - [ ] Preencher: handle (identificador único), nome completo, título/cargo, bio, e-mail de contato
 - [ ] Handle: 3-40 caracteres, apenas letras minúsculas, números e hífens, único global
 - [ ] Handle usado na URL pública do perfil (`/developers/{handle}`)
-- [ ] Campos opcionais: avatar (URL), localização, modelo preferido, links externos
+- [ ] Campos opcionais: avatar (URL), localização, modelo preferido, situação profissional, links externos
+- [ ] Situação profissional (`employment_status`): `looking` ou `employed` (nullable)
 - [ ] Bio aceita no máximo 500 caracteres
 - [ ] Cada dev possui apenas 1 perfil
 - [ ] Retorna 409 se perfil ou handle já existir
@@ -410,6 +411,118 @@
 
 ---
 
+### US-805 — Reabrir vaga 🔴
+**Como** empresa, **quero** reabrir uma vaga fechada, **para** retomar a busca por candidatos.
+
+**Critérios de aceite:**
+- [ ] Apenas vagas com status `closed` podem ser reabertas
+- [ ] Status alterado para `open`
+- [ ] Vaga volta a aparecer na busca pública
+- [ ] Apenas a empresa dona pode reabrir
+
+---
+
+## 9.1. Candidaturas (`job-applications`)
+
+### US-850 — Candidatar-se a vaga 🔴
+**Como** dev, **quero** me candidatar a uma vaga aberta, **para** demonstrar interesse na posição.
+
+**Critérios de aceite:**
+- [ ] Apenas vagas com status `open` aceitam candidaturas
+- [ ] Candidatura criada com status `pending`
+- [ ] Não permite candidatura duplicada (mesmo dev + mesma vaga)
+- [ ] Retorna 409 se já existir candidatura ativa
+- [ ] Retorna 422 se vaga não estiver aberta
+
+---
+
+### US-851 — Retirar candidatura 🔴
+**Como** dev, **quero** retirar minha candidatura, **para** desistir de uma posição.
+
+**Critérios de aceite:**
+- [ ] Status alterado para `withdrawn`
+- [ ] Apenas o dev dono pode retirar
+- [ ] Apenas candidaturas com status `pending` podem ser retiradas
+
+---
+
+### US-852 — Listar minhas candidaturas 🔴
+**Como** dev, **quero** ver todas as minhas candidaturas, **para** acompanhar o andamento dos processos.
+
+**Critérios de aceite:**
+- [ ] Lista todas as candidaturas do dev com status atualizado
+- [ ] Inclui dados resumidos da vaga e empresa
+- [ ] Ordenação: mais recentes primeiro
+- [ ] Paginação: 12 por página
+
+---
+
+### US-853 — Ver candidatos da vaga 🔴
+**Como** empresa, **quero** ver a lista de candidatos de uma vaga, **para** avaliar os interessados.
+
+**Critérios de aceite:**
+- [ ] Lista todos os devs que se candidataram à vaga
+- [ ] Exibe: dados resumidos do dev, status da candidatura, `employment_status` do dev
+- [ ] `employment_status` serve como alerta informativo (dev empregado pode ser empecilho)
+- [ ] Ordenação: mais recentes primeiro
+- [ ] Apenas a empresa dona da vaga pode acessar
+
+---
+
+### US-854 — Aceitar candidatura 🔴
+**Como** empresa, **quero** aceitar a candidatura de um dev, **para** indicar interesse no candidato.
+
+**Critérios de aceite:**
+- [ ] Status alterado para `accepted`
+- [ ] Apenas candidaturas com status `pending` podem ser aceitas
+- [ ] Apenas a empresa dona da vaga pode aceitar
+
+---
+
+### US-855 — Rejeitar candidatura 🔴
+**Como** empresa, **quero** rejeitar a candidatura de um dev, **para** indicar que não há interesse.
+
+**Critérios de aceite:**
+- [ ] Status alterado para `rejected`
+- [ ] Apenas candidaturas com status `pending` podem ser rejeitadas
+- [ ] Apenas a empresa dona da vaga pode rejeitar
+
+---
+
+## 9.2. Devs Salvos (`saved-developers`)
+
+### US-870 — Salvar dev para vaga 🔴
+**Como** empresa, **quero** salvar um dev na shortlist de uma vaga, **para** registrar interesse interno.
+
+**Critérios de aceite:**
+- [ ] Vincula dev + vaga à empresa
+- [ ] Não é candidatura oficial — apenas registro interno
+- [ ] Não permite duplicata (mesmo dev + mesma vaga)
+- [ ] Retorna 409 se já estiver salvo
+- [ ] Dev não é notificado
+
+---
+
+### US-871 — Listar devs salvos por vaga 🔴
+**Como** empresa, **quero** ver os devs que salvei para uma vaga, **para** revisar minha shortlist.
+
+**Critérios de aceite:**
+- [ ] Lista devs salvos para a vaga específica
+- [ ] Exibe dados resumidos do dev (nome, título, avatar, skills, `employment_status`)
+- [ ] Ordenação: mais recentes primeiro
+- [ ] Apenas a empresa dona pode acessar
+
+---
+
+### US-872 — Remover dev salvo 🔴
+**Como** empresa, **quero** remover um dev da shortlist de uma vaga, **para** manter a lista relevante.
+
+**Critérios de aceite:**
+- [ ] Remove o registro de dev salvo
+- [ ] Apenas a empresa dona pode remover
+
+---
+
 ## 10. Árvore de Skills (`skill-tree`)
 
 ### US-900 — Seed da árvore de skills 🔴
@@ -507,8 +620,10 @@
 | Projetos | 3 | 3 | 0 | 0 |
 | GitHub | 3 | 0 | 3 | 0 |
 | Perfil Empresa | 3 | 3 | 0 | 0 |
-| Vagas | 5 | 5 | 0 | 0 |
+| Vagas | 6 | 6 | 0 | 0 |
+| Candidaturas | 6 | 6 | 0 | 0 |
+| Devs Salvos | 3 | 3 | 0 | 0 |
 | Skill Tree | 2 | 2 | 0 | 0 |
 | Matching | 2 | 0 | 2 | 0 |
 | Buscas | 3 | 0 | 2 | 1 |
-| **Total** | **42** | **33** | **7** | **2** |
+| **Total** | **57** | **48** | **7** | **2** |

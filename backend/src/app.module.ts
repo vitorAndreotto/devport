@@ -10,6 +10,7 @@ import { SkillTreeModule } from './skill-tree/skill-tree.module.js';
 import { DevSkillModule } from './dev-skill/dev-skill.module.js';
 import { ExperienceModule } from './experience/experience.module.js';
 import { EducationModule } from './education/education.module.js';
+import { ProjectModule } from './project/project.module.js';
 
 @Module({
   imports: [
@@ -60,6 +61,7 @@ import { EducationModule } from './education/education.module.js';
     DevSkillModule,
     ExperienceModule,
     EducationModule,
+    ProjectModule,
   ],
 })
 export class AppModule {}

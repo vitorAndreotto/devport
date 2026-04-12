@@ -72,6 +72,12 @@ export class ExperienceController {
       start_date: exp.startDate,
       end_date: exp.endDate,
       is_current: exp.isCurrent,
+      skills: (exp.experienceSkills ?? []).map((es) => ({
+        id: es.skill.id,
+        name: es.skill.name,
+        slug: es.skill.slug,
+        category: es.skill.category,
+      })),
       created_at: exp.createdAt,
       updated_at: exp.updatedAt,
     };

@@ -94,6 +94,104 @@
     input { cursor: pointer; }
   }
 
+  // Skill selection
+  &__skills-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    align-items: center;
+  }
+
+  &__skill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.1875rem 0.375rem 0.1875rem 0.5rem;
+    border-radius: 999px;
+    background: var(--navy-50);
+    color: var(--navy-700);
+  }
+
+  &__skill-tag-remove {
+    background: none;
+    border: none;
+    color: var(--navy-400);
+    cursor: pointer;
+    padding: 0.125rem;
+    display: flex;
+    border-radius: 50%;
+    &:hover { background: var(--navy-100); color: var(--navy-800); }
+    ::ng-deep lucide-icon { display: flex; }
+  }
+
+  &__skill-add-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 500;
+    padding: 0.1875rem 0.5rem;
+    border-radius: 999px;
+    background: none;
+    border: 1.5px dashed var(--sand-300);
+    color: var(--navy-500);
+    cursor: pointer;
+    font-family: inherit;
+    transition: all 0.15s;
+    &:hover { border-color: var(--navy-400); color: var(--navy-700); background: var(--navy-50); }
+    ::ng-deep lucide-icon { display: flex; }
+  }
+
+  &__skill-picker {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    padding: 0.625rem;
+    background: var(--sand-50);
+    border: 1.5px solid var(--sand-200);
+    border-radius: 0.5rem;
+    margin-top: 0.5rem;
+    animation: fadeIn 0.15s ease-out;
+  }
+
+  &__skill-list {
+    max-height: 180px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+
+  &__skill-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.375rem 0.625rem;
+    border: none;
+    background: none;
+    border-radius: 0.375rem;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    color: var(--navy-800);
+    cursor: pointer;
+    text-align: left;
+    transition: background 0.1s;
+    &:hover { background: var(--navy-50); }
+
+    &--selected {
+      background: var(--navy-50);
+      font-weight: 600;
+      color: var(--navy-900);
+    }
+  }
+
+  &__skill-cat {
+    font-size: 0.6875rem;
+    color: var(--navy-400);
+  }
+
   &__confirm {
     width: 100%;
     padding: 0.75rem;

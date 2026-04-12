@@ -1,36 +1,43 @@
 <div class="experiences-page">
   <div class="experiences-page__header">
     <div>
-      <h1 class="experiences-page__title">Experiências</h1>
-      <p class="experiences-page__subtitle">Gerencie seu histórico profissional.</p>
+      <h1 class="experiences-page__title">
+        <lucide-icon name="anchor" [size]="22"></lucide-icon>
+        Diário de Bordo
+      </h1>
+      <p class="experiences-page__subtitle">Cada porto em que você ancorou na sua jornada profissional.</p>
     </div>
     <button class="btn-add" (click)="openAddModal()">
       <lucide-icon name="plus" [size]="18"></lucide-icon>
-      Adicionar experiência
+      Novo porto
     </button>
   </div>
 
   @if (isLoading()) {
     <div class="experiences-loading">
       <lucide-icon name="loader-2" [size]="24" class="spin"></lucide-icon>
-      <span>Carregando experiências...</span>
+      <span>Carregando histórico...</span>
     </div>
   } @else if (experiences().length === 0) {
     <div class="experiences-empty">
-      <lucide-icon name="briefcase" [size]="48"></lucide-icon>
-      <h3>Nenhuma experiência cadastrada</h3>
-      <p>Adicione suas experiências profissionais para enriquecer seu perfil.</p>
+      <div class="experiences-empty__icon">
+        <lucide-icon name="anchor" [size]="32"></lucide-icon>
+      </div>
+      <h3>Nenhuma experiência ancorada</h3>
+      <p>Registre os portos por onde você passou para construir seu diário de bordo.</p>
       <button class="btn-add" (click)="openAddModal()">
         <lucide-icon name="plus" [size]="18"></lucide-icon>
-        Adicionar experiência
+        Registrar primeiro porto
       </button>
     </div>
   } @else {
-    <div class="experiences-list">
-      @for (exp of experiences(); track exp.id) {
+    <div class="timeline">
+      @for (exp of experiences(); track exp.id; let i = $index) {
         <app-experience-card
           [experience]="exp"
+          [skillTree]="skillTree()"
           [saving]="isSavingEdit()"
+          [style.animation-delay]="i * 0.08 + 's'"
           (edit)="onEditExperience(exp, $event)"
           (remove)="onRemoveExperience(exp)"
         />
@@ -42,6 +49,7 @@
 @if (showAddModal()) {
   <app-experience-add-modal
     [isAdding]="isAdding()"
+    [skillTree]="skillTree()"
     (close)="closeAddModal()"
     (confirm)="onAddExperience($event)"
   />

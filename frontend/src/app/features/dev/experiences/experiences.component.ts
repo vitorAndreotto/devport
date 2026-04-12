@@ -2,10 +2,12 @@ import { Component, inject, signal, OnInit, DestroyRef } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule } from 'lucide-angular';
 import { ExperienceService } from '../../../core/services/experience.service';
+import { SkillService } from '../../../core/services/skill.service';
 import { NotificationService } from '../../../core/services/notification.service';
 import { extractErrorMessage } from '../../../core/api/api-error.util';
 import { ApiError } from '../../../core/api/api.service';
 import { Experience, CreateExperiencePayload } from '../../../core/models/experience.model';
+import { SkillTree } from '../../../core/models/skill.model';
 import { ExperienceCardComponent, ExperienceEditPayload } from './components/experience-card/experience-card.component';
 import { ExperienceAddModalComponent } from './components/experience-add-modal/experience-add-modal.component';
 
@@ -18,10 +20,12 @@ import { ExperienceAddModalComponent } from './components/experience-add-modal/e
 })
 export class ExperiencesComponent implements OnInit {
   private readonly experienceService = inject(ExperienceService);
+  private readonly skillService = inject(SkillService);
   private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
   readonly experiences = signal<Experience[]>([]);
+  readonly skillTree = signal<SkillTree[]>([]);
   readonly isLoading = signal(true);
   readonly showAddModal = signal(false);
   readonly isAdding = signal(false);
@@ -29,6 +33,7 @@ export class ExperiencesComponent implements OnInit {
 
   ngOnInit(): void {
     this.loadExperiences();
+    this.loadSkillTree();
   }
 
   openAddModal(): void {
@@ -68,6 +73,7 @@ export class ExperiencesComponent implements OnInit {
       start_date: data.start_date,
       end_date: data.end_date,
       is_current: data.is_current,
+      skill_ids: data.skill_ids,
     })
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe({
@@ -114,5 +120,11 @@ export class ExperiencesComponent implements OnInit {
           this.notify.error(extractErrorMessage(err));
         },
       });
+  }
+
+  private loadSkillTree(): void {
+    this.skillService.getSkillTree()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe((tree) => this.skillTree.set(tree));
   }
 }

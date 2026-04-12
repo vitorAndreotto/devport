@@ -1,51 +1,131 @@
-<div class="exp-card" [class.exp-card--editing]="isEditing()">
-  @if (isEditing()) {
-    <div class="exp-card__form">
-      <div class="exp-card__row">
-        <input class="exp-card__input exp-card__input--wide" [(ngModel)]="editCompany" placeholder="Empresa" />
-        <input class="exp-card__input exp-card__input--wide" [(ngModel)]="editPosition" placeholder="Cargo" />
+<!-- Timeline node + card wrapper -->
+<div class="timeline-item" [class.timeline-item--current]="experience().is_current" [class.timeline-item--editing]="isEditing()">
+
+  <!-- Timeline node -->
+  <div class="timeline-item__node">
+    @if (experience().is_current) {
+      <div class="timeline-item__anchor">
+        <lucide-icon name="anchor" [size]="14"></lucide-icon>
       </div>
-      <textarea class="exp-card__textarea" [(ngModel)]="editDescription" placeholder="Descrição (opcional)" rows="3"></textarea>
-      <div class="exp-card__row">
-        <input class="exp-card__input" type="date" [(ngModel)]="editStartDate" />
-        <input class="exp-card__input" type="date" [(ngModel)]="editEndDate" [disabled]="editIsCurrent()" />
-        <label class="exp-card__check">
-          <input type="checkbox" [checked]="editIsCurrent()" (change)="onCurrentChange($any($event.target).checked)" />
-          Atual
-        </label>
+    } @else {
+      <div class="timeline-item__dot"></div>
+    }
+  </div>
+
+  <!-- Period label (left side on desktop) -->
+  <div class="timeline-item__period">
+    <span class="timeline-item__period-text">{{ formatPeriod(experience()) }}</span>
+  </div>
+
+  <!-- Card content -->
+  <div class="timeline-item__card">
+    @if (isEditing()) {
+      <div class="exp-card__form">
+        <div class="exp-card__row">
+          <input class="exp-card__input exp-card__input--wide" [(ngModel)]="editCompany" placeholder="Empresa" />
+          <input class="exp-card__input exp-card__input--wide" [(ngModel)]="editPosition" placeholder="Cargo" />
+        </div>
+        <textarea class="exp-card__textarea" [(ngModel)]="editDescription" placeholder="Descrição (opcional)" rows="3"></textarea>
+        <div class="exp-card__row">
+          <input class="exp-card__input" type="date" [(ngModel)]="editStartDate" />
+          <input class="exp-card__input" type="date" [(ngModel)]="editEndDate" [disabled]="editIsCurrent()" />
+          <label class="exp-card__check">
+            <input type="checkbox" [checked]="editIsCurrent()" (change)="onCurrentChange($any($event.target).checked)" />
+            Atual
+          </label>
+        </div>
+
+        <!-- Skill tags editor -->
+        <div class="exp-card__skills-edit">
+          <div class="exp-card__skills-tags">
+            @for (skillId of editSkillIds(); track skillId) {
+              <span class="exp-card__skill-tag exp-card__skill-tag--removable">
+                {{ getSkillName(skillId) }}
+                <button type="button" class="exp-card__skill-tag-remove" (click)="removeSkillTag(skillId)">
+                  <lucide-icon name="x" [size]="12"></lucide-icon>
+                </button>
+              </span>
+            }
+            <button type="button" class="exp-card__skill-add-btn" (click)="showSkillPicker.set(!showSkillPicker())">
+              <lucide-icon name="plus" [size]="14"></lucide-icon>
+              Skills ({{ editSkillIds().size }}/20)
+            </button>
+          </div>
+
+          @if (showSkillPicker()) {
+            <div class="exp-card__skill-picker">
+              <input
+                class="exp-card__input"
+                type="text"
+                placeholder="Buscar skill..."
+                [ngModel]="skillSearch()"
+                (ngModelChange)="skillSearch.set($event)"
+              />
+              <div class="exp-card__skill-list">
+                @for (skill of filteredSkillTree(); track skill.id) {
+                  <button
+                    type="button"
+                    class="exp-card__skill-option"
+                    [class.exp-card__skill-option--selected]="editSkillIds().has(skill.id)"
+                    (click)="toggleSkill(skill.id)"
+                  >
+                    <span>{{ skill.name }}</span>
+                    <span class="exp-card__skill-cat">{{ categoryLabels[skill.category] || skill.category }}</span>
+                  </button>
+                }
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="exp-card__form-actions">
+          <button class="exp-card__btn exp-card__btn--save" (click)="saveEdit()" [disabled]="saving() || !editCompany() || !editPosition() || !editStartDate()">
+            <lucide-icon name="check" [size]="16"></lucide-icon>
+            Salvar
+          </button>
+          <button class="exp-card__btn exp-card__btn--cancel" (click)="cancelEdit()">
+            <lucide-icon name="x" [size]="16"></lucide-icon>
+            Cancelar
+          </button>
+        </div>
       </div>
-      <div class="exp-card__form-actions">
-        <button class="exp-card__btn exp-card__btn--save" (click)="saveEdit()" [disabled]="saving() || !editCompany() || !editPosition() || !editStartDate()">
-          <lucide-icon name="check" [size]="16"></lucide-icon>
-          Salvar
-        </button>
-        <button class="exp-card__btn exp-card__btn--cancel" (click)="cancelEdit()">
-          <lucide-icon name="x" [size]="16"></lucide-icon>
-          Cancelar
-        </button>
+    } @else {
+      <div class="exp-card__content">
+        <div class="exp-card__info">
+          <div class="exp-card__header">
+            <span class="exp-card__position">{{ experience().position }}</span>
+            @if (experience().is_current) {
+              <span class="exp-card__badge">
+                <span class="exp-card__badge-dot"></span>
+                Ancorado
+              </span>
+            }
+          </div>
+          <span class="exp-card__company">
+            <lucide-icon name="building-2" [size]="13"></lucide-icon>
+            {{ experience().company }}
+          </span>
+          <span class="exp-card__period-mobile">{{ formatPeriod(experience()) }}</span>
+          @if (experience().description) {
+            <p class="exp-card__description">{{ experience().description }}</p>
+          }
+          @if (experience().skills.length > 0) {
+            <div class="exp-card__skills">
+              @for (skill of experience().skills; track skill.id) {
+                <span class="exp-card__skill-tag">{{ skill.name }}</span>
+              }
+            </div>
+          }
+        </div>
+        <div class="exp-card__actions">
+          <button class="exp-card__btn exp-card__btn--edit" (click)="startEdit()">
+            <lucide-icon name="edit-3" [size]="15"></lucide-icon>
+          </button>
+          <button class="exp-card__btn exp-card__btn--delete" (click)="remove.emit()">
+            <lucide-icon name="trash-2" [size]="15"></lucide-icon>
+          </button>
+        </div>
       </div>
-    </div>
-  } @else {
-    <div class="exp-card__info">
-      <div class="exp-card__header">
-        <span class="exp-card__position">{{ experience().position }}</span>
-        @if (experience().is_current) {
-          <span class="exp-card__badge">Atual</span>
-        }
-      </div>
-      <span class="exp-card__company">{{ experience().company }}</span>
-      <span class="exp-card__period">{{ formatPeriod(experience()) }}</span>
-      @if (experience().description) {
-        <p class="exp-card__description">{{ experience().description }}</p>
-      }
-    </div>
-    <div class="exp-card__actions">
-      <button class="exp-card__btn exp-card__btn--edit" (click)="startEdit()">
-        <lucide-icon name="edit-3" [size]="15"></lucide-icon>
-      </button>
-      <button class="exp-card__btn exp-card__btn--delete" (click)="remove.emit()">
-        <lucide-icon name="trash-2" [size]="15"></lucide-icon>
-      </button>
-    </div>
-  }
+    }
+  </div>
 </div>

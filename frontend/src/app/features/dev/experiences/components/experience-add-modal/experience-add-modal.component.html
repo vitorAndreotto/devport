@@ -39,6 +39,50 @@
       Trabalho aqui atualmente
     </label>
 
+    <!-- Skills selection -->
+    <div class="modal__field">
+      <label>Skills utilizadas (opcional, máx. 20)</label>
+      <div class="modal__skills-tags">
+        @for (skillId of selectedSkillIds(); track skillId) {
+          <span class="modal__skill-tag">
+            {{ getSkillName(skillId) }}
+            <button type="button" class="modal__skill-tag-remove" (click)="removeSkillTag(skillId)">
+              <lucide-icon name="x" [size]="12"></lucide-icon>
+            </button>
+          </span>
+        }
+        <button type="button" class="modal__skill-add-btn" (click)="showSkillPicker.set(!showSkillPicker())">
+          <lucide-icon name="plus" [size]="14"></lucide-icon>
+          {{ showSkillPicker() ? 'Fechar' : 'Adicionar' }}
+        </button>
+      </div>
+
+      @if (showSkillPicker()) {
+        <div class="modal__skill-picker">
+          <input
+            class="modal__input"
+            type="text"
+            placeholder="Buscar skill..."
+            [ngModel]="skillSearch()"
+            (ngModelChange)="skillSearch.set($event)"
+          />
+          <div class="modal__skill-list">
+            @for (skill of filteredSkillTree(); track skill.id) {
+              <button
+                type="button"
+                class="modal__skill-option"
+                [class.modal__skill-option--selected]="selectedSkillIds().has(skill.id)"
+                (click)="toggleSkill(skill.id)"
+              >
+                <span>{{ skill.name }}</span>
+                <span class="modal__skill-cat">{{ categoryLabels[skill.category] || skill.category }}</span>
+              </button>
+            }
+          </div>
+        </div>
+      }
+    </div>
+
     <button class="modal__confirm" (click)="onConfirm()" [disabled]="!isValid || isAdding()">
       @if (isAdding()) {
         <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>

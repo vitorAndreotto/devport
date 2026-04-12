@@ -4,6 +4,9 @@ import {
   IsOptional,
   IsBoolean,
   IsDateString,
+  IsArray,
+  IsUUID,
+  ArrayMaxSize,
   MaxLength,
 } from 'class-validator';
 
@@ -34,4 +37,9 @@ export class CreateExperienceDto {
   @IsOptional()
   @IsBoolean()
   is_current?: boolean;
+
+  @IsOptional()
+  @IsArray()
+  @ArrayMaxSize(20)
+  skill_ids?: string[];
 }

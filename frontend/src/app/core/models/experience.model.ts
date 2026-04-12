@@ -1,3 +1,10 @@
+export interface ExperienceSkill {
+  id: string;
+  name: string;
+  slug: string;
+  category: string;
+}
+
 export interface Experience {
   id: string;
   company: string;
@@ -6,6 +13,7 @@ export interface Experience {
   start_date: string;
   end_date: string | null;
   is_current: boolean;
+  skills: ExperienceSkill[];
   created_at: string;
   updated_at: string;
 }
@@ -17,6 +25,7 @@ export interface CreateExperiencePayload {
   start_date: string;
   end_date?: string;
   is_current?: boolean;
+  skill_ids?: string[];
 }
 
 export interface UpdateExperiencePayload {
@@ -26,4 +35,5 @@ export interface UpdateExperiencePayload {
   start_date?: string;
   end_date?: string | null;
   is_current?: boolean;
+  skill_ids?: string[];
 }

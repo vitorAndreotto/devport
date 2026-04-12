@@ -19,8 +19,12 @@
      │      │N            │N             │N              │N              │N
      │ ┌────┴──────┐ ┌────┴─────┐ ┌──────┴──────┐ ┌──────┴──────┐ ┌─────┴──────┐
      │ │ dev_skills│ │educations│ │ experiences │ │  projects   │ │  (github)  │
-     │ └─────┬─────┘ └──────────┘ └─────────────┘ └─────────────┘ └────────────┘
-     │       │N
+     │ └─────┬─────┘ └──────────┘ └──────┬──────┘ └─────────────┘ └────────────┘
+     │       │N                          │N
+     │       │                     ┌─────┴────────────┐
+     │       │                     │ experience_skills │ (pivot: experience ↔ skill_tree)
+     │       │                     └─────┬────────────┘
+     │       │                           │N
      │       │
      │  ┌────┴──────────┐
      │  │  skill_tree   │←──┐ (self-ref: parent)
@@ -328,7 +332,29 @@ Histórico profissional.
 
 ---
 
-### 2.8 `projects`
+### 2.8 `experience_skills`
+
+Pivot: skills associadas a uma experiência (tag simples, sem nível).
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `experience_id` | `uuid` (FK) | não | — | Referência à experiência |
+| `skill_id` | `uuid` (FK) | não | — | Referência à árvore de skills |
+| `created_at` | `timestamp` | não | now() | Criação |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `UNIQUE (experience_id, skill_id)` — impede duplicata
+- `INDEX (skill_id)`
+
+**Foreign Keys:**
+- `experience_id → experiences(id) ON DELETE CASCADE`
+- `skill_id → skill_tree(id) ON DELETE CASCADE`
+
+---
+
+### 2.9 `projects`
 
 Projetos do desenvolvedor.
 
@@ -362,7 +388,7 @@ Projetos do desenvolvedor.
 
 ---
 
-### 2.9 `jobs`
+### 2.10 `jobs`
 
 Vagas publicadas por empresas.
 
@@ -402,7 +428,7 @@ Vagas publicadas por empresas.
 
 ---
 
-### 2.10 `job_skills`
+### 2.11 `job_skills`
 
 Pivot: skills exigidas por uma vaga, com nível mínimo.
 
@@ -439,6 +465,7 @@ Pivot: skills exigidas por uma vaga, com nível mínimo.
 | Handle válido | CHECK regex `^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$` em ambas as tabelas |
 | CNPJ único | `UNIQUE (cnpj)` em company_profiles |
 | Skill única por dev | `UNIQUE (dev_profile_id, skill_id)` em dev_skills |
+| Skill única por experiência | `UNIQUE (experience_id, skill_id)` em experience_skills |
 | Skill única por vaga | `UNIQUE (job_id, skill_id)` em job_skills |
 | Slug único na árvore | `UNIQUE (slug)` em skill_tree |
 | Em andamento → sem data fim | CHECK em educations e experiences |
@@ -504,9 +531,10 @@ Ordem de criação respeitando dependências:
 5. dev_skills
 6. educations
 7. experiences
-8. projects
-9. jobs
-10. job_skills
+8. experience_skills
+9. projects
+10. jobs
+11. job_skills
 ```
 
 ---

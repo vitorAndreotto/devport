@@ -474,6 +474,10 @@ GET /dev/experiences
       "start_date": "2024-03-01",
       "end_date": null,
       "is_current": true,
+      "skills": [
+        { "id": "880e8400-e29b-41d4-a716-446655440020", "name": "TypeScript", "slug": "typescript", "category": "language" },
+        { "id": "880e8400-e29b-41d4-a716-446655440021", "name": "NestJS", "slug": "nestjs", "category": "framework" }
+      ],
       "created_at": "2026-04-11T10:00:00Z",
       "updated_at": "2026-04-11T10:00:00Z"
     }
@@ -500,11 +504,12 @@ POST /dev/experiences
   "description": "Desenvolvimento de APIs RESTful com NestJS.",
   "start_date": "2024-03-01",
   "end_date": null,
-  "is_current": true
+  "is_current": true,
+  "skill_ids": ["880e8400-e29b-41d4-a716-446655440020", "880e8400-e29b-41d4-a716-446655440021"]
 }
 ```
 
-**Response `201 Created`:** experiência criada.
+**Response `201 Created`:** experiência criada (inclui `skills` populadas).
 
 **Validações:**
 - `company`: obrigatório, string, max 255
@@ -513,6 +518,7 @@ POST /dev/experiences
 - `start_date`: obrigatório, date
 - `end_date`: opcional, date, ≥ start_date
 - `is_current`: opcional, boolean, default false
+- `skill_ids`: opcional, array de UUIDs, max 20 itens, cada UUID deve existir em `skill_tree`
 - Se `is_current = true` e `end_date` preenchido → `422`
 
 ---

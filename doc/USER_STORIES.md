@@ -208,8 +208,9 @@
 
 **Critérios de aceite:**
 - [ ] Informar: empresa, cargo, data início (obrigatórios)
-- [ ] Campos opcionais: descrição, data fim, atual
+- [ ] Campos opcionais: descrição, data fim, atual, skills
 - [ ] Se "atual" = true, data fim deve ser nula
+- [ ] Pode associar skills da árvore (tags) — máximo 20 por experiência
 
 ---
 
@@ -217,8 +218,9 @@
 **Como** dev, **quero** editar uma experiência, **para** corrigir ou atualizar informações.
 
 **Critérios de aceite:**
-- [ ] Todos os campos editáveis
+- [ ] Todos os campos editáveis, incluindo skills associadas
 - [ ] Regras de validação mantidas
+- [ ] Ao alterar skills, as tags anteriores são substituídas pelo novo array
 
 ---
 
@@ -238,6 +240,19 @@
 - [ ] Experiências com "atual" = true aparecem no topo
 - [ ] Ordenação por data início descendente
 - [ ] Período exibido de forma legível (ex: "Jan 2023 — Atual")
+- [ ] Skills associadas exibidas como badges
+
+---
+
+### US-404 — Associar skills a experiência 🟡
+**Como** dev, **quero** marcar quais skills utilizei em cada experiência, **para** enriquecer meu histórico e melhorar meu match.
+
+**Critérios de aceite:**
+- [ ] Selecionar skills da árvore existente (mesmo catálogo do módulo skills)
+- [ ] Associação simples (tag) — sem nível ou anos
+- [ ] Máximo 20 skills por experiência
+- [ ] Skills exibidas como badges na experiência
+- [ ] Skills removidas junto com a experiência (cascade)
 
 ---
 

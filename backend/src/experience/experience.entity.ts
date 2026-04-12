@@ -5,9 +5,11 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   ManyToOne,
+  OneToMany,
   JoinColumn,
 } from 'typeorm';
 import { DevProfile } from '../dev-profile/dev-profile.entity.js';
+import { ExperienceSkill } from './experience-skill.entity.js';
 
 @Entity('experiences')
 export class Experience {
@@ -44,4 +46,7 @@ export class Experience {
   @ManyToOne(() => DevProfile, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'dev_profile_id' })
   devProfile: DevProfile;
+
+  @OneToMany(() => ExperienceSkill, (es) => es.experience, { cascade: true })
+  experienceSkills: ExperienceSkill[];
 }

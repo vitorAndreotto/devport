@@ -1,4 +1,4 @@
-<div class="skill-card" [class.skill-card--editing]="isEditing()">
+<div class="skill-card" [class.skill-card--editing]="isEditing()" [class.skill-card--expert]="skill().level === 'expert'">
   @if (isEditing()) {
     <div class="skill-card__name">{{ skill().skill.name }}</div>
     <div class="skill-card__edit">
@@ -23,24 +23,31 @@
       </button>
     </div>
   } @else {
-    <div class="skill-card__info">
-      <span class="skill-card__name">{{ skill().skill.name }}</span>
-      <div class="skill-card__meta">
-        <span class="skill-card__level skill-card__level--{{ skill().level }}">
-          {{ getLevelLabel(skill().level) }}
-        </span>
-        @if (skill().years_experience !== null) {
-          <span class="skill-card__years">{{ skill().years_experience }} {{ skill().years_experience === 1 ? 'ano' : 'anos' }}</span>
-        }
-      </div>
+    <!-- Depth gauge (level bar) -->
+    <div class="skill-card__gauge skill-card__gauge--{{ skill().level }}">
+      <div class="skill-card__gauge-fill"></div>
     </div>
-    <div class="skill-card__actions">
-      <button class="skill-card__btn skill-card__btn--edit" (click)="startEdit()">
-        <lucide-icon name="edit-3" [size]="15"></lucide-icon>
-      </button>
-      <button class="skill-card__btn skill-card__btn--delete" (click)="remove.emit()">
-        <lucide-icon name="trash-2" [size]="15"></lucide-icon>
-      </button>
+
+    <div class="skill-card__body">
+      <div class="skill-card__info">
+        <span class="skill-card__name">{{ skill().skill.name }}</span>
+        <div class="skill-card__meta">
+          <span class="skill-card__level skill-card__level--{{ skill().level }}">
+            {{ getLevelLabel(skill().level) }}
+          </span>
+          @if (skill().years_experience !== null) {
+            <span class="skill-card__years">{{ skill().years_experience }} {{ skill().years_experience === 1 ? 'ano' : 'anos' }}</span>
+          }
+        </div>
+      </div>
+      <div class="skill-card__actions">
+        <button class="skill-card__btn skill-card__btn--edit" (click)="startEdit()">
+          <lucide-icon name="edit-3" [size]="14"></lucide-icon>
+        </button>
+        <button class="skill-card__btn skill-card__btn--delete" (click)="remove.emit()">
+          <lucide-icon name="trash-2" [size]="14"></lucide-icon>
+        </button>
+      </div>
     </div>
   }
 </div>

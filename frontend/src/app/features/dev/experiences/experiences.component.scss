@@ -1,6 +1,6 @@
 .experiences-page {
   padding: 2rem 1.5rem;
-  max-width: 800px;
+  max-width: 860px;
   margin: 0 auto;
 
   @media (min-width: 768px) { padding: 2.5rem 2rem; }
@@ -10,14 +10,31 @@
     align-items: flex-start;
     justify-content: space-between;
     gap: 1rem;
-    margin-bottom: 2rem;
+    margin-bottom: 2.5rem;
     flex-wrap: wrap;
   }
 
-  &__title { font-size: 1.5rem; font-weight: 700; color: var(--navy-950); }
-  &__subtitle { font-size: 0.9375rem; color: var(--navy-600); margin-top: 0.25rem; }
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--navy-950);
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    ::ng-deep lucide-icon { display: flex; color: var(--navy-500); }
+  }
+
+  &__subtitle {
+    font-size: 0.9375rem;
+    color: var(--navy-600);
+    margin-top: 0.25rem;
+    font-style: italic;
+  }
 }
 
+// =============================================
+// Add button
+// =============================================
 .btn-add {
   display: flex;
   align-items: center;
@@ -31,12 +48,21 @@
   font-size: 0.875rem;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.25s ease;
   white-space: nowrap;
-  &:hover { background: var(--navy-800); }
+  box-shadow: 0 2px 8px rgba(11, 50, 96, 0.2);
+
+  &:hover {
+    background: var(--navy-800);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(11, 50, 96, 0.3);
+  }
   ::ng-deep lucide-icon { display: flex; }
 }
 
+// =============================================
+// Loading
+// =============================================
 .experiences-loading {
   display: flex;
   align-items: center;
@@ -47,20 +73,39 @@
   ::ng-deep lucide-icon { display: flex; }
 }
 
+// =============================================
+// Empty state (nautical)
+// =============================================
 .experiences-empty {
   text-align: center;
   padding: 4rem 1rem;
   color: var(--navy-500);
-  ::ng-deep lucide-icon { display: flex; justify-content: center; margin-bottom: 1rem; }
+
+  &__icon {
+    width: 4rem;
+    height: 4rem;
+    background: var(--navy-50);
+    border: 2px dashed var(--navy-200);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 1.25rem;
+    color: var(--navy-400);
+    ::ng-deep lucide-icon { display: flex; }
+  }
+
   h3 { font-size: 1.125rem; font-weight: 600; color: var(--navy-800); margin-bottom: 0.5rem; }
-  p { font-size: 0.875rem; margin-bottom: 1.5rem; }
+  p { font-size: 0.875rem; margin-bottom: 1.5rem; max-width: 340px; margin-left: auto; margin-right: auto; }
   .btn-add { margin: 0 auto; }
 }
 
-.experiences-list {
-  display: flex;
-  flex-direction: column;
-  gap: 0.75rem;
+// =============================================
+// Timeline container
+// =============================================
+.timeline {
+  position: relative;
+  padding-top: 0.5rem;
 }
 
 .spin { animation: spin 1s linear infinite; }

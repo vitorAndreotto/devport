@@ -1,0 +1,60 @@
+<div class="jobs-page">
+  <div class="jobs-page__header">
+    <div>
+      <h1 class="jobs-page__title">Rotas de Navegação</h1>
+      <p class="jobs-page__subtitle">Abra rotas para atrair navios ao seu porto.</p>
+    </div>
+    <a routerLink="/company/jobs/new" class="btn-new">
+      <lucide-icon name="plus" [size]="18"></lucide-icon>
+      Nova rota
+    </a>
+  </div>
+
+  @if (jobs().length === 0 && !isLoading()) {
+    <div class="jobs-page__empty">
+      <div class="jobs-page__empty-icon">
+        <lucide-icon name="compass" [size]="40"></lucide-icon>
+      </div>
+      <h2 class="jobs-page__empty-title">Nenhuma rota aberta</h2>
+      <p class="jobs-page__empty-text">Publique sua primeira rota para que navios possam traçar curso até o seu porto.</p>
+    </div>
+  }
+
+  @for (job of jobs(); track job.id) {
+    <div class="job-card" [class.job-card--closed]="job.status === 'closed'">
+      <div class="job-card__main">
+        <div class="job-card__header">
+          <h3 class="job-card__title">{{ job.title }}</h3>
+          <span class="job-card__badge" [class.job-card__badge--open]="job.status === 'open'" [class.job-card__badge--closed]="job.status === 'closed'">
+            {{ job.status === 'open' ? 'Aberta' : 'Fechada' }}
+          </span>
+        </div>
+        <div class="job-card__meta">
+          <span class="job-card__tag">{{ seniorityLabel(job.seniority) }}</span>
+          <span class="job-card__tag">{{ contractLabel(job.contract_model) }}</span>
+          <span class="job-card__tag">{{ workModeLabel(job.work_mode) }}</span>
+          <span class="job-card__tag">{{ job.skills.length }} skills</span>
+        </div>
+        @if (job.salary_min && job.salary_max) {
+          <p class="job-card__salary">
+            R$ {{ formatCurrency(job.salary_min) }} — R$ {{ formatCurrency(job.salary_max) }}
+            @if (!job.show_salary) {
+              <span class="job-card__salary-hidden">(oculto para candidatos)</span>
+            }
+          </p>
+        }
+      </div>
+      <div class="job-card__actions">
+        <a [routerLink]="['/company/jobs', job.id, 'edit']" class="job-card__btn">
+          <lucide-icon name="edit-3" [size]="16"></lucide-icon>
+        </a>
+        <button class="job-card__btn" (click)="toggleStatus(job)" [title]="job.status === 'open' ? 'Fechar' : 'Reabrir'">
+          <lucide-icon [name]="job.status === 'open' ? 'x' : 'check'" [size]="16"></lucide-icon>
+        </button>
+        <button class="job-card__btn job-card__btn--danger" (click)="removeJob(job)">
+          <lucide-icon name="trash-2" [size]="16"></lucide-icon>
+        </button>
+      </div>
+    </div>
+  }
+</div>

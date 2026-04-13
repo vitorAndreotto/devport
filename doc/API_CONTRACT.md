@@ -200,6 +200,8 @@ POST /dev/profile
   "email_contact": "contato@vitor.dev",
   "location": "São Paulo, SP",
   "work_mode": "remote",
+  "salary_min": 10000.00,
+  "salary_max": 15000.00,
   "github_username": "vitorsantos",
   "links": [
     { "label": "LinkedIn", "url": "https://linkedin.com/in/vitorsantos" },
@@ -223,6 +225,8 @@ POST /dev/profile
     "location": "São Paulo, SP",
     "work_mode": "remote",
     "employment_status": "looking",
+    "salary_min": 10000.00,
+    "salary_max": 15000.00,
     "github_username": "vitorsantos",
     "links": [
       { "label": "LinkedIn", "url": "https://linkedin.com/in/vitorsantos" },
@@ -243,6 +247,8 @@ POST /dev/profile
 - `email_contact`: obrigatório, email válido
 - `location`: opcional, string, max 255
 - `work_mode`: opcional, enum: `onsite`, `hybrid`, `remote`
+- `salary_min`: opcional, decimal, min 0
+- `salary_max`: opcional, decimal, ≥ salary_min
 - `github_username`: opcional, string, max 255
 - `links`: opcional, array de `{ label: string, url: string(url) }`
 - Retorna `409` se perfil já existir
@@ -742,7 +748,12 @@ POST /company/profile
   "website": "https://techcorp.com",
   "industry": "Tecnologia da Informação",
   "size": "medium",
-  "location": "São Paulo, SP",
+  "city_id": 3550308,
+  "zip_code": "01310-100",
+  "street": "Av. Paulista",
+  "neighborhood": "Bela Vista",
+  "number": "1000",
+  "complement": "12º andar",
   "links": [
     { "label": "LinkedIn", "url": "https://linkedin.com/company/techcorp" }
   ]
@@ -762,7 +773,12 @@ POST /company/profile
     "website": "https://techcorp.com",
     "industry": "Tecnologia da Informação",
     "size": "medium",
-    "location": "São Paulo, SP",
+    "city_id": 3550308,
+    "zip_code": "01310-100",
+    "street": "Av. Paulista",
+    "neighborhood": "Bela Vista",
+    "number": "1000",
+    "complement": "12º andar",
     "links": [
       { "label": "LinkedIn", "url": "https://linkedin.com/company/techcorp" }
     ],
@@ -780,7 +796,12 @@ POST /company/profile
 - `website`: opcional, url válida, max 2048
 - `industry`: obrigatório, string, max 255
 - `size`: obrigatório, enum: `startup`, `small`, `medium`, `large`, `enterprise`
-- `location`: obrigatório, string, max 255
+- `city_id`: opcional, integer, deve existir em cities
+- `zip_code`: opcional, string, formato 00000-000
+- `street`: opcional, string, max 255
+- `neighborhood`: opcional, string, max 255
+- `number`: opcional, string, max 20
+- `complement`: opcional, string, max 255
 - `links`: opcional, array de `{ label, url }`
 - Retorna `409` se perfil já existir
 
@@ -805,6 +826,94 @@ PUT /company/profile
 🔒🏢
 
 **Response `200 OK`:** perfil atualizado.
+
+---
+
+## 8A. Company Units (Unidades)
+
+### 8A.1 Listar unidades
+
+```
+GET /company/units
+```
+🔒🏢
+
+**Response `200 OK`:**
+```json
+{
+  "data": [
+    {
+      "id": "bb0e8400-e29b-41d4-a716-446655440095",
+      "name": "Filial São Paulo",
+      "city_id": 3550308,
+      "zip_code": "01310-100",
+      "street": "Av. Paulista",
+      "neighborhood": "Bela Vista",
+      "number": "1000",
+      "complement": "12º andar",
+      "created_at": "2026-04-11T10:00:00Z",
+      "updated_at": "2026-04-11T10:00:00Z"
+    }
+  ]
+}
+```
+
+> Ordena��ão: `name ASC`
+
+---
+
+### 8A.2 Adicionar unidade
+
+```
+POST /company/units
+```
+🔒🏢
+
+**Request:**
+```json
+{
+  "name": "Filial São Paulo",
+  "city_id": 3550308,
+  "zip_code": "01310-100",
+  "street": "Av. Paulista",
+  "neighborhood": "Bela Vista",
+  "number": "1000",
+  "complement": "12º andar"
+}
+```
+
+**Response `201 Created`:** unidade criada.
+
+**Validações:**
+- `name`: obrigatório, string, max 255
+- `city_id`: obrigatório, integer, deve existir em cities
+- `zip_code`: obrigatório, string, formato 00000-000
+- `street`: obrigatório, string, max 255
+- `neighborhood`: obrigatório, string, max 255
+- `number`: obrigatório, string, max 20
+- `complement`: opcional, string, max 255
+
+---
+
+### 8A.3 Atualizar unidade
+
+```
+PUT /company/units/{unitId}
+```
+🔒🏢
+
+**Response `200 OK`:** unidade atualizada.
+
+---
+
+### 8A.4 Remover unidade
+
+```
+DELETE /company/units/{unitId}
+```
+🔒🏢
+
+**Response `204 No Content`**
 
 ---
 
@@ -833,7 +942,8 @@ GET /company/jobs
             "slug": "angular",
             "category": "framework"
           },
-          "min_level": "intermediate"
+          "min_level": "intermediate",
+          "requirement": "required"
         },
         {
           "skill": {
@@ -842,15 +952,25 @@ GET /company/jobs
             "slug": "typescript",
             "category": "language"
           },
-          "min_level": "advanced"
+          "min_level": "advanced",
+          "requirement": "required"
         }
       ],
+      "seniority": "mid",
       "min_experience_years": 3,
       "contract_model": "clt",
       "salary_min": 8000.00,
       "salary_max": 12000.00,
+      "show_salary": true,
+      "benefits": ["VR", "Plano de saúde", "PLR"],
       "work_mode": "hybrid",
-      "location": "São Paulo, SP",
+      "company_unit_id": "bb0e8400-e29b-41d4-a716-446655440095",
+      "city_id": 3550308,
+      "zip_code": "01310-100",
+      "street": "Av. Paulista",
+      "neighborhood": "Bela Vista",
+      "number": "1000",
+      "complement": "12º andar",
       "status": "open",
       "created_at": "2026-04-11T10:00:00Z",
       "updated_at": "2026-04-11T10:00:00Z"
@@ -877,15 +997,25 @@ POST /company/jobs
   "title": "Desenvolvedor Angular Pleno",
   "description": "Buscamos dev Angular para nosso time de produto...",
   "skills": [
-    { "skill_id": "880e8400-e29b-41d4-a716-446655440020", "min_level": "intermediate" },
-    { "skill_id": "880e8400-e29b-41d4-a716-446655440021", "min_level": "advanced" }
+    { "skill_id": "880e8400-e29b-41d4-a716-446655440020", "min_level": "intermediate", "requirement": "required" },
+    { "skill_id": "880e8400-e29b-41d4-a716-446655440021", "min_level": "advanced", "requirement": "required" },
+    { "skill_id": "880e8400-e29b-41d4-a716-446655440030", "min_level": "beginner", "requirement": "differential" }
   ],
+  "seniority": "mid",
   "min_experience_years": 3,
   "contract_model": "clt",
   "salary_min": 8000.00,
   "salary_max": 12000.00,
+  "show_salary": true,
+  "benefits": ["VR", "Plano de saúde", "PLR"],
   "work_mode": "hybrid",
-  "location": "São Paulo, SP"
+  "company_unit_id": "bb0e8400-e29b-41d4-a716-446655440095",
+  "city_id": 3550308,
+  "zip_code": "01310-100",
+  "street": "Av. Paulista",
+  "neighborhood": "Bela Vista",
+  "number": "1000",
+  "complement": "12º andar"
 }
 ```
 
@@ -894,15 +1024,25 @@ POST /company/jobs
 **Validações:**
 - `title`: obrigatório, string, max 255
 - `description`: obrigatório, text
-- `skills`: obrigatório, array de `{ skill_id: uuid, min_level: enum }`
+- `skills`: obrigatório, array de `{ skill_id: uuid, min_level: enum, requirement: enum }`
 - `skills[].skill_id`: deve existir em skill_tree
 - `skills[].min_level`: enum: `beginner`, `intermediate`, `advanced`, `expert`
+- `skills[].requirement`: enum: `required`, `expected`, `differential` (default: `required`)
+- `seniority`: obrigatório, enum: `intern`, `junior`, `mid`, `senior`, `lead`, `specialist`
 - `min_experience_years`: obrigatório, integer, min 0
 - `contract_model`: obrigatório, enum: `clt`, `pj`, `clt_pj`
 - `salary_min`: obrigatório, decimal, min 0
 - `salary_max`: obrigatório, decimal, ≥ salary_min
+- `show_salary`: opcional, boolean (default: false)
+- `benefits`: opcional, array de strings, max 20 itens, cada string max 100 chars
 - `work_mode`: obrigatório, enum: `onsite`, `hybrid`, `remote`
-- `location`: obrigatório se `work_mode` = `onsite` ou `hybrid`, string, max 255
+- `company_unit_id`: opcional, uuid, deve pertencer à empresa (referência para pré-preenchimento)
+- `city_id`: obrigatório se `work_mode` = `onsite` ou `hybrid`, integer, deve existir em cities
+- `zip_code`: obrigatório se `work_mode` = `onsite` ou `hybrid`, string, formato 00000-000
+- `street`: obrigatório se `work_mode` = `onsite` ou `hybrid`, string, max 255
+- `neighborhood`: obrigatório se `work_mode` = `onsite` ou `hybrid`, string, max 255
+- `number`: obrigatório se `work_mode` = `onsite` ou `hybrid`, string, max 20
+- `complement`: opcional, string, max 255
 
 ---
 
@@ -1042,7 +1182,7 @@ GET /dev/applications
         "title": "Desenvolvedor Angular Pleno",
         "work_mode": "hybrid",
         "contract_model": "clt",
-        "location": "São Paulo, SP",
+        "city_id": 3550308,
         "status": "open",
         "company": {
           "company_name": "TechCorp",
@@ -1371,7 +1511,8 @@ GET /jobs
 | `skill` | uuid | Filtra por skill exigida |
 | `work_mode` | string | `onsite`, `hybrid`, `remote` |
 | `contract_model` | string | `clt`, `pj`, `clt_pj` |
-| `location` | string | Busca textual na localização |
+| `seniority` | string | `intern`, `junior`, `mid`, `senior`, `lead`, `specialist` |
+| `city_id` | integer | Filtra por município |
 | `sort` | string | `match_score`, `recent`, `experience_asc` |
 | `page` | integer | Página (default: 1) |
 | `limit` | integer | Itens por página (default: 12, max: 50) |
@@ -1387,13 +1528,23 @@ GET /jobs
       "skills": [
         {
           "skill": { "id": "...", "name": "Angular", "slug": "angular", "category": "framework" },
-          "min_level": "intermediate"
+          "min_level": "intermediate",
+          "requirement": "required"
         }
       ],
+      "seniority": "mid",
       "min_experience_years": 3,
       "contract_model": "clt",
+      "salary_min": 8000.00,
+      "salary_max": 12000.00,
+      "benefits": ["VR", "Plano de saúde", "PLR"],
       "work_mode": "hybrid",
-      "location": "São Paulo, SP",
+      "city_id": 3550308,
+      "zip_code": "01310-100",
+      "street": "Av. Paulista",
+      "neighborhood": "Bela Vista",
+      "number": "1000",
+      "complement": "12º andar",
       "status": "open",
       "company": {
         "id": "dd0e8400-e29b-41d4-a716-446655440070",
@@ -1417,7 +1568,7 @@ GET /jobs
 - `match_score` só aparece se dev estiver autenticado
 - Apenas vagas `open`
 - Default sort: `match_score` (dev logado) ou `recent` (visitante)
-- Faixa salarial **nunca** é retornada neste endpoint
+- `salary_min` / `salary_max` retornados apenas se `show_salary = true` na vaga
 
 ---
 
@@ -1438,25 +1589,40 @@ GET /jobs/{jobId}
     "skills": [
       {
         "skill": { "id": "...", "name": "Angular", "slug": "angular", "category": "framework" },
-        "min_level": "intermediate"
+        "min_level": "intermediate",
+        "requirement": "required"
       },
       {
         "skill": { "id": "...", "name": "TypeScript", "slug": "typescript", "category": "language" },
-        "min_level": "advanced"
+        "min_level": "advanced",
+        "requirement": "required"
+      },
+      {
+        "skill": { "id": "...", "name": "RxJS", "slug": "rxjs", "category": "framework" },
+        "min_level": "beginner",
+        "requirement": "differential"
       }
     ],
+    "seniority": "mid",
     "min_experience_years": 3,
     "contract_model": "clt",
+    "salary_min": 8000.00,
+    "salary_max": 12000.00,
+    "benefits": ["VR", "Plano de saúde", "PLR"],
     "work_mode": "hybrid",
-    "location": "São Paulo, SP",
+    "city_id": 3550308,
+    "zip_code": "01310-100",
+    "street": "Av. Paulista",
+    "neighborhood": "Bela Vista",
+    "number": "1000",
+    "complement": "12º andar",
     "status": "open",
     "company": {
       "id": "dd0e8400-e29b-41d4-a716-446655440070",
       "company_name": "TechCorp",
       "logo_url": "https://example.com/logo.png",
       "industry": "Tecnologia da Informação",
-      "size": "medium",
-      "location": "São Paulo, SP"
+      "size": "medium"
     },
     "match_score": 85,
     "created_at": "2026-04-11T10:00:00Z"
@@ -1464,7 +1630,7 @@ GET /jobs/{jobId}
 }
 ```
 
-> `match_score` presente apenas se dev autenticado. Salário nunca visível.
+> `match_score` presente apenas se dev autenticado. `salary_min`/`salary_max` presentes apenas se `show_salary = true`.
 
 ---
 
@@ -1482,7 +1648,7 @@ GET /developers
 | `q` | string | Busca no nome |
 | `skill` | uuid | Filtra por skill |
 | `min_level` | string | Nível mínimo na skill filtrada |
-| `location` | string | Busca textual |
+| `city_id` | integer | Filtra por município |
 | `job_id` | uuid | Vaga de referência para cálculo de match |
 | `page` | integer | Página (default: 1) |
 | `limit` | integer | Itens por página (default: 12, max: 50) |
@@ -1581,6 +1747,8 @@ GET /developers/{handle}
 }
 ```
 
+> Pretensão salarial (`salary_min`/`salary_max`) **nunca** é retornada em endpoints públicos ou para empresas.
+
 ---
 
 ### 11.6 Ver perfil público da empresa
@@ -1605,15 +1773,32 @@ GET /companies/{handle}
     "website": "https://techcorp.com",
     "industry": "Tecnologia da Informação",
     "size": "medium",
-    "location": "São Paulo, SP",
+    "city_id": 3550308,
+    "zip_code": "01310-100",
+    "street": "Av. Paulista",
+    "neighborhood": "Bela Vista",
+    "number": "1000",
+    "complement": "12º andar",
     "links": [],
+    "units": [
+      {
+        "id": "bb0e8400-e29b-41d4-a716-446655440095",
+        "name": "Filial Rio de Janeiro",
+        "city_id": 3304557,
+        "zip_code": "20040-020",
+        "street": "Av. Rio Branco",
+        "neighborhood": "Centro",
+        "number": "100",
+        "complement": null
+      }
+    ],
     "open_jobs": [
       {
         "id": "ee0e8400-e29b-41d4-a716-446655440080",
         "title": "Desenvolvedor Angular Pleno",
         "work_mode": "hybrid",
         "contract_model": "clt",
-        "location": "São Paulo, SP",
+        "city_id": 3550308,
         "created_at": "2026-04-11T10:00:00Z"
       }
     ],
@@ -1622,7 +1807,7 @@ GET /companies/{handle}
 }
 ```
 
-> Salário **nunca** visível no perfil público. Apenas vagas `open`.
+> Salário visível apenas se `show_salary = true` na vaga. Apenas vagas `open`. Unidades exibidas se existirem.
 
 ---
 
@@ -1697,13 +1882,17 @@ GET /companies/{handle}
 | 9A.2 | GET | `/dev/applications` | 🔒🧑‍💻 | Listar candidaturas |
 | 9A.3 | PATCH | `/dev/applications/{id}/withdraw` | 🔒🧑‍💻 | Retirar candidatura |
 
-### Company (16 endpoints autenticados)
+### Company (20 endpoints autenticados)
 
 | # | Método | Endpoint | Auth | Descrição |
 |---|---|---|---|---|
 | 8.1 | POST | `/company/profile` | 🔒🏢 | Criar perfil |
 | 8.2 | GET | `/company/profile` | 🔒🏢 | Ver perfil próprio |
 | 8.3 | PUT | `/company/profile` | 🔒🏢 | Atualizar perfil |
+| 8A.1 | GET | `/company/units` | 🔒🏢 | Listar unidades |
+| 8A.2 | POST | `/company/units` | 🔒🏢 | Adicionar unidade |
+| 8A.3 | PUT | `/company/units/{id}` | 🔒🏢 | Atualizar unidade |
+| 8A.4 | DELETE | `/company/units/{id}` | 🔒🏢 | Remover unidade |
 | 9.1 | GET | `/company/jobs` | 🔒🏢 | Listar vagas |
 | 9.2 | POST | `/company/jobs` | 🔒🏢 | Publicar vaga |
 | 9.3 | PUT | `/company/jobs/{id}` | 🔒🏢 | Atualizar vaga |
@@ -1732,4 +1921,4 @@ GET /companies/{handle}
 
 > 🔓* = público, mas se dev autenticado, inclui `match_score`
 
-> **Total: 51 endpoints** — 11 públicos, 25 dev, 16 empresa
+> **Total: 55 endpoints** — 11 públicos, 25 dev, 20 empresa

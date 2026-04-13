@@ -1,0 +1,125 @@
+<div class="units-page">
+  <div class="units-page__header">
+    <div>
+      <h1 class="units-page__title">Docas do Porto</h1>
+      <p class="units-page__subtitle">Cada doca é uma filial onde navios podem atracar.</p>
+    </div>
+    @if (!showForm()) {
+      <button class="btn-add" (click)="openNew()">
+        <lucide-icon name="plus" [size]="18"></lucide-icon>
+        Nova doca
+      </button>
+    }
+  </div>
+
+  <!-- Form -->
+  @if (showForm()) {
+    <section class="form-section">
+      <div class="form-section__header">
+        <lucide-icon name="map-pin" [size]="20"></lucide-icon>
+        <h2 class="form-section__title">{{ editingId() ? 'Editar doca' : 'Nova doca' }}</h2>
+      </div>
+
+      <form [formGroup]="form" (ngSubmit)="onSubmit()" class="form-section__body">
+        <app-form-field label="Nome da unidade" [control]="form.controls.name" [required]="true">
+          <input class="input" type="text" formControlName="name" placeholder="Ex: Doca São Paulo">
+        </app-form-field>
+
+        <app-form-field label="CEP" [control]="form.controls.zip_code" [required]="true">
+          <div class="cep-field">
+            <input
+              class="input"
+              type="text"
+              formControlName="zip_code"
+              placeholder="00000-000"
+              maxlength="9"
+              appCepMask
+              (blur)="onCepBlur()"
+            >
+            @if (isFetchingCep()) {
+              <lucide-icon name="loader-2" [size]="16" class="cep-field__spinner spin"></lucide-icon>
+            }
+          </div>
+        </app-form-field>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-field__label">Estado <span class="form-field__required">*</span></label>
+            <select class="input" formControlName="state_id" (change)="onStateChange()">
+              <option [ngValue]="null">Selecione o estado</option>
+              @for (state of states(); track state.id) {
+                <option [ngValue]="state.id">{{ state.name }} ({{ state.abbr }})</option>
+              }
+            </select>
+          </div>
+
+          <app-city-search
+            #citySearch
+            [stateId]="form.controls.state_id.value"
+            [control]="form.controls.city_id"
+          />
+        </div>
+
+        <app-form-field label="Rua / Logradouro" [control]="form.controls.street" [required]="true">
+          <input class="input" type="text" formControlName="street" placeholder="Rua, Avenida...">
+        </app-form-field>
+
+        <div class="form-grid">
+          <app-form-field label="Bairro" [control]="form.controls.neighborhood" [required]="true">
+            <input class="input" type="text" formControlName="neighborhood" placeholder="Bairro">
+          </app-form-field>
+
+          <app-form-field label="Número" [control]="form.controls.number" [required]="true">
+            <input class="input" type="text" formControlName="number" placeholder="Nº">
+          </app-form-field>
+        </div>
+
+        <app-form-field label="Complemento" [control]="form.controls.complement">
+          <input class="input" type="text" formControlName="complement" placeholder="Apto, Bloco, Sala...">
+        </app-form-field>
+
+        <div class="form-actions">
+          <button type="button" class="btn-cancel" (click)="cancelForm()">Cancelar</button>
+          <button type="submit" class="btn-save" [disabled]="isSaving()">
+            @if (isSaving()) {
+              <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+              Salvando...
+            } @else {
+              <lucide-icon name="save" [size]="18"></lucide-icon>
+              {{ editingId() ? 'Atualizar' : 'Adicionar' }}
+            }
+          </button>
+        </div>
+      </form>
+    </section>
+  }
+
+  <!-- List -->
+  @if (units().length === 0 && !showForm()) {
+    <div class="units-page__empty">
+      <div class="units-page__empty-icon">
+        <lucide-icon name="map-pin" [size]="40"></lucide-icon>
+      </div>
+      <h2 class="units-page__empty-title">Nenhuma doca registrada</h2>
+      <p class="units-page__empty-text">Registre as docas do porto para que navios saibam onde atracar.</p>
+    </div>
+  }
+
+  @for (unit of units(); track unit.id) {
+    <div class="unit-card">
+      <div class="unit-card__info">
+        <h3 class="unit-card__name">{{ unit.name }}</h3>
+        <p class="unit-card__address">{{ unit.street }}, {{ unit.number }}{{ unit.complement ? ' - ' + unit.complement : '' }}</p>
+        <p class="unit-card__address">{{ unit.neighborhood }} — CEP {{ unit.zip_code }}</p>
+      </div>
+      <div class="unit-card__actions">
+        <button class="unit-card__btn" (click)="openEdit(unit)">
+          <lucide-icon name="edit-3" [size]="16"></lucide-icon>
+        </button>
+        <button class="unit-card__btn unit-card__btn--danger" (click)="removeUnit(unit)">
+          <lucide-icon name="trash-2" [size]="16"></lucide-icon>
+        </button>
+      </div>
+    </div>
+  }
+</div>

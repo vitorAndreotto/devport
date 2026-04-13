@@ -30,12 +30,12 @@ export class DashboardComponent implements OnInit {
   projectCount = signal(0);
 
   readonly quickActions = [
-    { path: '/dev/profile', label: 'Editar perfil', icon: 'user', description: 'Atualize suas informações profissionais' },
-    { path: '/dev/skills', label: 'Gerenciar skills', icon: 'puzzle', description: 'Adicione ou edite suas habilidades' },
-    { path: '/dev/experiences', label: 'Experiências', icon: 'briefcase', description: 'Gerencie seu histórico profissional' },
-    { path: '/dev/education', label: 'Formação', icon: 'graduation-cap', description: 'Registre sua formação acadêmica' },
-    { path: '/dev/projects', label: 'Projetos', icon: 'folder-git-2', description: 'Gerencie seus projetos e repos' },
-    { path: '/dev/jobs', label: 'Buscar vagas', icon: 'compass', description: 'Encontre vagas com match' },
+    { path: '/dev/profile', label: 'Registro da Embarcação', icon: 'user', description: 'Atualize a identidade do seu navio' },
+    { path: '/dev/skills', label: 'Equipamentos de Bordo', icon: 'compass', description: 'Gerencie suas ferramentas e tecnologias' },
+    { path: '/dev/experiences', label: 'Diário de Bordo', icon: 'anchor', description: 'Registre os portos por onde ancorou' },
+    { path: '/dev/education', label: 'Carta Náutica', icon: 'graduation-cap', description: 'Suas habilitações de navegação' },
+    { path: '/dev/projects', label: 'Cargas do Porto', icon: 'folder-git-2', description: 'Projetos que você transportou' },
+    { path: '/dev/jobs', label: 'Rotas Disponíveis', icon: 'compass', description: 'Navegue até as melhores oportunidades' },
   ];
 
   ngOnInit(): void {

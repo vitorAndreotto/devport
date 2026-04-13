@@ -1,0 +1,239 @@
+<div class="job-form-page">
+  <div class="job-form-page__header">
+    <h1 class="job-form-page__title">{{ pageTitle }}</h1>
+    <p class="job-form-page__subtitle">{{ isEditing ? 'Atualize os dados da rota.' : 'Abra uma nova rota de navegação para o porto.' }}</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+    <!-- Dados básicos -->
+    <section class="form-section">
+      <div class="form-section__header">
+        <lucide-icon name="compass" [size]="20"></lucide-icon>
+        <h2 class="form-section__title">Dados da rota</h2>
+      </div>
+      <div class="form-section__body">
+        <app-form-field label="Título" [control]="form.controls.title" [required]="true">
+          <input class="input" type="text" formControlName="title" placeholder="Ex: Desenvolvedor Angular Pleno">
+        </app-form-field>
+
+        <app-form-field label="Descrição" [control]="form.controls.description" [required]="true">
+          <textarea class="input input--textarea" formControlName="description" placeholder="Descreva a vaga, responsabilidades, requisitos..." rows="5"></textarea>
+        </app-form-field>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-field__label">Senioridade <span class="form-field__required">*</span></label>
+            <select class="input" formControlName="seniority">
+              <option value="">Selecione</option>
+              <option value="intern">Estágio</option>
+              <option value="junior">Júnior</option>
+              <option value="mid">Pleno</option>
+              <option value="senior">Sênior</option>
+              <option value="lead">Lead</option>
+              <option value="specialist">Especialista</option>
+            </select>
+          </div>
+
+          <app-form-field label="Experiência mínima (anos)" [control]="form.controls.min_experience_years" [required]="true">
+            <input class="input" type="number" formControlName="min_experience_years" min="0">
+          </app-form-field>
+        </div>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-field__label">Modelo de contratação <span class="form-field__required">*</span></label>
+            <select class="input" formControlName="contract_model">
+              <option value="">Selecione</option>
+              <option value="clt">CLT</option>
+              <option value="pj">PJ</option>
+              <option value="clt_pj">CLT ou PJ</option>
+            </select>
+          </div>
+
+          <div class="form-field">
+            <label class="form-field__label">Modalidade <span class="form-field__required">*</span></label>
+            <select class="input" formControlName="work_mode">
+              <option value="">Selecione</option>
+              <option value="remote">Remoto</option>
+              <option value="hybrid">Híbrido</option>
+              <option value="onsite">Presencial</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Remuneração -->
+    <section class="form-section">
+      <div class="form-section__header">
+        <lucide-icon name="briefcase" [size]="20"></lucide-icon>
+        <h2 class="form-section__title">Remuneração</h2>
+      </div>
+      <div class="form-section__body">
+        <div class="form-grid">
+          <app-form-field label="Salário mínimo (R$)" [control]="form.controls.salary_min" [required]="true">
+            <input class="input" type="text" formControlName="salary_min" placeholder="0,00" appCurrencyMask>
+          </app-form-field>
+          <app-form-field label="Salário máximo (R$)" [control]="form.controls.salary_max" [required]="true">
+            <input class="input" type="text" formControlName="salary_max" placeholder="0,00" appCurrencyMask>
+          </app-form-field>
+        </div>
+
+        <label class="checkbox-field">
+          <input type="checkbox" formControlName="show_salary">
+          <span>Exibir faixa salarial publicamente na vaga</span>
+        </label>
+      </div>
+    </section>
+
+    <!-- Skills -->
+    <section class="form-section">
+      <div class="form-section__header">
+        <lucide-icon name="puzzle" [size]="20"></lucide-icon>
+        <h2 class="form-section__title">Skills</h2>
+      </div>
+      <div class="form-section__body" formArrayName="skills">
+        @for (skill of skillsArray.controls; track $index; let i = $index) {
+          <div class="skill-row" [formGroupName]="i">
+            <select class="input skill-row__skill" formControlName="skill_id">
+              <option value="">Selecione a skill</option>
+              @for (s of availableSkills(); track s.id) {
+                <option [value]="s.id">{{ s.name }}</option>
+              }
+            </select>
+            <select class="input skill-row__level" formControlName="min_level">
+              <option value="beginner">Iniciante</option>
+              <option value="intermediate">Intermediário</option>
+              <option value="advanced">Avançado</option>
+              <option value="expert">Expert</option>
+            </select>
+            <select class="input skill-row__req" formControlName="requirement">
+              <option value="required">Obrigatória</option>
+              <option value="expected">Esperada</option>
+              <option value="differential">Diferencial</option>
+            </select>
+            <button type="button" class="skill-row__remove" (click)="removeSkill(i)">
+              <lucide-icon name="trash-2" [size]="16"></lucide-icon>
+            </button>
+          </div>
+        }
+
+        <button type="button" class="btn-add" (click)="addSkill()">
+          <lucide-icon name="plus" [size]="16"></lucide-icon>
+          Adicionar skill
+        </button>
+      </div>
+    </section>
+
+    <!-- Benefícios -->
+    <section class="form-section">
+      <div class="form-section__header">
+        <lucide-icon name="list-checks" [size]="20"></lucide-icon>
+        <h2 class="form-section__title">Benefícios</h2>
+      </div>
+      <div class="form-section__body">
+        <div class="benefit-input">
+          <input
+            class="input"
+            type="text"
+            [value]="benefitInput()"
+            (input)="benefitInput.set($any($event.target).value)"
+            (keydown)="onBenefitKeydown($event)"
+            placeholder="Digite e pressione Enter (ex: VR, Plano de saúde)"
+          >
+          <button type="button" class="benefit-input__add" (click)="addBenefit()">
+            <lucide-icon name="plus" [size]="16"></lucide-icon>
+          </button>
+        </div>
+
+        @if (benefitsArray.length > 0) {
+          <div class="benefit-tags">
+            @for (b of benefitsArray.controls; track $index; let i = $index) {
+              <span class="benefit-tag">
+                {{ b.get('value')?.value }}
+                <button type="button" class="benefit-tag__remove" (click)="removeBenefit(i)">
+                  <lucide-icon name="x" [size]="12"></lucide-icon>
+                </button>
+              </span>
+            }
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Endereço -->
+    @if (needsAddress) {
+      <section class="form-section">
+        <div class="form-section__header">
+          <lucide-icon name="map-pin" [size]="20"></lucide-icon>
+          <h2 class="form-section__title">Localização</h2>
+        </div>
+        <div class="form-section__body">
+          <div class="form-field">
+            <label class="form-field__label">Preencher endereço a partir de</label>
+            <select class="input" formControlName="company_unit_id" (change)="onLocationSourceChange()">
+              <option value="">Sede da empresa</option>
+              @for (unit of units(); track unit.id) {
+                <option [value]="unit.id">{{ unit.name }}</option>
+              }
+            </select>
+          </div>
+
+          <app-form-field label="CEP" [control]="form.controls.zip_code">
+            <div class="cep-field">
+              <input class="input" type="text" formControlName="zip_code" placeholder="00000-000" maxlength="9" appCepMask (blur)="onCepBlur()">
+              @if (isFetchingCep()) {
+                <lucide-icon name="loader-2" [size]="16" class="cep-field__spinner spin"></lucide-icon>
+              }
+            </div>
+          </app-form-field>
+
+          <div class="form-grid">
+            <div class="form-field">
+              <label class="form-field__label">Estado</label>
+              <select class="input" formControlName="state_id" (change)="onStateChange()">
+                <option [ngValue]="null">Selecione o estado</option>
+                @for (state of states(); track state.id) {
+                  <option [ngValue]="state.id">{{ state.name }} ({{ state.abbr }})</option>
+                }
+              </select>
+            </div>
+            <app-city-search #citySearch [stateId]="form.controls.state_id.value" [control]="form.controls.city_id" />
+          </div>
+
+          <app-form-field label="Rua / Logradouro" [control]="form.controls.street">
+            <input class="input" type="text" formControlName="street" placeholder="Rua, Avenida...">
+          </app-form-field>
+
+          <div class="form-grid">
+            <app-form-field label="Bairro" [control]="form.controls.neighborhood">
+              <input class="input" type="text" formControlName="neighborhood" placeholder="Bairro">
+            </app-form-field>
+            <app-form-field label="Número" [control]="form.controls.number">
+              <input class="input" type="text" formControlName="number" placeholder="Nº">
+            </app-form-field>
+          </div>
+
+          <app-form-field label="Complemento" [control]="form.controls.complement">
+            <input class="input" type="text" formControlName="complement" placeholder="Apto, Bloco, Sala...">
+          </app-form-field>
+        </div>
+      </section>
+    }
+
+    <!-- Actions -->
+    <div class="job-form-page__actions">
+      <button type="button" class="btn-cancel" (click)="router.navigate(['/company/jobs'])">Cancelar</button>
+      <button type="submit" class="btn-save" [disabled]="isSaving()">
+        @if (isSaving()) {
+          <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+          Salvando...
+        } @else {
+          <lucide-icon name="save" [size]="18"></lucide-icon>
+          {{ isEditing ? 'Atualizar' : 'Publicar rota' }}
+        }
+      </button>
+    </div>
+  </form>
+</div>

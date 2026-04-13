@@ -2,9 +2,11 @@ import { Component, inject, input, output, signal, OnInit, DestroyRef } from '@a
 import { FormControl, ReactiveFormsModule, Validators } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule } from 'lucide-angular';
+import { Observable } from 'rxjs';
 import { DevProfileService } from '../../../core/services/dev-profile.service';
 
 export type HandleStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invalid';
+export type HandleCheckFn = (handle: string) => Observable<boolean>;
 
 @Component({
   selector: 'app-handle-input',
@@ -15,6 +17,7 @@ export type HandleStatus = 'idle' | 'checking' | 'available' | 'taken' | 'invali
 })
 export class HandleInputComponent implements OnInit {
   control = input.required<FormControl<string | null>>();
+  checkFn = input<HandleCheckFn | null>(null);
   statusChange = output<HandleStatus>();
 
   private readonly profileService = inject(DevProfileService);
@@ -51,7 +54,9 @@ export class HandleInputComponent implements OnInit {
     this.status.set('checking');
     this.statusChange.emit('checking');
 
-    this.profileService.checkHandle(value)
+    const check = this.checkFn() ?? ((h: string) => this.profileService.checkHandle(h));
+
+    check(value)
       .pipe(takeUntilDestroyed(this.destroyRef))
       .subscribe((available) => {
         const newStatus: HandleStatus = available ? 'available' : 'taken';

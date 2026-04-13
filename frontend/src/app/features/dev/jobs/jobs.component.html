@@ -1,0 +1,351 @@
+<div class="jobs-page">
+    <!-- Filters -->
+    <div class="filters">
+        <div class="filters__search">
+            <lucide-icon name="search" [size]="18"></lucide-icon>
+            <input class="filters__input" type="text" placeholder="Buscar vagas..." [ngModel]="filterQ()" (ngModelChange)="filterQ.set($event)" (keydown.enter)="search()">
+        </div>
+
+        <div class="filters__row">
+            <select class="filters__select" [ngModel]="filterWorkMode()" (ngModelChange)="filterWorkMode.set($event); onWorkModeChange()">
+        <option value="">Modalidade</option>
+        <option value="remote">Remoto</option>
+        <option value="hybrid">Híbrido</option>
+        <option value="onsite">Presencial</option>
+      </select> @if (showCityFilter()) {
+            <div class="city-search">
+                <div class="city-search__field">
+                    <lucide-icon name="map-pin" [size]="14"></lucide-icon>
+                    <input class="city-search__input" type="text" placeholder="Buscar cidade..." [value]="citySearchQuery()" (input)="onCitySearchInput($any($event.target).value)" (focus)="onCitySearchFocus()" (blur)="onCitySearchBlur()"> @if (filterCityId())
+                    {
+                    <button class="city-search__clear" type="button" (mousedown)="clearCity()">
+                <lucide-icon name="x" [size]="12"></lucide-icon>
+              </button> }
+                </div>
+                @if (cityDropdownOpen() && cityOptions().length > 0) {
+                <div class="city-search__dropdown">
+                    @for (c of cityOptions(); track c.id) {
+                    <button class="city-search__option" type="button" (mousedown)="selectCity(c)">
+                  <span class="city-search__option-name">{{ c.name }}</span>
+                  <span class="city-search__option-state">{{ c.state_abbr }}</span>
+                </button> }
+                </div>
+                }
+            </div>
+            }
+
+            <select class="filters__select" [ngModel]="filterContract()" (ngModelChange)="filterContract.set($event); search()">
+        <option value="">Contrato</option>
+        <option value="clt">CLT</option>
+        <option value="pj">PJ</option>
+        <option value="clt_pj">CLT/PJ</option>
+      </select>
+
+            <select class="filters__select" [ngModel]="filterSeniority()" (ngModelChange)="filterSeniority.set($event); search()">
+        <option value="">Senioridade</option>
+        <option value="intern">Estágio</option>
+        <option value="junior">Júnior</option>
+        <option value="mid">Pleno</option>
+        <option value="senior">Sênior</option>
+        <option value="lead">Lead</option>
+        <option value="specialist">Especialista</option>
+      </select>
+
+            <select class="filters__select" [ngModel]="filterApplication()" (ngModelChange)="filterApplication.set($event)">
+        <option value="">Candidatura</option>
+        <option value="applied">Candidatado</option>
+        <option value="not_applied">Não candidatado</option>
+      </select> @if (activeFiltersCount() > 0) {
+            <button class="filters__clear" (click)="clearFilters()">
+          <lucide-icon name="x" [size]="14"></lucide-icon>
+          Limpar
+        </button> }
+        </div>
+
+        <!-- Skills filter -->
+        <div class="filters__skills">
+            <div class="filters__skill-add">
+                <div class="skill-search">
+                    <div class="skill-search__field">
+                        <lucide-icon name="search" [size]="14"></lucide-icon>
+                        <input class="skill-search__input" type="text" placeholder="Buscar skill..." [value]="skillSearchQuery()" (input)="skillSearchQuery.set($any($event.target).value); filterNewSkillId.set('')" (focus)="onSkillSearchFocus()" (blur)="onSkillSearchBlur()">
+                    </div>
+                    @if (skillDropdownOpen() && filteredSkillOptions().length > 0) {
+                    <div class="skill-search__dropdown">
+                        @for (s of filteredSkillOptions(); track s.id) {
+                        <button class="skill-search__option" type="button" (mousedown)="selectSkillOption(s)">
+                  <span class="skill-search__option-name">{{ s.name }}</span>
+                  <span class="skill-search__option-cat">{{ s.category }}</span>
+                </button> }
+                    </div>
+                    }
+                </div>
+                <select class="filters__select" [ngModel]="filterNewSkillLevel()" (ngModelChange)="filterNewSkillLevel.set($event)">
+          <option value="">Qualquer nível</option>
+          <option value="beginner">Iniciante+</option>
+          <option value="intermediate">Intermediário+</option>
+          <option value="advanced">Avançado+</option>
+          <option value="expert">Expert</option>
+        </select>
+                <button class="filters__skill-btn" (click)="addSkillFilter()" [disabled]="!filterNewSkillId()">
+          <lucide-icon name="plus" [size]="14"></lucide-icon>
+        </button>
+            </div>
+
+            @if (filterSkills().length > 0) {
+            <div class="filters__skill-tags">
+                @for (sf of filterSkills(); track sf.skill_id; let i = $index) {
+                <span class="filters__skill-tag">
+              {{ getSkillName(sf.skill_id) }}
+              @if (sf.min_level) {
+                <span class="filters__skill-tag-level">{{ levelLabel(sf.min_level) }}+</span> }
+                <button class="filters__skill-tag-remove" (click)="removeSkillFilter(i)">
+                <lucide-icon name="x" [size]="10"></lucide-icon>
+              </button>
+                </span>
+                }
+            </div>
+            }
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div class="jobs-content">
+        <!-- List -->
+        <div class="jobs-list">
+            @if (isLoading()) {
+            <div class="jobs-list__loading">
+                <lucide-icon name="loader-2" [size]="24" class="spin"></lucide-icon>
+            </div>
+            } @else if (filteredJobs().length === 0) {
+            <div class="jobs-list__empty">
+                <lucide-icon name="compass" [size]="32"></lucide-icon>
+                <p>Nenhuma vaga encontrada.</p>
+            </div>
+            } @else { @for (job of filteredJobs(); track job.id) {
+            <button class="job-card" [class.job-card--active]="selectedJobId() === job.id" (click)="selectJob(job)">
+              @if (job.match_score != null) {
+                <div class="job-card__score" [class.job-card__score--high]="job.match_score >= 70" [class.job-card__score--mid]="job.match_score >= 40 && job.match_score < 70" [class.job-card__score--low]="job.match_score < 40">{{ job.match_score }}%</div>
+              }
+              <div class="job-card__header">
+                <div class="job-card__company">
+                  @if (job.company?.logo_url) {
+                    <img [src]="job.company!.logo_url" class="job-card__logo" [alt]="job.company!.company_name">
+                  } @else {
+                    <div class="job-card__logo-placeholder"><lucide-icon name="building-2" [size]="14"></lucide-icon></div>
+                  }
+                  <span class="job-card__company-name">{{ job.company?.company_name }}</span>
+                </div>
+                <span class="job-card__time">{{ timeAgo(job.created_at) }}</span>
+              </div>
+              <h3 class="job-card__title">{{ job.title }}</h3>
+              <div class="job-card__meta">
+                <span class="job-card__badge job-card__badge--seniority">{{ seniorityLabel(job.seniority) }}</span>
+                <span class="job-card__badge job-card__badge--mode">{{ workModeLabel(job.work_mode) }}</span>
+                <span class="job-card__badge">{{ contractLabel(job.contract_model) }}</span>
+              </div>
+              @if (job.city_name && job.work_mode !== 'remote') {
+                <div class="job-card__location"><lucide-icon name="map-pin" [size]="12"></lucide-icon> {{ job.city_name }}{{ job.state_abbr ? ', ' + job.state_abbr : '' }}</div>
+              }
+              @if (job.required_skills?.length) {
+                <div class="job-card__skills">
+                  @for (sk of job.required_skills; track sk) {
+                    <span class="job-card__skill">{{ sk }}</span>
+                  }
+                </div>
+              }
+              @if (getApplication(job.id); as app) {
+                <span class="job-card__applied">Candidatado</span>
+              }
+            </button> } }
+
+            <!-- Pagination -->
+            @if (lastPage() > 1) {
+            <div class="pagination">
+                <button class="pagination__btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
+            <lucide-icon name="chevron-down" [size]="14" style="transform: rotate(90deg)"></lucide-icon>
+          </button> @for (p of [].constructor(lastPage()); track $index) { @if ($index + 1 === 1 || $index + 1 === lastPage() || ($index + 1 >= currentPage() - 1 && $index + 1 <= currentPage() + 1)) { <button class="pagination__btn" [class.pagination__btn--active]="$index + 1 === currentPage()" (click)="goToPage($index + 1)">{{ $index + 1 }}</button>
+                    } @else if ($index + 1 === currentPage() - 2 || $index + 1 === currentPage() + 2) {
+                    <span class="pagination__dots">...</span> } }
+
+                    <button class="pagination__btn" [disabled]="currentPage() === lastPage()" (click)="goToPage(currentPage() + 1)">
+            <lucide-icon name="chevron-down" [size]="14" style="transform: rotate(-90deg)"></lucide-icon>
+          </button>
+
+                    <span class="pagination__info">{{ totalItems() }} vagas</span>
+            </div>
+            }
+        </div>
+
+        <!-- Detail -->
+        <div class="job-detail">
+            @if (isLoadingDetail()) {
+            <div class="job-detail__empty">
+                <lucide-icon name="loader-2" [size]="28" class="spin"></lucide-icon>
+            </div>
+            } @else if (selectedJob(); as job) {
+            <div class="job-detail__header">
+                <div class="job-detail__top-row">
+                    <div class="job-detail__company">
+                        @if (job.company?.logo_url) {
+                        <img [src]="job.company!.logo_url" class="job-detail__logo" [alt]="job.company!.company_name"> } @else {
+                        <div class="job-detail__logo-placeholder">
+                            <lucide-icon name="building-2" [size]="20"></lucide-icon>
+                        </div>
+                        }
+                        <span class="job-detail__company-name">{{ job.company?.company_name }}</span>
+                    </div>
+                    <span class="job-detail__time">{{ timeAgo(job.created_at) }}</span>
+                </div>
+
+                <h2 class="job-detail__title">{{ job.title }}</h2>
+
+                <div class="job-detail__meta">
+                    <span class="job-detail__badge">{{ seniorityLabel(job.seniority) }}</span>
+                    <span class="job-detail__badge">{{ workModeLabel(job.work_mode) }}</span>
+                    <span class="job-detail__badge">{{ contractLabel(job.contract_model) }}</span>
+                    <span class="job-detail__badge">{{ job.min_experience_years }}+ anos</span>
+                </div>
+
+                <div class="job-detail__stats">
+                    @if (job.salary_min && job.salary_max) {
+                    <span class="job-detail__stat">
+                <lucide-icon name="briefcase" [size]="14"></lucide-icon>
+                R$ {{ formatCurrency(job.salary_min) }} — R$ {{ formatCurrency(job.salary_max) }}
+              </span> }
+                    <span class="job-detail__stat">
+              <lucide-icon name="user" [size]="14"></lucide-icon>
+              {{ job.application_count }} candidato{{ job.application_count !== 1 ? 's' : '' }}
+            </span>
+                </div>
+
+                @if (job.match_score != null) {
+                  <div class="job-detail__match">
+                    <div class="job-detail__match-score" [class.job-detail__match-score--high]="job.match_score >= 70" [class.job-detail__match-score--mid]="job.match_score >= 40 && job.match_score < 70" [class.job-detail__match-score--low]="job.match_score < 40">
+                      <span class="job-detail__match-value">{{ job.match_score }}%</span>
+                      <span class="job-detail__match-label">Match</span>
+                    </div>
+                    @if (job.match_detail) {
+                      <div class="job-detail__match-bars">
+                        <div class="match-bar">
+                          <span class="match-bar__label">Skills</span>
+                          <div class="match-bar__track"><div class="match-bar__fill" [style.width.%]="job.match_detail.skills"></div></div>
+                          <span class="match-bar__value">{{ job.match_detail.skills | number:'1.0-0' }}%</span>
+                        </div>
+                        <div class="match-bar">
+                          <span class="match-bar__label">Experiência</span>
+                          <div class="match-bar__track"><div class="match-bar__fill" [style.width.%]="job.match_detail.experience"></div></div>
+                          <span class="match-bar__value">{{ job.match_detail.experience | number:'1.0-0' }}%</span>
+                        </div>
+                        <div class="match-bar">
+                          <span class="match-bar__label">Modalidade</span>
+                          <div class="match-bar__track"><div class="match-bar__fill" [style.width.%]="job.match_detail.modality"></div></div>
+                          <span class="match-bar__value">{{ job.match_detail.modality | number:'1.0-0' }}%</span>
+                        </div>
+                        <div class="match-bar">
+                          <span class="match-bar__label">Salário</span>
+                          <div class="match-bar__track"><div class="match-bar__fill" [style.width.%]="job.match_detail.salary"></div></div>
+                          <span class="match-bar__value">{{ job.match_detail.salary | number:'1.0-0' }}%</span>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+            </div>
+
+            <!-- Apply / Withdraw -->
+            <div class="job-detail__action">
+                @if (getApplication(job.id); as app) { @if (app.status === 'pending') {
+                <button class="btn-withdraw" (click)="withdraw(app)">
+                <lucide-icon name="x" [size]="18"></lucide-icon>
+                Retirar candidatura
+              </button> } @else {
+                <span class="job-detail__status job-detail__status--{{ app.status }}">
+                {{ app.status === 'accepted' ? 'Aceito' : app.status === 'rejected' ? 'Rejeitado' : 'Retirado' }}
+              </span> } } @else {
+                <button class="btn-apply" [disabled]="isApplying()" (click)="apply(job)">
+              @if (isApplying()) {
+                <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+              } @else {
+                <lucide-icon name="anchor" [size]="18"></lucide-icon>
+              }
+              Candidatar-se
+            </button> }
+            </div>
+
+            <!-- Description -->
+            <div class="job-detail__section">
+                <h3>Descrição</h3>
+                <p class="job-detail__text">{{ job.description }}</p>
+            </div>
+
+            <!-- Skills -->
+            @if (job.skills.length) {
+            <div class="job-detail__section">
+                <h3>Skills</h3>
+                <div class="job-detail__skills">
+                    @for (s of sortedSkills(job.skills); track s.skill.id) {
+                    <div class="skill-chip" [class]="'skill-chip--' + s.requirement">
+                        <div>
+                            <span class="skill-chip__name">{{ s.skill.name }}</span>
+                            <span class="skill-chip__level">{{ levelLabel(s.min_level) }}</span>
+                        </div>
+                        <span class="skill-chip__req">{{ requirementLabel(s.requirement) }}</span>
+                    </div>
+                    }
+                </div>
+            </div>
+            }
+
+            <!-- Benefits -->
+            @if (job.benefits?.length) {
+            <div class="job-detail__section">
+                <h3>Benefícios</h3>
+                <div class="job-detail__benefits">
+                    @for (b of job.benefits; track b) {
+                    <span class="benefit-chip">{{ b }}</span> }
+                </div>
+            </div>
+            }
+
+            <!-- Location -->
+            @if (job.location) {
+            <div class="job-detail__section">
+                <h3>
+                    <lucide-icon name="map-pin" [size]="16"></lucide-icon>
+                    Localização
+                </h3>
+                <div class="job-detail__location">
+                    <p class="job-detail__location-city">
+                        {{ job.location.city }}{{ job.location.state ? ', ' + job.location.state : '' }}
+                    </p>
+                    @if (job.location.street) {
+                    <p class="job-detail__location-address">
+                        {{ job.location.street }}, {{ job.location.number }} @if (job.location.complement) { — {{ job.location.complement }} }
+                    </p>
+                    <p class="job-detail__location-address">
+                        {{ job.location.neighborhood }} @if (job.location.zip_code) { — CEP {{ job.location.zip_code }} }
+                    </p>
+                    }
+                </div>
+            </div>
+            } @else if (job.work_mode === 'remote') {
+            <div class="job-detail__section">
+                <h3>
+                    <lucide-icon name="map-pin" [size]="16"></lucide-icon>
+                    Localização
+                </h3>
+                <p class="job-detail__location-remote">
+                    <lucide-icon name="compass" [size]="16"></lucide-icon>
+                    100% Remoto — trabalhe de qualquer lugar
+                </p>
+            </div>
+            } } @else {
+            <div class="job-detail__empty">
+                <lucide-icon name="compass" [size]="40"></lucide-icon>
+                <p>Selecione uma vaga para ver os detalhes.</p>
+            </div>
+            }
+        </div>
+    </div>
+</div>

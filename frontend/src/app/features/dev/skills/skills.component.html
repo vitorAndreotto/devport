@@ -3,13 +3,13 @@
     <div>
       <h1 class="skills-page__title">
         <lucide-icon name="compass" [size]="22"></lucide-icon>
-        Carta de Navegação
+        Equipamentos de Bordo
       </h1>
-      <p class="skills-page__subtitle">Mapeie suas habilidades e trace sua rota profissional.</p>
+      <p class="skills-page__subtitle">Cada ferramenta que equipa sua embarcação para qualquer navegação.</p>
     </div>
     <button class="btn-add" (click)="openAddModal()">
       <lucide-icon name="plus" [size]="18"></lucide-icon>
-      Mapear skill
+      Equipar
     </button>
   </div>
 
@@ -23,11 +23,11 @@
       <div class="skills-empty__icon">
         <lucide-icon name="compass" [size]="32"></lucide-icon>
       </div>
-      <h3>Nenhuma skill mapeada</h3>
-      <p>Comece a traçar sua carta de navegação adicionando suas habilidades técnicas.</p>
+      <h3>Nenhum equipamento a bordo</h3>
+      <p>Equipe sua embarcação com as ferramentas que você domina.</p>
       <button class="btn-add" (click)="openAddModal()">
         <lucide-icon name="plus" [size]="18"></lucide-icon>
-        Mapear primeira skill
+        Equipar primeiro
       </button>
     </div>
   } @else {
@@ -35,11 +35,11 @@
     <div class="skills-stats">
       <div class="skills-stats__item">
         <span class="skills-stats__value">{{ mySkills().length }}</span>
-        <span class="skills-stats__label">skills mapeadas</span>
+        <span class="skills-stats__label">equipamentos a bordo</span>
       </div>
       <div class="skills-stats__item">
         <span class="skills-stats__value">{{ groupedSkills().length }}</span>
-        <span class="skills-stats__label">regiões</span>
+        <span class="skills-stats__label">compartimentos</span>
       </div>
     </div>
 

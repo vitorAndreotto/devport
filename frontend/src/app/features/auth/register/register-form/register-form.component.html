@@ -7,10 +7,10 @@
 
     <div class="register-form__header">
       <div class="register-form__role-icon">
-        <lucide-icon [name]="role() === 'dev' ? 'code' : 'building-2'" [size]="32"></lucide-icon>
+        <lucide-icon [name]="role() === 'dev' ? 'anchor' : 'building-2'" [size]="32"></lucide-icon>
       </div>
-      <h2 class="register-form__title">Registro {{ roleLabel }}</h2>
-      <p class="register-form__subtitle">Preencha seus dados para criar sua conta.</p>
+      <h2 class="register-form__title">Registro — {{ roleLabel }}</h2>
+      <p class="register-form__subtitle">Preencha os dados para registrar sua {{ role() === 'dev' ? 'embarcação' : 'doca' }}.</p>
     </div>
 
     @if (apiError()) {
@@ -25,7 +25,7 @@
           class="input"
           type="text"
           formControlName="name"
-          [placeholder]="role() === 'dev' ? 'Seu nome completo' : 'Nome da empresa'"
+          [placeholder]="role() === 'dev' ? 'Nome do capitão' : 'Nome do porto'"
           autocomplete="name"
         >
       </app-form-field>
@@ -66,15 +66,15 @@
         [disabled]="isLoading()"
       >
         @if (isLoading()) {
-          Criando conta...
+          Registrando...
         } @else {
-          Criar conta
+          Zarpar
         }
       </button>
     </form>
 
     <p class="register-form__footer">
-      Já tem uma conta? <a routerLink="/auth/login" class="register-form__link">Entrar</a>
+      Já zarpou antes? <a routerLink="/auth/login" class="register-form__link">Embarcar</a>
     </p>
   </div>
 </div>

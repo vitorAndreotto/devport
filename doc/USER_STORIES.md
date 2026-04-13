@@ -79,8 +79,10 @@
 - [ ] Preencher: handle (identificador único), nome completo, título/cargo, bio, e-mail de contato
 - [ ] Handle: 3-40 caracteres, apenas letras minúsculas, números e hífens, único global
 - [ ] Handle usado na URL pública do perfil (`/developers/{handle}`)
-- [ ] Campos opcionais: avatar (URL), localização, modelo preferido, situação profissional, links externos
+- [ ] Campos opcionais: avatar (URL), localização, modelo preferido, situação profissional, pretensão salarial, links externos
 - [ ] Situação profissional (`employment_status`): `looking` ou `employed` (nullable)
+- [ ] Pretensão salarial (`salary_min`, `salary_max`): valores opcionais, nunca visíveis publicamente
+- [ ] Se informada, `salary_max` deve ser ≥ `salary_min`
 - [ ] Bio aceita no máximo 500 caracteres
 - [ ] Cada dev possui apenas 1 perfil
 - [ ] Retorna 409 se perfil ou handle já existir
@@ -325,10 +327,10 @@
 **Como** empresa, **quero** criar meu perfil corporativo, **para** apresentar minha organização e publicar vagas.
 
 **Critérios de aceite:**
-- [ ] Preencher: handle (identificador único), nome da empresa, CNPJ, descrição, setor de atuação, tamanho, localização
+- [ ] Preencher: handle (identificador único), nome da empresa, CNPJ, descrição, setor de atuação, tamanho
 - [ ] Handle: mesmas regras do dev (3-40 chars, lowercase, único global)
 - [ ] Handle usado na URL pública (`/companies/{handle}`)
-- [ ] Campos opcionais: logo (URL), site, links
+- [ ] Campos opcionais: logo (URL), site, endereço da sede (CEP, município, rua, bairro, número, complemento), links
 - [ ] CNPJ deve ser único
 - [ ] Descrição limitada a 1000 caracteres
 - [ ] Cada empresa possui apenas 1 perfil
@@ -350,9 +352,50 @@
 
 **Critérios de aceite:**
 - [ ] Perfil acessível via `/companies/{handle}` (ex: `/companies/techcorp`)
-- [ ] Exibe: dados da empresa + lista de vagas abertas
+- [ ] Exibe: dados da empresa + endereço da sede (se informado) + unidades + lista de vagas abertas
 - [ ] Acessível sem autenticação
 - [ ] Faixa salarial **não** é exibida
+
+---
+
+## 8.1. Unidades da Empresa (`company-units`)
+
+### US-710 — Adicionar unidade 🔴
+**Como** empresa, **quero** cadastrar uma unidade/filial, **para** informar onde tenho presença física.
+
+**Critérios de aceite:**
+- [ ] Informar: nome da unidade, CEP, município, rua, bairro, número (obrigatórios)
+- [ ] Complemento é opcional
+- [ ] Município referenciado pela tabela de cidades (IBGE)
+- [ ] Uma empresa pode ter múltiplas unidades
+
+---
+
+### US-711 — Editar unidade 🔴
+**Como** empresa, **quero** editar uma unidade, **para** manter o endereço atualizado.
+
+**Critérios de aceite:**
+- [ ] Todos os campos editáveis
+- [ ] Validações de obrigatoriedade mantidas
+
+---
+
+### US-712 — Remover unidade 🔴
+**Como** empresa, **quero** remover uma unidade, **para** manter apenas locais ativos.
+
+**Critérios de aceite:**
+- [ ] Unidade removida
+- [ ] Apenas a empresa dona pode remover
+
+---
+
+### US-713 — Listar unidades 🔴
+**Como** empresa, **quero** ver todas as minhas unidades, **para** gerenciá-las.
+
+**Critérios de aceite:**
+- [ ] Lista todas as unidades da empresa
+- [ ] Exibe nome e endereço completo de cada unidade
+- [ ] Ordenação por nome ASC
 
 ---
 
@@ -362,11 +405,16 @@
 **Como** empresa, **quero** publicar uma vaga, **para** encontrar candidatos qualificados.
 
 **Critérios de aceite:**
-- [ ] Informar: título, descrição, skills necessárias (com nível mínimo), experiência mínima, modelo de contratação, faixa salarial, modalidade
-- [ ] Localização obrigatória quando modalidade = `onsite` ou `hybrid`
+- [ ] Informar: título, descrição, senioridade, skills (com nível mínimo e tipo de exigência), experiência mínima, modelo de contratação, faixa salarial, modalidade
+- [ ] Senioridade obrigatória: `intern`, `junior`, `mid`, `senior`, `lead`, `specialist`
+- [ ] Cada skill da vaga tem tipo de exigência: `required` (obrigatória), `expected` (esperada) ou `differential` (diferencial)
+- [ ] Endereço completo obrigatório quando modalidade = `onsite` ou `hybrid` (município, CEP, rua, bairro, número)
+- [ ] Opcionalmente selecionar unidade ou sede — endereço pré-preenchido automaticamente, mas editável
+- [ ] Se nenhuma unidade selecionada e empresa tem endereço de sede, pré-preenche com sede
+- [ ] Flag `show_salary` (default: false) — empresa decide se exibe faixa salarial publicamente
+- [ ] Benefícios opcionais (lista de textos livres): VR, VA, plano de saúde, etc.
 - [ ] Skills selecionadas da árvore de skills
 - [ ] Vaga criada com status `open`
-- [ ] Faixa salarial salva mas não exibida publicamente
 
 ---
 
@@ -404,9 +452,9 @@
 **Como** visitante, **quero** ver os detalhes de uma vaga, **para** entender os requisitos.
 
 **Critérios de aceite:**
-- [ ] Exibe: título, descrição, skills, experiência, modelo, modalidade, localização
+- [ ] Exibe: título, descrição, senioridade, skills agrupadas por exigência (obrigatórias/esperadas/diferenciais), experiência, modelo, modalidade, endereço (se presencial/híbrido), benefícios
 - [ ] Exibe nome e dados da empresa
-- [ ] Faixa salarial **não** é exibida
+- [ ] Faixa salarial exibida apenas se `show_salary = true`
 - [ ] Se dev logado, exibe score de match
 
 ---
@@ -579,7 +627,7 @@
 **Como** dev, **quero** buscar vagas com filtros, **para** encontrar oportunidades relevantes.
 
 **Critérios de aceite:**
-- [ ] Filtros: texto, skill, modalidade, modelo, localização
+- [ ] Filtros: texto, skill, modalidade, modelo, senioridade, município
 - [ ] Apenas vagas com status `open`
 - [ ] Paginação: 12 por página
 - [ ] Se dev logado: ordenação padrão por match score
@@ -591,7 +639,7 @@
 **Como** empresa, **quero** buscar devs com filtros, **para** encontrar candidatos.
 
 **Critérios de aceite:**
-- [ ] Filtros: texto, skill, nível mínimo, localização, vaga de referência
+- [ ] Filtros: texto, skill, nível mínimo, município, vaga de referência
 - [ ] Paginação: 12 por página
 - [ ] Se vaga informada: ordenação por match score
 
@@ -620,10 +668,11 @@
 | Projetos | 3 | 3 | 0 | 0 |
 | GitHub | 3 | 0 | 3 | 0 |
 | Perfil Empresa | 3 | 3 | 0 | 0 |
+| Unidades Empresa | 4 | 4 | 0 | 0 |
 | Vagas | 6 | 6 | 0 | 0 |
 | Candidaturas | 6 | 6 | 0 | 0 |
 | Devs Salvos | 3 | 3 | 0 | 0 |
 | Skill Tree | 2 | 2 | 0 | 0 |
 | Matching | 2 | 0 | 2 | 0 |
 | Buscas | 3 | 0 | 2 | 1 |
-| **Total** | **57** | **48** | **7** | **2** |
+| **Total** | **61** | **52** | **7** | **2** |

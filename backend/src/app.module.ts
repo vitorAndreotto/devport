@@ -11,6 +11,11 @@ import { DevSkillModule } from './dev-skill/dev-skill.module.js';
 import { ExperienceModule } from './experience/experience.module.js';
 import { EducationModule } from './education/education.module.js';
 import { ProjectModule } from './project/project.module.js';
+import { CompanyProfileModule } from './company-profile/company-profile.module.js';
+import { CompanyUnitModule } from './company-unit/company-unit.module.js';
+import { JobModule } from './job/job.module.js';
+import { JobApplicationModule } from './job-application/job-application.module.js';
+import { MatchingModule } from './matching/matching.module.js';
 
 @Module({
   imports: [
@@ -62,6 +67,11 @@ import { ProjectModule } from './project/project.module.js';
     ExperienceModule,
     EducationModule,
     ProjectModule,
+    CompanyProfileModule,
+    CompanyUnitModule,
+    JobModule,
+    JobApplicationModule,
+    MatchingModule,
   ],
 })
 export class AppModule {}

@@ -10,10 +10,10 @@ import { LucideAngularModule } from 'lucide-angular';
     <div class="not-found">
       <lucide-icon name="compass" [size]="64"></lucide-icon>
       <h1>404</h1>
-      <p>Parece que você se perdeu no porto.</p>
+      <p>Navio à deriva! Essa rota não existe nos nossos mapas.</p>
       <a routerLink="/" class="not-found__link">
         <lucide-icon name="anchor" [size]="18"></lucide-icon>
-        Voltar ao início
+        Voltar ao porto
       </a>
     </div>
   `,

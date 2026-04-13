@@ -8,29 +8,29 @@
     <!-- Step 1: Role Selection -->
     @if (!selectedRole()) {
       <div class="register__step">
-        <h1 class="register__title">Criar conta</h1>
-        <p class="register__subtitle">Selecione seu tipo de perfil para começar.</p>
+        <h1 class="register__title">Registrar embarcação</h1>
+        <p class="register__subtitle">Você é um navio ou um porto?</p>
 
         <div class="role-selector">
           <button class="role-card" (click)="selectRole('dev')">
             <div class="role-card__icon">
-              <lucide-icon name="code" [size]="32"></lucide-icon>
+              <lucide-icon name="anchor" [size]="32"></lucide-icon>
             </div>
-            <span class="role-card__title">Desenvolvedor</span>
-            <span class="role-card__description">Crie seu perfil profissional, adicione skills e encontre vagas.</span>
+            <span class="role-card__title">Navio (Dev)</span>
+            <span class="role-card__description">Equipe sua embarcação, trace rotas e navegue até as melhores vagas.</span>
           </button>
 
           <button class="role-card" (click)="selectRole('company')">
             <div class="role-card__icon">
               <lucide-icon name="building-2" [size]="32"></lucide-icon>
             </div>
-            <span class="role-card__title">Empresa</span>
-            <span class="role-card__description">Publique vagas e encontre os melhores candidatos para seu time.</span>
+            <span class="role-card__title">Porto (Empresa)</span>
+            <span class="role-card__description">Abra seu porto, publique rotas e atraia os melhores navios.</span>
           </button>
         </div>
 
         <p class="register__footer">
-          Já tem uma conta? <a routerLink="/auth/login" class="register__link">Entrar</a>
+          Já zarpou antes? <a routerLink="/auth/login" class="register__link">Embarcar</a>
         </p>
       </div>
     }

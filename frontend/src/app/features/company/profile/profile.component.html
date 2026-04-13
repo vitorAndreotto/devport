@@ -1,0 +1,180 @@
+<div class="profile-page">
+  <div class="profile-page__header">
+    <h1 class="profile-page__title">Registro do Porto</h1>
+    <p class="profile-page__subtitle">A identidade do seu porto nos mares do dev.</p>
+  </div>
+
+  <form [formGroup]="form" (ngSubmit)="onSubmit()">
+
+    <!-- Dados da empresa -->
+    <section class="form-section">
+      <div class="form-section__header">
+        <lucide-icon name="building-2" [size]="20"></lucide-icon>
+        <h2 class="form-section__title">Dados do Porto</h2>
+      </div>
+
+      <div class="form-section__body">
+        <app-handle-input
+          [control]="form.controls.handle"
+          [checkFn]="handleCheckFn"
+          (statusChange)="onHandleStatus($event)"
+        />
+
+        <div class="form-grid">
+          <app-form-field label="Nome da empresa" [control]="form.controls.company_name" [required]="true">
+            <input class="input" type="text" formControlName="company_name" placeholder="Nome da empresa">
+          </app-form-field>
+
+          <app-form-field label="CNPJ" [control]="form.controls.cnpj" [required]="true">
+            <input class="input" type="text" formControlName="cnpj" placeholder="00.000.000/0000-00" maxlength="18" appCnpjMask>
+          </app-form-field>
+        </div>
+
+        <app-form-field label="Descrição" [control]="form.controls.description" [required]="true">
+          <textarea class="input input--textarea" formControlName="description" placeholder="Sobre a empresa..." rows="4"></textarea>
+          <span class="char-count">{{ descriptionLength }}/1000</span>
+        </app-form-field>
+
+        <div class="form-grid">
+          <app-form-field label="Setor de atuação" [control]="form.controls.industry" [required]="true">
+            <input class="input" type="text" formControlName="industry" placeholder="Ex: Tecnologia da Informação">
+          </app-form-field>
+
+          <div class="form-field">
+            <label class="form-field__label">Tamanho <span class="form-field__required">*</span></label>
+            <select class="input" formControlName="size">
+              <option value="">Selecione</option>
+              <option value="startup">Startup</option>
+              <option value="small">Pequena</option>
+              <option value="medium">Média</option>
+              <option value="large">Grande</option>
+              <option value="enterprise">Enterprise</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Endereço da sede -->
+    <section class="form-section">
+      <div class="form-section__header">
+        <lucide-icon name="map-pin" [size]="20"></lucide-icon>
+        <h2 class="form-section__title">Localização do Porto</h2>
+      </div>
+
+      <div class="form-section__body">
+        <app-form-field label="CEP" [control]="form.controls.zip_code">
+          <div class="cep-field">
+            <input
+              class="input"
+              type="text"
+              formControlName="zip_code"
+              placeholder="00000-000"
+              maxlength="9"
+              appCepMask
+              (blur)="onCepBlur()"
+            >
+            @if (isFetchingCep()) {
+              <lucide-icon name="loader-2" [size]="16" class="cep-field__spinner spin"></lucide-icon>
+            }
+          </div>
+          <span class="cep-hint">Preencha o CEP para buscar endereço automaticamente</span>
+        </app-form-field>
+
+        <div class="form-grid">
+          <div class="form-field">
+            <label class="form-field__label">Estado</label>
+            <select class="input" formControlName="state_id" (change)="onStateChange()">
+              <option [ngValue]="null">Selecione o estado</option>
+              @for (state of states(); track state.id) {
+                <option [ngValue]="state.id">{{ state.name }} ({{ state.abbr }})</option>
+              }
+            </select>
+          </div>
+
+          <app-city-search
+            #citySearch
+            [stateId]="form.controls.state_id.value"
+            [control]="form.controls.city_id"
+          />
+        </div>
+
+        <div class="form-grid">
+          <app-form-field label="Bairro" [control]="form.controls.neighborhood">
+            <input class="input" type="text" formControlName="neighborhood" placeholder="Bairro">
+          </app-form-field>
+
+          <app-form-field label="Número" [control]="form.controls.number">
+            <input class="input" type="text" formControlName="number" placeholder="Nº">
+          </app-form-field>
+        </div>
+
+        <app-form-field label="Rua / Logradouro" [control]="form.controls.street">
+          <input class="input" type="text" formControlName="street" placeholder="Rua, Avenida...">
+        </app-form-field>
+
+        <app-form-field label="Complemento" [control]="form.controls.complement">
+          <input class="input" type="text" formControlName="complement" placeholder="Apto, Bloco, Sala...">
+        </app-form-field>
+      </div>
+    </section>
+
+    <!-- Presença online -->
+    <section class="form-section">
+      <div class="form-section__header">
+        <lucide-icon name="link" [size]="20"></lucide-icon>
+        <h2 class="form-section__title">Farol & Sinalização</h2>
+      </div>
+
+      <div class="form-section__body">
+        <div class="form-grid">
+          <app-form-field label="URL do Logo" [control]="form.controls.logo_url">
+            <input class="input" type="url" formControlName="logo_url" placeholder="https://exemplo.com/logo.png">
+          </app-form-field>
+
+          <app-form-field label="Website" [control]="form.controls.website">
+            <input class="input" type="url" formControlName="website" placeholder="https://suaempresa.com">
+          </app-form-field>
+        </div>
+      </div>
+    </section>
+
+    <!-- Links -->
+    <section class="form-section">
+      <div class="form-section__header">
+        <lucide-icon name="share-2" [size]="20"></lucide-icon>
+        <h2 class="form-section__title">Bandeiras do Porto</h2>
+      </div>
+
+      <div class="form-section__body" formArrayName="links">
+        @for (link of linksArray.controls; track $index; let i = $index) {
+          <div class="link-row" [formGroupName]="i">
+            <input class="input link-row__label" type="text" formControlName="label" placeholder="Label (ex: LinkedIn)">
+            <input class="input link-row__url" type="url" formControlName="url" placeholder="https://...">
+            <button type="button" class="link-row__remove" (click)="removeLink(i)">
+              <lucide-icon name="trash-2" [size]="16"></lucide-icon>
+            </button>
+          </div>
+        }
+
+        <button type="button" class="btn-add-link" (click)="addLink()">
+          <lucide-icon name="plus" [size]="16"></lucide-icon>
+          Adicionar link
+        </button>
+      </div>
+    </section>
+
+    <!-- Submit -->
+    <div class="profile-page__actions">
+      <button type="submit" class="btn-save" [disabled]="!canSave">
+        @if (isSaving()) {
+          <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+          Salvando...
+        } @else {
+          <lucide-icon name="save" [size]="18"></lucide-icon>
+          Salvar alterações
+        }
+      </button>
+    </div>
+  </form>
+</div>

@@ -6,6 +6,7 @@ import { FormFieldComponent } from '../../../shared/components/form-field/form-f
 import { HandleInputComponent, HandleStatus } from '../../../shared/components/handle-input/handle-input.component';
 import { CitySearchComponent } from '../../../shared/components/city-search/city-search.component';
 import { CepMaskDirective } from '../../../shared/directives/cep-mask.directive';
+import { CurrencyMaskDirective } from '../../../shared/directives/currency-mask.directive';
 import { DevProfileService } from '../../../core/services/dev-profile.service';
 import { LocationService } from '../../../core/services/location.service';
 import { ViaCepService } from '../../../core/services/viacep.service';
@@ -17,7 +18,7 @@ import { State } from '../../../core/models/location.model';
 @Component({
   selector: 'app-profile',
   standalone: true,
-  imports: [ReactiveFormsModule, LucideAngularModule, FormFieldComponent, HandleInputComponent, CitySearchComponent, CepMaskDirective],
+  imports: [ReactiveFormsModule, LucideAngularModule, FormFieldComponent, HandleInputComponent, CitySearchComponent, CepMaskDirective, CurrencyMaskDirective],
   templateUrl: './profile.component.html',
   styleUrl: './profile.component.scss',
 })
@@ -51,7 +52,12 @@ export class ProfileComponent implements OnInit {
     neighborhood: [''],
     number: [''],
     complement: [''],
-    work_mode: [null as string | null],
+    work_mode_remote: [false],
+    work_mode_hybrid: [false],
+    work_mode_onsite: [false],
+    employment_status: [null as string | null],
+    salary_min: [''],
+    salary_max: [''],
     github_username: [''],
     links: this.fb.array([] as FormGroup[]),
   });
@@ -159,7 +165,10 @@ export class ProfileComponent implements OnInit {
       neighborhood: data.neighborhood || undefined,
       number: data.number || undefined,
       complement: data.complement || undefined,
-      work_mode: data.work_mode || undefined,
+      work_modes: this.buildWorkModes(),
+      employment_status: data.employment_status || undefined,
+      salary_min: this.parseCurrency(data.salary_min) ?? undefined,
+      salary_max: this.parseCurrency(data.salary_max) ?? undefined,
       github_username: data.github_username || undefined,
       links: data.links?.length ? data.links as { label: string; url: string }[] : undefined,
     }).subscribe({
@@ -206,7 +215,12 @@ export class ProfileComponent implements OnInit {
       neighborhood: profile.neighborhood ?? '',
       number: profile.number ?? '',
       complement: profile.complement ?? '',
-      work_mode: profile.work_mode,
+      work_mode_remote: profile.work_modes?.includes('remote') ?? false,
+      work_mode_hybrid: profile.work_modes?.includes('hybrid') ?? false,
+      work_mode_onsite: profile.work_modes?.includes('onsite') ?? false,
+      employment_status: profile.employment_status,
+      salary_min: profile.salary_min != null ? String(profile.salary_min) : '',
+      salary_max: profile.salary_max != null ? String(profile.salary_max) : '',
       github_username: profile.github_username ?? '',
     });
 
@@ -240,6 +254,29 @@ export class ProfileComponent implements OnInit {
           this.states.set(states);
           resolve();
         });
+    });
+  }
+
+  private buildWorkModes(): string[] | undefined {
+    const modes: string[] = [];
+    const d = this.form.getRawValue();
+    if (d.work_mode_remote) modes.push('remote');
+    if (d.work_mode_hybrid) modes.push('hybrid');
+    if (d.work_mode_onsite) modes.push('onsite');
+    return modes.length > 0 ? modes : undefined;
+  }
+
+  private parseCurrency(value: string | null | undefined): number | null {
+    if (!value) return null;
+    const cleaned = value.replace(/\./g, '').replace(',', '.');
+    const num = parseFloat(cleaned);
+    return isNaN(num) ? null : num;
+  }
+
+  private formatCurrency(value: number): string {
+    return value.toLocaleString('pt-BR', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     });
   }
 

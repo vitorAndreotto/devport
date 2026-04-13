@@ -36,10 +36,11 @@
      └─────1│ company_profiles │  ← role = company
              └──────┬───────────┘
                     │1
-                    │N
-              ┌─────┴──────┐
-              │    jobs     │
-              └─────┬──────┘
+                    ├───────────────────┐
+                    │N                  │N
+              ┌─────┴──────┐     ┌──────┴────���────┐
+              │    jobs     │     │ company_units  │
+              └─────┬──────┘     └────────────────┘
                     │N
                     │N
               ┌─────┴──────┐
@@ -158,8 +159,10 @@ Dados profissionais do desenvolvedor.
 | `neighborhood` | `varchar(255)` | sim | null | Bairro |
 | `number` | `varchar(20)` | sim | null | Número |
 | `complement` | `varchar(255)` | sim | null | Complemento |
-| `work_mode` | `varchar(10)` | sim | null | `onsite`, `hybrid`, `remote` |
+| `work_modes` | `jsonb` | sim | null | Array de modalidades preferidas: `["remote","hybrid"]` |
 | `employment_status` | `varchar(10)` | sim | null | `looking`, `employed` |
+| `salary_min` | `decimal(10,2)` | sim | null | Pretensão salarial mínima |
+| `salary_max` | `decimal(10,2)` | sim | null | Pretensão salarial máxima |
 | `github_username` | `varchar(255)` | sim | null | Username do GitHub |
 | `links` | `jsonb` | sim | null | Links externos |
 | `created_at` | `timestamp` | não | now() | Criação |
@@ -179,8 +182,10 @@ Dados profissionais do desenvolvedor.
 
 **Check constraints:**
 - `handle ~ '^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$'` — 3-40 chars, lowercase, números e hífens, sem iniciar/terminar com hífen
-- `work_mode IN ('onsite', 'hybrid', 'remote') OR work_mode IS NULL`
+- `work_modes` é jsonb array (ex: `["remote","hybrid"]`) ou null
 - `employment_status IN ('looking', 'employed') OR employment_status IS NULL`
+- `salary_min IS NULL OR salary_min >= 0`
+- `salary_max IS NULL OR salary_max >= salary_min`
 
 **Estrutura do campo `links` (jsonb):**
 ```json
@@ -208,7 +213,12 @@ Dados da empresa.
 | `website` | `varchar(2048)` | sim | null | Site da empresa |
 | `industry` | `varchar(255)` | não | — | Setor de atuação |
 | `size` | `varchar(20)` | não | — | Tamanho da empresa |
-| `location` | `varchar(255)` | não | — | Localização da sede |
+| `city_id` | `integer` (FK) | sim | null | Município da sede (IBGE) |
+| `zip_code` | `varchar(9)` | sim | null | CEP da sede (formato 00000-000) |
+| `street` | `varchar(255)` | sim | null | Rua / Logradouro |
+| `neighborhood` | `varchar(255)` | sim | null | Bairro |
+| `number` | `varchar(20)` | sim | null | Número |
+| `complement` | `varchar(255)` | sim | null | Complemento |
 | `links` | `jsonb` | sim | null | Links externos |
 | `created_at` | `timestamp` | não | now() | Criação |
 | `updated_at` | `timestamp` | não | now() | Atualização |
@@ -219,13 +229,46 @@ Dados da empresa.
 - `UNIQUE (handle)` — URL pública: `/companies/{handle}`
 - `UNIQUE (cnpj)`
 - `INDEX (company_name)`
+- `INDEX (city_id)`
 
 **Foreign Keys:**
 - `user_id → users(id) ON DELETE CASCADE`
+- `city_id → cities(id) ON DELETE SET NULL`
 
 **Check constraints:**
 - `handle ~ '^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$'` — mesma regra do dev
 - `size IN ('startup', 'small', 'medium', 'large', 'enterprise')`
+
+---
+
+### 2.3.1 `company_units`
+
+Unidades/filiais da empresa (endereços adicionais).
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `company_profile_id` | `uuid` (FK) | não | — | Referência ao perfil empresa |
+| `name` | `varchar(255)` | não | — | Nome da unidade (ex: "Filial SP") |
+| `city_id` | `integer` (FK) | não | — | Município (IBGE) |
+| `zip_code` | `varchar(9)` | não | — | CEP (formato 00000-000) |
+| `street` | `varchar(255)` | não | — | Rua / Logradouro |
+| `neighborhood` | `varchar(255)` | não | — | Bairro |
+| `number` | `varchar(20)` | não | — | Número |
+| `complement` | `varchar(255)` | sim | null | Complemento |
+| `created_at` | `timestamp` | não | now() | Criação |
+| `updated_at` | `timestamp` | não | now() | Atualização |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `INDEX (company_profile_id)`
+- `INDEX (city_id)`
+
+**Foreign Keys:**
+- `company_profile_id → company_profiles(id) ON DELETE CASCADE`
+- `city_id → cities(id) ON DELETE RESTRICT`
+
+> Todos os campos de endereço são obrigatórios ao criar uma unidade. `complement` é a única exceção.
 
 ---
 
@@ -411,14 +454,23 @@ Vagas publicadas por empresas.
 |---|---|---|---|---|
 | `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
 | `company_profile_id` | `uuid` (FK) | não | — | Referência ao perfil empresa |
+| `company_unit_id` | `uuid` (FK) | sim | null | Unidade de referência (null = sede) |
 | `title` | `varchar(255)` | não | — | Título da vaga |
 | `description` | `text` | não | — | Descrição |
+| `seniority` | `varchar(15)` | não | — | Nível de senioridade |
 | `min_experience_years` | `integer` | não | — | Experiência mínima (anos) |
 | `contract_model` | `varchar(10)` | não | — | Modelo de contratação |
 | `salary_min` | `decimal(10,2)` | não | — | Faixa salarial mínima |
 | `salary_max` | `decimal(10,2)` | não | — | Faixa salarial máxima |
+| `show_salary` | `boolean` | não | false | Exibir faixa salarial publicamente |
+| `benefits` | `jsonb` | sim | null | Lista de benefícios |
 | `work_mode` | `varchar(10)` | não | — | Modalidade |
-| `location` | `varchar(255)` | sim | null | Localização (presencial/híbrido) |
+| `city_id` | `integer` (FK) | sim | null | Município da vaga |
+| `zip_code` | `varchar(9)` | sim | null | CEP |
+| `street` | `varchar(255)` | sim | null | Rua / Logradouro |
+| `neighborhood` | `varchar(255)` | sim | null | Bairro |
+| `number` | `varchar(20)` | sim | null | Número |
+| `complement` | `varchar(255)` | sim | null | Complemento |
 | `status` | `varchar(10)` | não | 'open' | Status da vaga |
 | `created_at` | `timestamp` | não | now() | Criação |
 | `updated_at` | `timestamp` | não | now() | Atualização |
@@ -426,26 +478,44 @@ Vagas publicadas por empresas.
 **Índices:**
 - `PRIMARY KEY (id)`
 - `INDEX (company_profile_id)`
+- `INDEX (company_unit_id)`
+- `INDEX (seniority)`
 - `INDEX (status)`
 - `INDEX (work_mode)`
+- `INDEX (city_id)`
 - `INDEX (created_at)`
 
 **Foreign Keys:**
 - `company_profile_id → company_profiles(id) ON DELETE CASCADE`
+- `company_unit_id → company_units(id) ON DELETE SET NULL`
+- `city_id → cities(id) ON DELETE SET NULL`
 
 **Check constraints:**
+- `seniority IN ('intern', 'junior', 'mid', 'senior', 'lead', 'specialist')`
 - `contract_model IN ('clt', 'pj', 'clt_pj')`
 - `work_mode IN ('onsite', 'hybrid', 'remote')`
 - `status IN ('open', 'closed')`
 - `salary_min >= 0`
 - `salary_max >= salary_min`
-- `NOT (work_mode IN ('onsite', 'hybrid') AND location IS NULL)` — presencial/híbrido exige localização
+- `NOT (work_mode IN ('onsite', 'hybrid') AND city_id IS NULL)` — presencial/híbrido exige endereço
+
+> `company_unit_id` é apenas referência para pré-preenchimento no frontend. O endereço da vaga é independente e editável.
+
+**Estrutura do campo `benefits` (jsonb):**
+```json
+["VR", "VA", "Plano de saúde", "Plano odonto", "Gympass", "PLR", "Stock options", "Home office"]
+```
+> Array de strings livres. Sem catálogo fixo — a empresa digita os benefícios.
+
+**Regra de `show_salary`:**
+- `false` (default): faixa salarial visível apenas para a empresa dona
+- `true`: faixa salarial exibida publicamente na vaga
 
 ---
 
 ### 2.11 `job_skills`
 
-Pivot: skills exigidas por uma vaga, com nível mínimo.
+Pivot: skills de uma vaga, com nível mínimo e tipo de exigência.
 
 | Coluna | Tipo | Nullable | Default | Descrição |
 |---|---|---|---|---|
@@ -453,12 +523,14 @@ Pivot: skills exigidas por uma vaga, com nível mínimo.
 | `job_id` | `uuid` (FK) | não | — | Referência à vaga |
 | `skill_id` | `uuid` (FK) | não | — | Referência à árvore de skills |
 | `min_level` | `varchar(15)` | não | — | Nível mínimo exigido |
+| `requirement` | `varchar(15)` | não | 'required' | Tipo de exigência |
 | `created_at` | `timestamp` | não | now() | Criação |
 
 **Índices:**
 - `PRIMARY KEY (id)`
 - `UNIQUE (job_id, skill_id)` — impede duplicata
 - `INDEX (skill_id)`
+- `INDEX (job_id, requirement)` — busca por tipo de exigência
 
 **Foreign Keys:**
 - `job_id → jobs(id) ON DELETE CASCADE`
@@ -466,6 +538,12 @@ Pivot: skills exigidas por uma vaga, com nível mínimo.
 
 **Check constraints:**
 - `min_level IN ('beginner', 'intermediate', 'advanced', 'expert')`
+- `requirement IN ('required', 'expected', 'differential')`
+
+**Tipos de exigência:**
+- `required` — Obrigatória: skill indispensável para a vaga
+- `expected` — Esperada: skill que o candidato idealmente possui
+- `differential` — Diferencial: skill que destaca o candidato, mas não é eliminatória
 
 ---
 
@@ -522,6 +600,95 @@ Shortlist interna da empresa — devs salvos por vaga.
 
 ---
 
+### 2.14 `match_scores`
+
+Cache de scores de matching entre devs e vagas.
+
+| Coluna | Tipo | Nullable | Default | Descrição |
+|---|---|---|---|---|
+| `id` | `uuid` (PK) | não | gen_random_uuid() | Identificador único |
+| `dev_profile_id` | `uuid` (FK) | não | — | Referência ao perfil dev |
+| `job_id` | `uuid` (FK) | não | — | Referência à vaga |
+| `score` | `integer` | não | — | Score calculado (0-100) |
+| `dev_hash` | `varchar(32)` | não | — | MD5 dos dados do dev usados no cálculo |
+| `job_hash` | `varchar(32)` | não | — | MD5 dos dados da vaga usados no cálculo |
+| `skill_score` | `decimal(5,2)` | não | — | Sub-score de skills (0-100) |
+| `experience_score` | `decimal(5,2)` | não | — | Sub-score de experiência (0-100) |
+| `modality_score` | `decimal(5,2)` | não | — | Sub-score modalidade+localização (0-100) |
+| `salary_score` | `decimal(5,2)` | não | — | Sub-score salarial (0-100) |
+| `calculated_at` | `timestamp` | não | now() | Data do cálculo |
+
+**Índices:**
+- `PRIMARY KEY (id)`
+- `UNIQUE (dev_profile_id, job_id)` — um score por par dev+vaga (upsert)
+- `INDEX (job_id, score DESC)` — ranking de devs por vaga
+- `INDEX (dev_profile_id, score DESC)` — ranking de vagas por dev
+- `INDEX (dev_hash)` — busca por hash do dev
+- `INDEX (job_hash)` — busca por hash da vaga
+
+**Foreign Keys:**
+- `dev_profile_id → dev_profiles(id) ON DELETE CASCADE`
+- `job_id → jobs(id) ON DELETE CASCADE`
+
+**Composição do `dev_hash` (MD5 de):**
+```
+{dev_profile_id}:{work_modes_sorted}:{city_id}:{salary_min}:{salary_max}:{skills_sorted}:{total_experience_months}
+```
+Onde `skills_sorted` = lista ordenada de `skill_id:level` das dev_skills.
+
+**Composição do `job_hash` (MD5 de):**
+```
+{job_id}:{work_mode}:{city_id}:{salary_min}:{salary_max}:{seniority}:{min_experience_years}:{skills_sorted}
+```
+Onde `skills_sorted` = lista ordenada de `skill_id:min_level:requirement` das job_skills.
+
+---
+
+#### Estratégia de Cache (Redis + PostgreSQL)
+
+**Camada 1 — Redis (hot cache):**
+```
+Key:   match:{dev_profile_id}:{job_id}
+Value: { score, dev_hash, job_hash, skill_score, experience_score, modality_score, salary_score }
+TTL:   24 horas
+```
+
+**Camada 2 — PostgreSQL (tabela `match_scores`):**
+- Persistência do último cálculo
+- Permite queries analíticas (ranking, busca paginada por score)
+- Upsert ao calcular (`ON CONFLICT (dev_profile_id, job_id) DO UPDATE`)
+
+**Fluxo de cálculo:**
+
+```
+1. Requisição de match (dev, job)
+2. Buscar no Redis → key: match:{dev_id}:{job_id}
+   ├─ HIT: comparar dev_hash e job_hash atuais
+   │   ├─ Hashes iguais → retornar score do cache ✓
+   │   └─ Hashes mudaram → recalcular (passo 4)
+   └─ MISS: buscar no PostgreSQL (tabela match_scores)
+       ├─ FOUND: comparar hashes
+       │   ├─ Iguais → salvar no Redis + retornar ✓
+       │   └─ Mudaram → recalcular (passo 4)
+       └─ NOT FOUND → recalcular (passo 4)
+4. Calcular score (algoritmo 6.4)
+5. Salvar no Redis (TTL 24h)
+6. Upsert no PostgreSQL (match_scores)
+7. Retornar score ✓
+```
+
+**Invalidação:**
+- Quando dev atualiza perfil, skills ou experiências → deletar keys Redis `match:{dev_id}:*` e atualizar `dev_hash`
+- Quando empresa atualiza vaga ou job_skills → deletar keys Redis `match:*:{job_id}` e atualizar `job_hash`
+- O hash garante que mesmo sem invalidação explícita, o próximo acesso detecta mudança
+
+**Cálculo em lote (para listagem paginada):**
+- Ao listar vagas para um dev, calcular scores para a página inteira em batch
+- Usar pipeline Redis para buscar/salvar múltiplos scores em uma operação
+- Jobs sem score calculado são calculados on-demand e inseridos no cache
+
+---
+
 ## 3. Regras de Integridade Resumidas
 
 | Regra | Implementação |
@@ -538,11 +705,12 @@ Shortlist interna da empresa — devs salvos por vaga.
 | Slug único na árvore | `UNIQUE (slug)` em skill_tree |
 | Em andamento → sem data fim | CHECK em educations e experiences |
 | Curso exige carga horária | CHECK em educations |
-| Presencial/híbrido exige localização | CHECK em jobs |
+| Presencial/híbrido exige endereço | CHECK `NOT (work_mode IN ('onsite','hybrid') AND city_id IS NULL)` em jobs |
 | Salário max ≥ min | CHECK em jobs |
 | Repo GitHub único por dev | `UNIQUE (dev_profile_id, github_repo_id)` em projects |
 | Candidatura única por dev+vaga | `UNIQUE (dev_profile_id, job_id)` em job_applications |
 | Dev salvo único por empresa+dev+vaga | `UNIQUE (company_profile_id, dev_profile_id, job_id)` em saved_developers |
+| Score único por dev+vaga | `UNIQUE (dev_profile_id, job_id)` em match_scores (upsert) |
 | Deletar user cascateia tudo | ON DELETE CASCADE em todas as FKs |
 
 ---
@@ -555,6 +723,7 @@ Shortlist interna da empresa — devs salvos por vaga.
 | `educations` | `is_ongoing DESC, start_date DESC NULLS LAST` |
 | `experiences` | `is_current DESC, start_date DESC` |
 | `projects` | `created_at DESC` |
+| `company_units` | `name ASC` |
 | `jobs` | `status ASC (open first), created_at DESC` |
 | `job_applications` | `created_at DESC` |
 | `saved_developers` | `created_at DESC` |
@@ -585,6 +754,11 @@ JOIN job_skills js ON js.job_id = j.id
 JOIN skill_tree st ON st.id = js.skill_id
 WHERE j.status = 'open'
 AND st.name ILIKE '%termo%';
+
+-- Busca de vagas por município
+SELECT * FROM jobs
+WHERE status = 'open'
+AND city_id = 3550308;
 ```
 
 > Para o MVP, `ILIKE` é suficiente. Evolução futura: `pg_trgm` ou full-text search.
@@ -599,6 +773,7 @@ Ordem de criação respeitando dependências:
 1. users
 2. dev_profiles
 3. company_profiles
+3.1. company_units
 4. skill_tree
 5. dev_skills
 6. educations
@@ -609,6 +784,7 @@ Ordem de criação respeitando dependências:
 11. job_skills
 12. job_applications
 13. saved_developers
+14. match_scores
 ```
 
 ---

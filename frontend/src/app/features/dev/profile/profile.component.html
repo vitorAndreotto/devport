@@ -1,7 +1,7 @@
 <div class="profile-page">
   <div class="profile-page__header">
-    <h1 class="profile-page__title">Meu Perfil</h1>
-    <p class="profile-page__subtitle">Gerencie suas informações profissionais.</p>
+    <h1 class="profile-page__title">Registro da Embarcação</h1>
+    <p class="profile-page__subtitle">A identidade do seu navio nos mares do dev.</p>
   </div>
 
   <form [formGroup]="form" (ngSubmit)="onSubmit()">
@@ -10,7 +10,7 @@
     <section class="form-section">
       <div class="form-section__header">
         <lucide-icon name="user" [size]="20"></lucide-icon>
-        <h2 class="form-section__title">Identidade</h2>
+        <h2 class="form-section__title">Dados do Capitão</h2>
       </div>
 
       <div class="form-section__body">
@@ -50,7 +50,7 @@
     <section class="form-section">
       <div class="form-section__header">
         <lucide-icon name="map-pin" [size]="20"></lucide-icon>
-        <h2 class="form-section__title">Endereço</h2>
+        <h2 class="form-section__title">Porto de Origem</h2>
       </div>
 
       <div class="form-section__body">
@@ -114,30 +114,62 @@
     <section class="form-section">
       <div class="form-section__header">
         <lucide-icon name="briefcase" [size]="20"></lucide-icon>
-        <h2 class="form-section__title">Preferências de trabalho</h2>
+        <h2 class="form-section__title">Preferências de Navegação</h2>
       </div>
 
       <div class="form-section__body">
         <div class="form-grid">
           <div class="form-field">
-            <label class="form-field__label">Modalidade preferida</label>
-            <select class="input" formControlName="work_mode">
-              <option [ngValue]="null">Sem preferência</option>
-              <option value="remote">Remoto</option>
-              <option value="hybrid">Híbrido</option>
-              <option value="onsite">Presencial</option>
-            </select>
+            <label class="form-field__label">Modalidades preferidas</label>
+            <div class="checkbox-group">
+              <label class="checkbox-item">
+                <input type="checkbox" formControlName="work_mode_remote">
+                <span>Remoto</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" formControlName="work_mode_hybrid">
+                <span>Híbrido</span>
+              </label>
+              <label class="checkbox-item">
+                <input type="checkbox" formControlName="work_mode_onsite">
+                <span>Presencial</span>
+              </label>
+            </div>
           </div>
 
-          <app-form-field label="GitHub username" [control]="form.controls.github_username">
-            <div class="input-group">
-              <span class="input-group__prefix">
-                <lucide-icon name="github" [size]="16"></lucide-icon>
-              </span>
-              <input class="input input--with-prefix" type="text" formControlName="github_username" placeholder="seu-username">
-            </div>
+          <div class="form-field">
+            <label class="form-field__label">Situação profissional</label>
+            <select class="input" formControlName="employment_status">
+              <option [ngValue]="null">Não informar</option>
+              <option value="looking">Em busca</option>
+              <option value="employed">Empregado</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <app-form-field label="Pretensão salarial mínima (R$)" [control]="form.controls.salary_min">
+            <input class="input" type="text" formControlName="salary_min" placeholder="0,00" appCurrencyMask>
+          </app-form-field>
+
+          <app-form-field label="Pretensão salarial máxima (R$)" [control]="form.controls.salary_max">
+            <input class="input" type="text" formControlName="salary_max" placeholder="0,00" appCurrencyMask>
           </app-form-field>
         </div>
+
+        <span class="salary-hint">
+          <lucide-icon name="info" [size]="14"></lucide-icon>
+          Sua pretensão salarial nunca será exibida publicamente. É usada apenas para calcular compatibilidade com vagas.
+        </span>
+
+        <app-form-field label="GitHub username" [control]="form.controls.github_username">
+          <div class="input-group">
+            <span class="input-group__prefix">
+              <lucide-icon name="github" [size]="16"></lucide-icon>
+            </span>
+            <input class="input input--with-prefix" type="text" formControlName="github_username" placeholder="seu-username">
+          </div>
+        </app-form-field>
       </div>
     </section>
 
@@ -145,7 +177,7 @@
     <section class="form-section">
       <div class="form-section__header">
         <lucide-icon name="link" [size]="20"></lucide-icon>
-        <h2 class="form-section__title">Links externos</h2>
+        <h2 class="form-section__title">Bandeiras & Sinais</h2>
       </div>
 
       <div class="form-section__body" formArrayName="links">

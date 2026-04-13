@@ -33,6 +33,18 @@ export class LocationController {
     return city;
   }
 
+  @Get('cities')
+  async searchCities(@Query('q') q?: string) {
+    if (!q || q.length < 2) return [];
+
+    return this.cityRepo.find({
+      where: { name: ILike(`%${q}%`) },
+      relations: ['state'],
+      order: { name: 'ASC' },
+      take: 20,
+    });
+  }
+
   @Get('states/:stateId/cities')
   async listCities(
     @Param('stateId', ParseIntPipe) stateId: number,

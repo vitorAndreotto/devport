@@ -9,8 +9,8 @@
         <div class="login__icon">
           <lucide-icon name="log-in" [size]="28"></lucide-icon>
         </div>
-        <h1 class="login__title">Entrar</h1>
-        <p class="login__subtitle">Acesse sua conta para continuar.</p>
+        <h1 class="login__title">Embarcar</h1>
+        <p class="login__subtitle">Suba a bordo e continue sua navegação.</p>
       </div>
 
       @if (apiError()) {
@@ -41,16 +41,16 @@
         <button type="submit" class="login__submit" [disabled]="isLoading()">
           @if (isLoading()) {
             <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
-            Entrando...
+            Embarcando...
           } @else {
             <lucide-icon name="log-in" [size]="18"></lucide-icon>
-            Entrar
+            Embarcar
           }
         </button>
       </form>
 
       <p class="login__footer">
-        Não tem conta? <a routerLink="/auth/register" class="login__link">Registre-se</a>
+        Ainda não zarpou? <a routerLink="/auth/register" class="login__link">Registre sua embarcação</a>
       </p>
     </div>
   </div>

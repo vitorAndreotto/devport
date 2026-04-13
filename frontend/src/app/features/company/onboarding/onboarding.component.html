@@ -1,0 +1,64 @@
+<div class="onboarding">
+  <div class="onboarding__card">
+    <div class="onboarding__header">
+      <div class="onboarding__icon">
+        <lucide-icon name="building-2" [size]="32"></lucide-icon>
+      </div>
+      <h1 class="onboarding__title">Bem-vindo ao porto!</h1>
+      <p class="onboarding__subtitle">Registre seu porto para abrir as docas e atrair navios.</p>
+    </div>
+
+    @if (apiError()) {
+      <div class="onboarding__alert">{{ apiError() }}</div>
+    }
+
+    <form [formGroup]="form" (ngSubmit)="onSubmit()" class="onboarding__form">
+      <app-handle-input
+        [control]="form.controls.handle"
+        [checkFn]="handleCheckFn"
+        (statusChange)="onHandleStatus($event)"
+      />
+
+      <app-form-field label="Nome da empresa" [control]="form.controls.company_name" [required]="true">
+        <input class="input" type="text" formControlName="company_name" placeholder="Nome da empresa">
+      </app-form-field>
+
+      <app-form-field label="CNPJ" [control]="form.controls.cnpj" [required]="true">
+        <input class="input" type="text" formControlName="cnpj" placeholder="00.000.000/0000-00" maxlength="18" appCnpjMask>
+      </app-form-field>
+
+      <app-form-field label="Descrição" [control]="form.controls.description" [required]="true">
+        <textarea class="input input--textarea" formControlName="description" placeholder="Sobre a empresa (max 1000 caracteres)" rows="3"></textarea>
+        <span class="char-count">{{ descriptionLength }}/1000</span>
+      </app-form-field>
+
+      <div class="form-grid">
+        <app-form-field label="Setor de atuação" [control]="form.controls.industry" [required]="true">
+          <input class="input" type="text" formControlName="industry" placeholder="Ex: Tecnologia da Informação">
+        </app-form-field>
+
+        <div class="form-field">
+          <label class="form-field__label">Tamanho <span class="form-field__required">*</span></label>
+          <select class="input" formControlName="size">
+            <option value="">Selecione</option>
+            <option value="startup">Startup</option>
+            <option value="small">Pequena</option>
+            <option value="medium">Média</option>
+            <option value="large">Grande</option>
+            <option value="enterprise">Enterprise</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="submit" class="onboarding__submit" [disabled]="!canSubmit">
+        @if (isLoading()) {
+          <lucide-icon name="loader-2" [size]="18" class="spin"></lucide-icon>
+          Inaugurando porto...
+        } @else {
+          <lucide-icon name="building-2" [size]="18"></lucide-icon>
+          Inaugurar porto
+        }
+      </button>
+    </form>
+  </div>
+</div>

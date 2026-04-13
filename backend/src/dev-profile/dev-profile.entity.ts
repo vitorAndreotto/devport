@@ -59,8 +59,17 @@ export class DevProfile {
 
   // ---
 
-  @Column({ name: 'work_mode', type: 'varchar', length: 10, nullable: true })
-  workMode: string | null;
+  @Column({ name: 'work_modes', type: 'jsonb', nullable: true })
+  workModes: string[] | null;
+
+  @Column({ name: 'employment_status', type: 'varchar', length: 10, nullable: true })
+  employmentStatus: string | null;
+
+  @Column({ name: 'salary_min', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  salaryMin: number | null;
+
+  @Column({ name: 'salary_max', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  salaryMax: number | null;
 
   @Column({ name: 'github_username', type: 'varchar', length: 255, nullable: true })
   githubUsername: string | null;

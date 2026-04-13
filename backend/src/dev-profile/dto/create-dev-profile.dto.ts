@@ -5,8 +5,10 @@ import {
   IsEmail,
   IsEnum,
   IsInt,
+  IsNumber,
   IsArray,
   IsUrl,
+  Min,
   Matches,
   MaxLength,
   MinLength,
@@ -19,6 +21,11 @@ enum WorkMode {
   Onsite = 'onsite',
   Hybrid = 'hybrid',
   Remote = 'remote',
+}
+
+enum EmploymentStatus {
+  Looking = 'looking',
+  Employed = 'employed',
 }
 
 class LinkDto {
@@ -102,8 +109,25 @@ export class CreateDevProfileDto {
   // ---
 
   @IsOptional()
-  @IsEnum(WorkMode)
-  work_mode?: string;
+  @IsArray()
+  @IsEnum(WorkMode, { each: true })
+  work_modes?: string[];
+
+  @IsOptional()
+  @IsEnum(EmploymentStatus)
+  employment_status?: string;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Type(() => Number)
+  salary_min?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Type(() => Number)
+  salary_max?: number;
 
   @IsOptional()
   @IsString()

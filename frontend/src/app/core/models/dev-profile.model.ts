@@ -13,7 +13,10 @@ export interface DevProfile {
   neighborhood: string | null;
   number: string | null;
   complement: string | null;
-  work_mode: string | null;
+  work_modes: string[] | null;
+  employment_status: string | null;
+  salary_min: number | null;
+  salary_max: number | null;
   github_username: string | null;
   links: { label: string; url: string }[] | null;
   created_at: string;
@@ -33,7 +36,10 @@ export interface CreateDevProfilePayload {
   neighborhood?: string;
   number?: string;
   complement?: string;
-  work_mode?: string;
+  work_modes?: string[];
+  employment_status?: string;
+  salary_min?: number;
+  salary_max?: number;
   github_username?: string;
   links?: { label: string; url: string }[];
 }

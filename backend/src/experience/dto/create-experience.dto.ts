@@ -5,7 +5,6 @@ import {
   IsBoolean,
   IsDateString,
   IsArray,
-  IsUUID,
   ArrayMaxSize,
   MaxLength,
 } from 'class-validator';

@@ -35,7 +35,7 @@ export class RegisterFormComponent {
   });
 
   get roleLabel(): string {
-    return this.role() === 'dev' ? 'Desenvolvedor' : 'Empresa';
+    return this.role() === 'dev' ? 'Navio' : 'Porto';
   }
 
   onSubmit(): void {

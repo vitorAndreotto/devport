@@ -106,8 +106,10 @@ Dados centrais do desenvolvedor.
 | Avatar (URL) | string | Não |
 | E-mail de contato | string | Sim |
 | Localização | string | Não |
-| Modelo preferido | enum: `onsite`, `hybrid`, `remote` | Não |
+| Modalidades preferidas | array de enum: `onsite`, `hybrid`, `remote` (múltipla seleção) | Não |
 | Situação profissional | enum: `looking`, `employed` | Não |
+| Pretensão salarial mínima | decimal | Não |
+| Pretensão salarial máxima | decimal | Não |
 | Links externos (GitHub, LinkedIn, site) | json/array | Não |
 
 **Regras:**
@@ -116,6 +118,7 @@ Dados centrais do desenvolvedor.
 - Bio limitada a 500 caracteres
 - Handle é único, usado na URL pública (`/developers/vitorsantos`), aceita apenas letras minúsculas, números e hífens, entre 3 e 40 caracteres
 - Situação profissional é informativa (visível no perfil público). Serve como alerta para empresas — devs empregados podem representar um empecilho na contratação
+- Pretensão salarial **nunca** é exibida publicamente nem para empresas — usada apenas internamente para cálculo de compatibilidade salarial com vagas
 
 ---
 
@@ -227,7 +230,12 @@ Sem alterações em relação à v1.
 | Site | string | Não |
 | Setor de atuação | string | Sim |
 | Tamanho | enum: `startup`, `small`, `medium`, `large`, `enterprise` | Sim |
-| Localização (sede) | string | Sim |
+| Município (sede) | FK → cities | Não |
+| CEP | string | Não |
+| Rua / Logradouro | string | Não |
+| Bairro | string | Não |
+| Número | string | Não |
+| Complemento | string | Não |
 | Links (LinkedIn, site de carreiras) | json/array | Não |
 
 **Regras:**
@@ -235,6 +243,29 @@ Sem alterações em relação à v1.
 - Handle é único, usado na URL pública (`/companies/techcorp`), mesmas regras do handle de dev
 - CNPJ deve ser único (sem duplicatas)
 - Descrição limitada a 1000 caracteres
+- Endere��o da sede é opcional (todos os campos)
+
+---
+
+#### 6.2.1.1 Unidades da Empresa (`company-units`)
+
+Endereços de filiais/unidades adicionais da empresa.
+
+| Campo | Tipo | Obrigatório |
+|---|---|---|
+| Nome da unidade | string | Sim |
+| Município | FK → cities | Sim |
+| CEP | string | Sim |
+| Rua / Logradouro | string | Sim |
+| Bairro | string | Sim |
+| Número | string | Sim |
+| Complemento | string | Não |
+
+**Regras:**
+- Uma empresa pode ter múltiplas unidades
+- Se uma unidade for criada, todos os campos de endereço são obrigatórios (exceto complemento)
+- Unidades são gerenciadas pela empresa (CRUD)
+- Unidades são exibidas no perfil público da empresa
 
 ---
 
@@ -244,20 +275,34 @@ Sem alterações em relação à v1.
 |---|---|---|
 | Título da vaga | string | Sim |
 | Descrição | text | Sim |
-| Skills necessárias (com nível mínimo) | array de { skill_id, min_level } | Sim |
+| Senioridade | enum: `intern`, `junior`, `mid`, `senior`, `lead`, `specialist` | Sim |
+| Skills (com nível mínimo e exigência) | array de { skill_id, min_level, requirement } | Sim |
 | Experiência mínima (anos) | integer | Sim |
 | Modelo de contratação | enum: `clt`, `pj`, `clt_pj` | Sim |
 | Faixa salarial mínima | decimal | Sim |
 | Faixa salarial máxima | decimal | Sim |
+| Exibir salário | boolean | Sim (default: false) |
+| Benefícios | array de strings | Não |
 | Modalidade | enum: `onsite`, `hybrid`, `remote` | Sim |
-| Localização da vaga | string | Condicional* |
+| Unidade de referência | FK → company_units (nullable) | Não |
+| Município | FK → cities | Condicional* |
+| CEP | string | Condicional* |
+| Rua / Logradouro | string | Condicional* |
+| Bairro | string | Condicional* |
+| Número | string | Condicional* |
+| Complemento | string | Não |
 | Status | enum: `open`, `closed` | Sim |
 
 **Regras:**
-- *Localização obrigatória quando modalidade = `onsite` ou `hybrid`
-- Faixa salarial é visível **apenas para a empresa** — devs não veem
-- Faixa salarial é usada internamente para matching (futura evolução)
-- Skills da vaga são referências à árvore de skills
+- *Endereço completo obrigatório quando modalidade = `onsite` ou `hybrid` (city_id, zip_code, street, neighborhood, number)
+- Vaga pode referenciar uma unidade (`company_unit_id`) ou a sede (null) para pré-preencher o endereço no frontend
+- O endereço da vaga é independente — preenchido automaticamente mas editável livremente
+- Faixa salarial controlada por `show_salary`: se `true`, visível publicamente; se `false`, apenas para a empresa
+- Benefícios são texto livre (array de strings), exibidos no perfil público da vaga
+- Skills da vaga são referências à árvore de skills, cada uma com tipo de exigência:
+  - `required` — obrigatória (eliminatória)
+  - `expected` — esperada (candidato ideal)
+  - `differential` — diferencial (destaque, não eliminatória)
 - Uma empresa pode ter múltiplas vagas ativas
 - Ordenação: vagas abertas primeiro, mais recentes primeiro
 - Vaga fechada não aparece na busca pública
@@ -358,29 +403,158 @@ soft_skill
 
 ### 6.4 Sistema de Matching (`matching`)
 
-Algoritmo de compatibilidade entre devs e vagas.
+Algoritmo de compatibilidade entre devs e vagas. Score de **0 a 100**.
 
-#### 6.4.1 Match Dev → Vaga
-
-Quando um dev busca vagas, cada vaga recebe um **score de 0 a 100** baseado em:
-
-| Critério | Peso | Cálculo |
+| Critério | Peso | Descrição |
 |---|---|---|
-| Skills em comum | 60% | % das skills exigidas pela vaga que o dev possui, com bônus se nível do dev ≥ nível exigido |
-| Experiência | 20% | Anos de experiência do dev vs mínimo da vaga |
-| Modalidade | 10% | Preferência do dev vs modalidade da vaga |
-| Localização | 10% | Match de localização (relevante para presencial/híbrido) |
+| Skills | 50% | Compatibilidade técnica ponderada por exigência e nível |
+| Experiência | 25% | Tempo de experiência vs mínimo da vaga |
+| Modalidade + Localização | 10% | Preferência de trabalho e proximidade geográfica |
+| Faixa salarial | 15% | Compatibilidade entre pretensão do dev e faixa da vaga |
 
-#### 6.4.2 Match Empresa → Dev
+---
 
-Quando uma empresa busca devs para uma vaga, cada dev recebe o mesmo score calculado contra aquela vaga.
+#### 6.4.1 Skills (40%)
 
-**Regras:**
-- Score é calculado em tempo real (sem cache no MVP)
+Cada skill da vaga gera um sub-score baseado em:
+1. **O dev possui a skill?** — se não, sub-score = 0
+2. **Qual o nível do dev vs o nível exigido?** — tabela de compatibilidade abaixo
+
+**Tabela de compatibilidade de nível (% do sub-score da skill):**
+
+| Dev \ Vaga exige → | Beginner | Intermediate | Advanced | Expert |
+|---|---|---|---|---|
+| **Beginner** | 100% | 70% | 50% | 30% |
+| **Intermediate** | 120% | 100% | 70% | 50% |
+| **Advanced** | 150% | 120% | 100% | 70% |
+| **Expert** | 150% | 150% | 120% | 100% |
+
+> Valores acima de 100% indicam que o dev supera o requisito — bonificação.
+> O sub-score é **capped em 100** (não ultrapassa 100 por skill).
+
+**Ponderação por tipo de exigência:**
+- `required` → peso **3**
+- `expected` → peso **2**
+- `differential` → peso **1**
+
+**Fórmula:**
+```
+skill_score = Σ (sub_score_i × peso_i) / Σ (100 × peso_i) × 100
+```
+
+**Exemplo:** Vaga pede TypeScript (expert, required), React (advanced, expected), Docker (intermediate, differential).
+- Dev tem TypeScript advanced → 70% × peso 3 = 210
+- Dev tem React advanced → 100% × peso 2 = 200
+- Dev não tem Docker → 0% × peso 1 = 0
+- Máximo possível: (100×3) + (100×2) + (100×1) = 600
+- Score: (210 + 200 + 0) / 600 × 100 = **68.3**
+
+---
+
+#### 6.4.2 Experiência (20%)
+
+Calculada a partir da **soma total de tempo das experiências profissionais** do dev (tabela `experiences`).
+
+```
+total_anos = Σ (end_date - start_date) para cada experience
+           (is_current usa a data atual como end_date)
+
+Se total_anos >= min_experience_years da vaga → score = 100
+Se total_anos < min_experience_years → score = (total_anos / min_experience_years) × 100
+```
+
+**Exemplo:** Vaga pede 5 anos, dev tem 3.5 → score = 70.
+
+---
+
+#### 6.4.3 Modalidade + Localização (10%)
+
+Dividido em duas partes de **50% cada**:
+
+**Parte A — Modalidade (50% do critério):**
+
+O dev possui um array de modalidades preferidas (`work_modes`): ex. `["remote", "hybrid"]`.
+
+- Modalidade da vaga **está** no array do dev → **100%**
+- Modalidade da vaga **não está** no array do dev → **0%**
+- Dev sem preferência (array vazio ou null) → **100%** (aceita qualquer)
+
+**Parte B — Localização (50% do critério):**
+
+- Vaga é **remote** → **100%** (localização não se aplica)
+- Vaga é **onsite/hybrid**:
+  - Mesma cidade (city_id) → **100%**
+  - Mesmo estado → **50%**
+  - Estado diferente → **0%**
+  - Dev sem cidade cadastrada → **50%**
+
+**Score final do critério:**
+```
+score = (modalidade_part × 0.5) + (localização_part × 0.5)
+```
+
+---
+
+#### 6.4.4 Faixa Salarial (30%)
+
+Compara a pretensão do dev (`salary_min`/`salary_max`) com a faixa da vaga (`salary_min`/`salary_max`).
+
+**Casos:**
+
+| Situação | Score |
+|---|---|
+| Dev não informou pretensão | 50% (neutro) |
+| Faixas se sobrepõem parcialmente | % de sobreposição |
+| Faixa do dev está dentro da faixa da vaga | 100% a 110% (bonus proporcional) |
+| Faixa do dev está totalmente fora (acima) | 0% |
+| Faixa do dev está totalmente fora (abaixo) | 100% a 110% (bonus: vaga paga mais que o dev pede) |
+
+> **Score máximo: 110%.** Dev que pede menos do que a vaga paga recebe bonificação (cap 110%), pois é um candidato "acessível" para a empresa.
+
+**Fórmula:**
+```
+overlap_start = MAX(dev_min, job_min)
+overlap_end = MIN(dev_max, job_max)
+
+Se overlap_start > overlap_end → sem sobreposição
+  Se dev_min > job_max → score = 0 (dev quer mais do que a vaga paga)
+  Se dev_max < job_min → score = MIN(110, 100 + bonus)
+    bonus = MIN(10, ((job_min - dev_max) / dev_max) × 100)
+Senão:
+  overlap = overlap_end - overlap_start
+  range = MAX(dev_max, job_max) - MIN(dev_min, job_min)
+  base_score = (overlap / range) × 100
+  Se faixa do dev inteira dentro da faixa da vaga:
+    bonus = MIN(10, ((job_max - dev_max) / dev_max) × 50)
+    score = MIN(110, base_score + bonus)
+  Senão:
+    score = base_score
+```
+
+---
+
+#### 6.4.5 Score Final
+
+```
+score = (skills × 0.50) + (experiencia × 0.25) + (modalidade_localizacao × 0.10) + (salario × 0.15)
+```
+
+**Arredondado para inteiro.** Score de 0 a 100.
+
+---
+
+#### 6.4.6 Match Empresa → Dev
+
+Quando uma empresa busca devs para uma vaga, cada dev recebe o **mesmo score** calculado contra aquela vaga.
+
+**Regras gerais:**
+- Score com cache em 2 camadas: Redis (hot, TTL 24h) + PostgreSQL (persistente, tabela `match_scores`)
+- Recalcula apenas quando hash dos dados do dev ou da vaga muda
 - Resultados ordenados por score decrescente
-- Score mínimo para exibição: 20 (abaixo disso, não aparece)
+- Score < 20 não aparece nos resultados
 - Dev vê o score ao lado de cada vaga
 - Empresa vê o score ao lado de cada dev
+- Sub-scores individuais (skills, experiência, modalidade, salário) armazenados para transparência
 
 ---
 
@@ -394,7 +568,8 @@ Quando uma empresa busca devs para uma vaga, cada dev recebe o mesmo score calcu
 | Skill | skill_id | Filtra vagas que exigem determinada skill |
 | Modalidade | enum | `onsite`, `hybrid`, `remote` |
 | Modelo | enum | `clt`, `pj`, `clt_pj` |
-| Localização | string | Busca textual na localização |
+| Senioridade | enum | `intern`, `junior`, `mid`, `senior`, `lead`, `specialist` |
+| Município | city_id | Filtra vagas por município |
 | Ordenação | enum | `match_score`, `recent`, `experience_asc` |
 
 **Regras:**
@@ -409,7 +584,7 @@ Quando uma empresa busca devs para uma vaga, cada dev recebe o mesmo score calcu
 | Texto | string | Busca no nome do dev |
 | Skill | skill_id | Filtra devs que possuem determinada skill |
 | Nível mínimo | enum | Nível mínimo na skill filtrada |
-| Localização | string | Busca textual |
+| Município | city_id | Filtra devs por município |
 | Vaga de referência | job_id | Calcula score contra uma vaga específica |
 
 **Regras:**
@@ -462,6 +637,7 @@ DevProfile (1) ── (N) Education
 DevProfile (1) ── (N) Experience
 DevProfile (1) ── (N) Project
 
+CompanyProfile (1) ── (N) CompanyUnit  ← unidades/filiais
 CompanyProfile (1) ── (N) Job
 Job (N) ── (N) SkillTree          ← skills exigidas (com nível mínimo)
 Job (1) ── (N) JobApplication     ← candidaturas recebidas

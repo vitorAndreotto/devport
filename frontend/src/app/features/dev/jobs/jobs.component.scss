@@ -1,0 +1,1041 @@
+.jobs-page {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: calc(100vh - 56px);
+
+  @media (min-width: 1024px) {
+    min-height: 100vh;
+  }
+}
+
+// =============================================
+// Filters
+// =============================================
+.filters {
+  padding: 1rem 1.5rem;
+  background: white;
+  border-bottom: 1px solid var(--sand-200);
+
+  &__search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    background: var(--sand-50);
+    border: 1.5px solid var(--sand-300);
+    border-radius: 0.5rem;
+    padding: 0 0.75rem;
+    margin-bottom: 0.75rem;
+
+    ::ng-deep lucide-icon { display: flex; color: var(--navy-400); }
+
+    &:focus-within {
+      border-color: var(--navy-500);
+      box-shadow: 0 0 0 3px rgba(55, 98, 147, 0.1);
+    }
+  }
+
+  &__input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.625rem 0;
+    font-family: inherit;
+    font-size: 0.9375rem;
+    color: var(--navy-950);
+    outline: none;
+
+    &::placeholder { color: var(--navy-300); }
+  }
+
+  &__row {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+
+  &__select {
+    padding: 0.375rem 2rem 0.375rem 0.625rem;
+    border: 1.5px solid var(--sand-300);
+    border-radius: 0.375rem;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    color: var(--navy-700);
+    background: white;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%237390b3' stroke-width='2'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.5rem center;
+    cursor: pointer;
+    outline: none;
+
+    &:focus {
+      border-color: var(--navy-500);
+    }
+
+    &--grow {
+      flex: 1;
+      min-width: 150px;
+    }
+  }
+
+  &__skills {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--sand-200);
+  }
+
+  &__skill-add {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  &__skill-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    border: 1.5px solid var(--sand-300);
+    border-radius: 0.375rem;
+    background: white;
+    color: var(--navy-600);
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: all 0.15s;
+
+    &:hover:not(:disabled) {
+      background: var(--navy-50);
+      border-color: var(--navy-400);
+    }
+
+    &:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    ::ng-deep lucide-icon { display: flex; }
+  }
+
+  &__skill-tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.375rem;
+    margin-top: 0.5rem;
+  }
+
+  &__skill-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    background: var(--navy-50);
+    border: 1px solid var(--navy-200);
+    border-radius: 2rem;
+    padding: 0.25rem 0.625rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--navy-800);
+
+    &-level {
+      font-weight: 400;
+      color: var(--navy-500);
+    }
+
+    &-remove {
+      display: flex;
+      background: none;
+      border: none;
+      cursor: pointer;
+      padding: 0;
+      color: var(--navy-400);
+      margin-left: 0.125rem;
+
+      &:hover { color: #dc2626; }
+      ::ng-deep lucide-icon { display: flex; }
+    }
+  }
+
+  &__clear {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    padding: 0.375rem 0.75rem;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--navy-500);
+    cursor: pointer;
+
+    &:hover { color: #dc2626; }
+    ::ng-deep lucide-icon { display: flex; }
+  }
+}
+
+// =============================================
+// City search dropdown
+// =============================================
+.city-search {
+  position: relative;
+  min-width: 180px;
+
+  &__field {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    border: 1.5px solid var(--sand-300);
+    border-radius: 0.375rem;
+    padding: 0 0.5rem;
+    background: white;
+
+    &:focus-within {
+      border-color: var(--navy-500);
+      box-shadow: 0 0 0 3px rgba(55, 98, 147, 0.1);
+    }
+
+    ::ng-deep lucide-icon { display: flex; color: var(--navy-400); }
+  }
+
+  &__input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.375rem 0;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    color: var(--navy-950);
+    outline: none;
+    min-width: 100px;
+
+    &::placeholder { color: var(--navy-300); }
+  }
+
+  &__clear {
+    display: flex;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0.125rem;
+    color: var(--navy-400);
+
+    &:hover { color: #dc2626; }
+    ::ng-deep lucide-icon { display: flex; }
+  }
+
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1.5px solid var(--sand-300);
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgba(7, 30, 61, 0.12);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 50;
+    min-width: 220px;
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    color: var(--navy-900);
+    cursor: pointer;
+    text-align: left;
+
+    &:hover { background: var(--navy-50); }
+
+    &-name { font-weight: 500; }
+    &-state { font-size: 0.6875rem; color: var(--navy-400); }
+  }
+}
+
+// =============================================
+// Skill search dropdown
+// =============================================
+.skill-search {
+  position: relative;
+  flex: 1;
+  min-width: 180px;
+
+  &__field {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    border: 1.5px solid var(--sand-300);
+    border-radius: 0.375rem;
+    padding: 0 0.5rem;
+    background: white;
+
+    &:focus-within {
+      border-color: var(--navy-500);
+      box-shadow: 0 0 0 3px rgba(55, 98, 147, 0.1);
+    }
+
+    ::ng-deep lucide-icon { display: flex; color: var(--navy-400); }
+  }
+
+  &__input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0.375rem 0;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    color: var(--navy-950);
+    outline: none;
+
+    &::placeholder { color: var(--navy-300); }
+  }
+
+  &__dropdown {
+    position: absolute;
+    top: calc(100% + 4px);
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1.5px solid var(--sand-300);
+    border-radius: 0.5rem;
+    box-shadow: 0 8px 24px rgba(7, 30, 61, 0.12);
+    max-height: 200px;
+    overflow-y: auto;
+    z-index: 50;
+  }
+
+  &__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 0.5rem 0.75rem;
+    border: none;
+    background: none;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    color: var(--navy-900);
+    cursor: pointer;
+    text-align: left;
+
+    &:hover {
+      background: var(--navy-50);
+    }
+
+    &-name {
+      font-weight: 500;
+    }
+
+    &-cat {
+      font-size: 0.6875rem;
+      color: var(--navy-400);
+    }
+  }
+}
+
+// =============================================
+// Content split
+// =============================================
+.jobs-content {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+}
+
+// =============================================
+// List panel
+// =============================================
+.jobs-list {
+  width: 380px;
+  min-width: 300px;
+  border-right: 1px solid var(--sand-200);
+  overflow-y: auto;
+  background: var(--sand-50);
+
+  @media (max-width: 768px) {
+    width: 100%;
+    border-right: none;
+  }
+
+  &__loading, &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 3rem 1.5rem;
+    color: var(--navy-400);
+    gap: 0.75rem;
+
+    ::ng-deep lucide-icon { display: flex; }
+
+    p {
+      font-size: 0.9375rem;
+    }
+  }
+}
+
+// =============================================
+// Pagination
+// =============================================
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.25rem;
+  padding: 0.75rem 1rem;
+  border-top: 1px solid var(--sand-200);
+  background: white;
+  flex-shrink: 0;
+
+  &__btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2rem;
+    height: 2rem;
+    padding: 0 0.375rem;
+    border: 1px solid var(--sand-200);
+    border-radius: 0.375rem;
+    background: white;
+    font-family: inherit;
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--navy-700);
+    cursor: pointer;
+    transition: all 0.15s;
+
+    &:hover:not(:disabled) {
+      background: var(--navy-50);
+      border-color: var(--navy-300);
+    }
+
+    &--active {
+      background: var(--navy-900);
+      border-color: var(--navy-900);
+      color: white;
+
+      &:hover:not(:disabled) {
+        background: var(--navy-800);
+      }
+    }
+
+    &:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+    }
+
+    ::ng-deep lucide-icon { display: flex; }
+  }
+
+  &__dots {
+    font-size: 0.75rem;
+    color: var(--navy-400);
+    padding: 0 0.25rem;
+  }
+
+  &__info {
+    font-size: 0.75rem;
+    color: var(--navy-400);
+    margin-left: 0.5rem;
+  }
+}
+
+.job-card {
+  display: block;
+  width: 100%;
+  text-align: left;
+  background: white;
+  border: none;
+  border-bottom: 1px solid var(--sand-200);
+  padding: 0.875rem 1.25rem;
+  cursor: pointer;
+  transition: all 0.15s;
+  font-family: inherit;
+  position: relative;
+
+  &:hover {
+    background: var(--navy-50);
+  }
+
+  &--active {
+    background: var(--navy-50);
+    border-left: 3px solid var(--navy-900);
+  }
+
+  // Match score — top right corner
+  &__score {
+    position: absolute;
+    top: 0.75rem;
+    right: 0.75rem;
+    font-size: 0.6875rem;
+    font-weight: 700;
+    padding: 0.1875rem 0.5rem;
+    border-radius: 1rem;
+    letter-spacing: -0.02em;
+
+    &--high { background: #dcfce7; color: #16a34a; }
+    &--mid  { background: #fffbeb; color: #d97706; }
+    &--low  { background: #fef2f2; color: #dc2626; }
+  }
+
+  // Header: company + time
+  &__header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.25rem;
+  }
+
+  &__company {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+  }
+
+  &__logo {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    object-fit: cover;
+  }
+
+  &__logo-placeholder {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    background: var(--navy-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--navy-400);
+    ::ng-deep lucide-icon { display: flex; }
+  }
+
+  &__company-name {
+    font-size: 0.6875rem;
+    color: var(--navy-500);
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 180px;
+  }
+
+  &__time {
+    font-size: 0.625rem;
+    color: var(--navy-400);
+    flex-shrink: 0;
+  }
+
+  // Title
+  &__title {
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--navy-950);
+    margin-bottom: 0.375rem;
+    line-height: 1.3;
+    padding-right: 2.5rem; // space for score badge
+  }
+
+  // Meta badges
+  &__meta {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.375rem;
+  }
+
+  &__badge {
+    font-size: 0.625rem;
+    font-weight: 600;
+    padding: 0.125rem 0.375rem;
+    border-radius: 0.25rem;
+    text-transform: uppercase;
+    letter-spacing: 0.02em;
+    background: var(--sand-100);
+    color: var(--navy-600);
+
+    &--seniority {
+      background: var(--navy-900);
+      color: white;
+    }
+
+    &--mode {
+      background: var(--navy-100);
+      color: var(--navy-700);
+    }
+  }
+
+  // Location
+  &__location {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.6875rem;
+    color: var(--navy-500);
+    margin-bottom: 0.375rem;
+
+    ::ng-deep lucide-icon { display: flex; color: var(--navy-400); }
+  }
+
+  // Required skills
+  &__skills {
+    display: flex;
+    gap: 0.25rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.25rem;
+  }
+
+  &__skill {
+    font-size: 0.625rem;
+    font-weight: 500;
+    color: var(--navy-700);
+    background: var(--navy-50);
+    border: 1px solid var(--navy-200);
+    padding: 0.0625rem 0.375rem;
+    border-radius: 0.25rem;
+  }
+
+  // Applied badge
+  &__applied {
+    display: inline-block;
+    margin-top: 0.25rem;
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: #16a34a;
+    background: #dcfce7;
+    padding: 0.125rem 0.5rem;
+    border-radius: 1rem;
+  }
+}
+
+// =============================================
+// Detail panel
+// =============================================
+.job-detail {
+  flex: 1;
+  overflow-y: auto;
+  padding: 2rem;
+  background: white;
+
+  @media (max-width: 768px) {
+    display: none;
+  }
+
+  &__empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 100%;
+    color: var(--navy-300);
+    gap: 1rem;
+    ::ng-deep lucide-icon { display: flex; }
+    p { font-size: 0.9375rem; }
+  }
+
+  &__header {
+    margin-bottom: 1.5rem;
+  }
+
+  &__top-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 0.75rem;
+  }
+
+  &__time {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--navy-400);
+    flex-shrink: 0;
+  }
+
+  &__company {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  &__logo {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    object-fit: cover;
+  }
+
+  &__logo-placeholder {
+    width: 36px;
+    height: 36px;
+    border-radius: 8px;
+    background: var(--navy-100);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--navy-400);
+    ::ng-deep lucide-icon { display: flex; }
+  }
+
+  &__company-name {
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: var(--navy-600);
+  }
+
+  &__title {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--navy-950);
+    margin-bottom: 0.75rem;
+  }
+
+  &__meta {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.5rem;
+  }
+
+  &__badge {
+    font-size: 0.8125rem;
+    font-weight: 500;
+    color: var(--navy-700);
+    background: var(--navy-50);
+    padding: 0.25rem 0.75rem;
+    border-radius: 2rem;
+  }
+
+  &__stats {
+    display: flex;
+    gap: 1.25rem;
+    margin-top: 0.75rem;
+  }
+
+  &__match {
+    display: flex;
+    align-items: center;
+    gap: 1.25rem;
+    margin-top: 1rem;
+    padding: 1rem;
+    background: var(--sand-50);
+    border: 1px solid var(--sand-200);
+    border-radius: 0.5rem;
+  }
+
+  &__match-score {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 4rem;
+    height: 4rem;
+    border-radius: 50%;
+    flex-shrink: 0;
+
+    &--high { background: #dcfce7; }
+    &--mid  { background: #fffbeb; }
+    &--low  { background: #fef2f2; }
+  }
+
+  &__match-value {
+    font-size: 1.125rem;
+    font-weight: 700;
+    color: var(--navy-950);
+    line-height: 1;
+  }
+
+  &__match-label {
+    font-size: 0.625rem;
+    font-weight: 600;
+    color: var(--navy-500);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  &__match-bars {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  &__stat {
+    display: flex;
+    align-items: center;
+    gap: 0.375rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--navy-600);
+
+    ::ng-deep lucide-icon { display: flex; color: var(--navy-400); }
+  }
+
+  &__action {
+    padding: 1rem 0;
+    border-top: 1px solid var(--sand-200);
+    border-bottom: 1px solid var(--sand-200);
+    margin-bottom: 1.5rem;
+  }
+
+  &__status {
+    display: inline-block;
+    padding: 0.5rem 1.25rem;
+    border-radius: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 600;
+
+    &--accepted { background: #dcfce7; color: #16a34a; }
+    &--rejected { background: #fef2f2; color: #dc2626; }
+    &--withdrawn { background: var(--sand-200); color: var(--navy-500); }
+  }
+
+  &__section {
+    margin-bottom: 1.5rem;
+
+    h3 {
+      display: flex;
+      align-items: center;
+      gap: 0.375rem;
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--navy-900);
+      margin-bottom: 0.75rem;
+
+      ::ng-deep lucide-icon { display: flex; }
+    }
+  }
+
+  &__text {
+    font-size: 0.9375rem;
+    color: var(--navy-700);
+    line-height: 1.6;
+    white-space: pre-line;
+  }
+
+  &__skills {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__benefits {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+
+  &__location {
+    background: var(--sand-50);
+    border: 1px solid var(--sand-200);
+    border-radius: 0.5rem;
+    padding: 1rem;
+  }
+
+  &__location-city {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--navy-900);
+    margin-bottom: 0.25rem;
+  }
+
+  &__location-address {
+    font-size: 0.875rem;
+    color: var(--navy-600);
+    line-height: 1.5;
+  }
+
+  &__location-remote {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    color: #16a34a;
+    background: #f0fdf4;
+    border: 1px solid #bbf7d0;
+    border-radius: 0.5rem;
+    padding: 0.75rem 1rem;
+
+    ::ng-deep lucide-icon { display: flex; }
+  }
+}
+
+// =============================================
+// Skill chips
+// =============================================
+.skill-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.625rem;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0.5rem;
+  font-size: 0.8125rem;
+  border: 1px solid;
+
+  &--required {
+    background: #fef2f2;
+    border-color: #fecaca;
+  }
+
+  &--expected {
+    background: #fffbeb;
+    border-color: #fde68a;
+  }
+
+  &--differential {
+    background: #f0fdf4;
+    border-color: #bbf7d0;
+  }
+
+  > div {
+    display: flex;
+    flex-direction: column;
+    gap: 0.0625rem;
+  }
+
+  &__name {
+    font-weight: 600;
+    color: var(--navy-900);
+    font-size: 0.8125rem;
+  }
+
+  &__level {
+    font-weight: 400;
+    color: var(--navy-500);
+    font-size: 0.75rem;
+  }
+
+  &__req {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    padding: 0.125rem 0.5rem;
+    border-radius: 1rem;
+    white-space: nowrap;
+  }
+
+  &--required &__req {
+    background: #fecaca;
+    color: #dc2626;
+  }
+
+  &--expected &__req {
+    background: #fde68a;
+    color: #92400e;
+  }
+
+  &--differential &__req {
+    background: #bbf7d0;
+    color: #166534;
+  }
+}
+
+.benefit-chip {
+  display: inline-block;
+  background: var(--navy-50);
+  border: 1px solid var(--navy-200);
+  border-radius: 2rem;
+  padding: 0.25rem 0.75rem;
+  font-size: 0.8125rem;
+  font-weight: 500;
+  color: var(--navy-700);
+}
+
+// =============================================
+// Action buttons
+// =============================================
+.btn-apply {
+  padding: 0.75rem 2rem;
+  background: var(--navy-900);
+  color: white;
+  border: none;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+
+  &:hover:not(:disabled) { background: var(--navy-800); }
+  &:disabled { opacity: 0.7; cursor: not-allowed; }
+  ::ng-deep lucide-icon { display: flex; }
+}
+
+.btn-withdraw {
+  padding: 0.75rem 2rem;
+  background: white;
+  color: #dc2626;
+  border: 1.5px solid #fecaca;
+  border-radius: 0.5rem;
+  font-family: inherit;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+
+  &:hover { background: #fef2f2; }
+  ::ng-deep lucide-icon { display: flex; }
+}
+
+// =============================================
+// Match bars
+// =============================================
+.match-bar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+
+  &__label {
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--navy-500);
+    width: 5.5rem;
+    flex-shrink: 0;
+  }
+
+  &__track {
+    flex: 1;
+    height: 6px;
+    background: var(--sand-200);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+
+  &__fill {
+    height: 100%;
+    background: var(--navy-600);
+    border-radius: 3px;
+    transition: width 0.4s ease;
+  }
+
+  &__value {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    color: var(--navy-700);
+    width: 2rem;
+    text-align: right;
+    flex-shrink: 0;
+  }
+}
+
+.spin {
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}

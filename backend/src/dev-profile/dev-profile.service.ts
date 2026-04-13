@@ -57,7 +57,10 @@ export class DevProfileService {
       neighborhood: dto.neighborhood ?? null,
       number: dto.number ?? null,
       complement: dto.complement ?? null,
-      workMode: dto.work_mode ?? null,
+      workModes: dto.work_modes ?? null,
+      employmentStatus: dto.employment_status ?? null,
+      salaryMin: dto.salary_min ?? null,
+      salaryMax: dto.salary_max ?? null,
       githubUsername: dto.github_username ?? null,
       links: dto.links ?? null,
     });
@@ -88,7 +91,10 @@ export class DevProfileService {
     if (dto.neighborhood !== undefined) updateData.neighborhood = dto.neighborhood ?? null;
     if (dto.number !== undefined) updateData.number = dto.number ?? null;
     if (dto.complement !== undefined) updateData.complement = dto.complement ?? null;
-    if (dto.work_mode !== undefined) updateData.workMode = dto.work_mode ?? null;
+    if (dto.work_modes !== undefined) updateData.workModes = dto.work_modes ?? null;
+    if (dto.employment_status !== undefined) updateData.employmentStatus = dto.employment_status ?? null;
+    if (dto.salary_min !== undefined) updateData.salaryMin = dto.salary_min ?? null;
+    if (dto.salary_max !== undefined) updateData.salaryMax = dto.salary_max ?? null;
     if (dto.github_username !== undefined) updateData.githubUsername = dto.github_username ?? null;
     if (dto.links !== undefined) updateData.links = dto.links ?? null;
 

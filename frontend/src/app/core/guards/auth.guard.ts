@@ -26,6 +26,18 @@ export const devGuard: CanActivateFn = () => {
   return false;
 };
 
+export const companyGuard: CanActivateFn = () => {
+  const authService = inject(AuthService);
+  const router = inject(Router);
+
+  if (authService.isAuthenticated() && authService.userRole() === 'company') {
+    return true;
+  }
+
+  router.navigate(['/']);
+  return false;
+};
+
 export const guestGuard: CanActivateFn = () => {
   const authService = inject(AuthService);
   const router = inject(Router);
@@ -35,6 +47,12 @@ export const guestGuard: CanActivateFn = () => {
   }
 
   const role = authService.userRole();
-  router.navigate([role === 'dev' ? '/dev' : '/']);
+  if (role === 'dev') {
+    router.navigate(['/dev']);
+  } else if (role === 'company') {
+    router.navigate(['/company']);
+  } else {
+    router.navigate(['/']);
+  }
   return false;
 };

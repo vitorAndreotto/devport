@@ -3,7 +3,7 @@ import { LandingComponent } from './features/landing/landing.component';
 import { RegisterComponent } from './features/auth/register/register.component';
 import { LoginComponent } from './features/auth/login/login.component';
 import { NotFoundComponent } from './features/not-found/not-found.component';
-import { devGuard, guestGuard } from './core/guards/auth.guard';
+import { devGuard, companyGuard, guestGuard } from './core/guards/auth.guard';
 
 export const routes: Routes = [
   { path: '', component: LandingComponent },
@@ -13,6 +13,11 @@ export const routes: Routes = [
     path: 'dev',
     canActivate: [devGuard],
     loadChildren: () => import('./features/dev/dev.routes').then((m) => m.devRoutes),
+  },
+  {
+    path: 'company',
+    canActivate: [companyGuard],
+    loadChildren: () => import('./features/company/company.routes').then((m) => m.companyRoutes),
   },
   { path: '**', component: NotFoundComponent },
 ];

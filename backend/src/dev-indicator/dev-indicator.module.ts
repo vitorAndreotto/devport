@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { MatchScore } from '../matching/match-score.entity.js';
+import { MatchScore } from '../matching/infrastructure/match-score.entity.js';
 import { Job } from '../job/job.entity.js';
 import { JobSkill } from '../job/job-skill.entity.js';
 import { DevSkill } from '../dev-skill/dev-skill.entity.js';

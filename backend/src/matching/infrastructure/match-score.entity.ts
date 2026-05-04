@@ -6,8 +6,8 @@ import {
   JoinColumn,
   Unique,
 } from 'typeorm';
-import { DevProfile } from '../dev-profile/dev-profile.entity.js';
-import { Job } from '../job/job.entity.js';
+import { DevProfile } from '../../dev-profile/dev-profile.entity.js';
+import { Job } from '../../job/job.entity.js';
 
 @Entity('match_scores')
 @Unique(['devProfileId', 'jobId'])

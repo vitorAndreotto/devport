@@ -147,19 +147,35 @@
           </div>
         </div>
 
-        <div class="form-grid">
-          <app-form-field label="Pretensão salarial mínima (R$)" [control]="form.controls.salary_min">
-            <input class="input" type="text" formControlName="salary_min" placeholder="0,00" appCurrencyMask>
-          </app-form-field>
+        <div class="form-field">
+          <label class="form-field__label">Raio máximo para vagas presenciais/híbridas (km)</label>
+          <input class="input" type="number" formControlName="max_radius_km" placeholder="Ex: 30" min="1" max="60">
+          <span class="form-field__hint">De 1 a 60 km. Se não informado, usa padrão: 40 km (capitais) ou 20 km (demais).</span>
+        </div>
 
-          <app-form-field label="Pretensão salarial máxima (R$)" [control]="form.controls.salary_max">
-            <input class="input" type="text" formControlName="salary_max" placeholder="0,00" appCurrencyMask>
+        <h3 class="form-subsection-title">Pretensão salarial CLT</h3>
+        <div class="form-grid">
+          <app-form-field label="CLT mínima (R$)" [control]="form.controls.salary_clt_min">
+            <input class="input" type="text" formControlName="salary_clt_min" placeholder="0,00" appCurrencyMask>
+          </app-form-field>
+          <app-form-field label="CLT máxima (R$)" [control]="form.controls.salary_clt_max">
+            <input class="input" type="text" formControlName="salary_clt_max" placeholder="0,00" appCurrencyMask>
+          </app-form-field>
+        </div>
+
+        <h3 class="form-subsection-title">Pretensão salarial PJ</h3>
+        <div class="form-grid">
+          <app-form-field label="PJ mínima (R$)" [control]="form.controls.salary_pj_min">
+            <input class="input" type="text" formControlName="salary_pj_min" placeholder="0,00" appCurrencyMask>
+          </app-form-field>
+          <app-form-field label="PJ máxima (R$)" [control]="form.controls.salary_pj_max">
+            <input class="input" type="text" formControlName="salary_pj_max" placeholder="0,00" appCurrencyMask>
           </app-form-field>
         </div>
 
         <span class="salary-hint">
           <lucide-icon name="info" [size]="14"></lucide-icon>
-          Sua pretensão salarial nunca será exibida publicamente. É usada apenas para calcular compatibilidade com vagas.
+          Sua pretensão salarial nunca será exibida publicamente. É usada apenas para calcular compatibilidade com vagas. Informe CLT, PJ ou ambas.
         </span>
 
         <app-form-field label="GitHub username" [control]="form.controls.github_username">

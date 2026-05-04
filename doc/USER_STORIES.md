@@ -580,7 +580,7 @@
 - [ ] Skills organizadas em categorias: `language`, `framework`, `database`, `devops`, `tool`, `methodology`, `soft_skill`, `other`
 - [ ] Cada skill tem nome, slug (unique) e categoria
 - [ ] Skills podem ter pai (hierarquia de até 2 níveis)
-- [ ] Seed popula no mínimo 50 skills
+- [ ] Seed popula ~500 skills mapeadas em 8 categorias
 
 ---
 

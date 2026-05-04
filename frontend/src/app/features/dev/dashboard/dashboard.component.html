@@ -6,6 +6,7 @@
         <p class="dashboard__subtitle">Bem-vindo à ponte de comando. Aqui está o estado da sua embarcação.</p>
     </div>
 
+    <!-- Stats Cards -->
     <div class="dashboard__stats">
         <a routerLink="/dev/skills" class="stat-card stat-card--link">
             <div class="stat-card__icon">
@@ -47,17 +48,343 @@
             </div>
         </a>
 
+        @if (applicationsSummary()) {
         <div class="stat-card">
             <div class="stat-card__icon">
-                <lucide-icon name="compass" [size]="22"></lucide-icon>
+                <lucide-icon name="send" [size]="22"></lucide-icon>
             </div>
             <div class="stat-card__info">
-                <span class="stat-card__value">—</span>
-                <span class="stat-card__label">Vagas</span>
+                <span class="stat-card__value">{{ applicationsSummary()!.total }}</span>
+                <span class="stat-card__label">Candidaturas</span>
             </div>
         </div>
+        }
     </div>
 
+    <!-- Indicators -->
+    @if (!loadingIndicators()) {
+
+    <!-- Profile Completeness -->
+    @if (profileCompleteness()) {
+    <section class="indicator-section">
+        <h2 class="indicator-section__title">
+            <lucide-icon name="shield-check" [size]="18"></lucide-icon>
+            Completude do Perfil
+        </h2>
+        <div class="indicator-card">
+            <div class="progress-ring">
+                <span class="progress-ring__value">{{ profileCompleteness()!.score }}%</span>
+            </div>
+            <div class="progress-bar-wrapper">
+                <div class="progress-bar">
+                    <div class="progress-bar__fill" [style.width]="profileCompleteness()!.score + '%'"
+                        [style.background]="getScoreColor(profileCompleteness()!.score)"></div>
+                </div>
+                @if (profileCompleteness()!.missing.length > 0) {
+                <p class="indicator-hint">Falta preencher: {{ profileCompleteness()!.missing.join(', ') }}</p>
+                } @else {
+                <p class="indicator-hint indicator-hint--success">Perfil completo!</p>
+                }
+            </div>
+        </div>
+    </section>
+    }
+
+    <!-- Score by Seniority -->
+    @if (scoreBySeniority().length > 0) {
+    <section class="indicator-section">
+        <h2 class="indicator-section__title">
+            <lucide-icon name="bar-chart-3" [size]="18"></lucide-icon>
+            Score de Match por Senioridade
+        </h2>
+
+        <!-- Seniority selector cards -->
+        <div class="seniority-cards">
+            @for (s of orderedScores(); track s.seniority) {
+            <button class="seniority-card" [class.seniority-card--active]="selectedSeniority() === s.seniority"
+                (click)="selectSeniority(s.seniority)">
+                <span class="seniority-card__label">{{ seniorityLabels[s.seniority] || s.seniority }}</span>
+                <span class="seniority-card__score" [style.color]="selectedSeniority() === s.seniority ? 'white' : getScoreColor(s.general)">{{ s.general }}</span>
+            </button>
+            }
+        </div>
+
+        <!-- Detail for selected seniority -->
+        @if (selectedScore()) {
+        <div class="score-grid">
+            <span class="score-grid__subtitle">{{ selectedScore()!.total_matches }} vagas analisadas</span>
+            <div class="score-item">
+                <span class="score-item__label">Geral</span>
+                <div class="score-item__bar">
+                    <div class="score-item__fill" [style.width]="getScoreBarWidth(selectedScore()!.general)"
+                        [style.background]="getScoreColor(selectedScore()!.general)"></div>
+                </div>
+                <span class="score-item__value">{{ selectedScore()!.general }}</span>
+            </div>
+            <div class="score-item">
+                <span class="score-item__label">Skills</span>
+                <div class="score-item__bar">
+                    <div class="score-item__fill" [style.width]="getScoreBarWidth(selectedScore()!.skills)"
+                        [style.background]="getScoreColor(selectedScore()!.skills)"></div>
+                </div>
+                <span class="score-item__value">{{ selectedScore()!.skills }}</span>
+            </div>
+            <div class="score-item">
+                <span class="score-item__label">Experiencia</span>
+                <div class="score-item__bar">
+                    <div class="score-item__fill" [style.width]="getScoreBarWidth(selectedScore()!.experience)"
+                        [style.background]="getScoreColor(selectedScore()!.experience)"></div>
+                </div>
+                <span class="score-item__value">{{ selectedScore()!.experience }}</span>
+            </div>
+            <div class="score-item">
+                <span class="score-item__label">Modalidade</span>
+                <div class="score-item__bar">
+                    <div class="score-item__fill" [style.width]="getScoreBarWidth(selectedScore()!.modality)"
+                        [style.background]="getScoreColor(selectedScore()!.modality)"></div>
+                </div>
+                <span class="score-item__value">{{ selectedScore()!.modality }}</span>
+            </div>
+            <div class="score-item">
+                <span class="score-item__label">Salário</span>
+                <div class="score-item__bar">
+                    <div class="score-item__fill" [style.width]="getScoreBarWidth(selectedScore()!.salary)"
+                        [style.background]="getScoreColor(selectedScore()!.salary)"></div>
+                </div>
+                <span class="score-item__value">{{ selectedScore()!.salary }}</span>
+            </div>
+        </div>
+        }
+    </section>
+    }
+
+    <!-- Score Weakest -->
+    @if (scoreWeakest()) {
+    <section class="indicator-section">
+        <div class="alert-card">
+            <lucide-icon name="lightbulb" [size]="20"></lucide-icon>
+            <div class="alert-card__content">
+                <strong>Onde melhorar:</strong> {{ scoreWeakest()!.suggestion }}
+            </div>
+        </div>
+    </section>
+    }
+
+    <!-- Skills & Market cards -->
+    <div class="indicator-grid">
+        @if (skillsGap().length > 0) {
+        <section class="indicator-section">
+            <h2 class="indicator-section__title">
+                <lucide-icon name="trending-up" [size]="18"></lucide-icon>
+                Skills em Alta (você não tem)
+            </h2>
+            <div class="indicator-card">
+                @for (skill of skillsGap(); track skill.id) {
+                <div class="skill-row">
+                    <span class="skill-row__name">{{ skill.name }}</span>
+                    <span class="skill-row__badge skill-row__badge--category">{{ categoryLabels[skill.category] || skill.category }}</span>
+                    <span class="skill-row__demand">{{ skill.demand }} vagas</span>
+                </div>
+                }
+            </div>
+        </section>
+        }
+
+        @if (skillsPopularity().length > 0) {
+        <section class="indicator-section">
+            <h2 class="indicator-section__title">
+                <lucide-icon name="star" [size]="18"></lucide-icon>
+                Suas Skills no Mercado
+            </h2>
+            <div class="indicator-card">
+                @for (skill of skillsPopularity(); track skill.id) {
+                <div class="skill-row">
+                    <span class="skill-row__name">{{ skill.name }}</span>
+                    <span class="skill-row__badge">{{ skillLevelLabels[skill.level] || skill.level }}</span>
+                    <span class="skill-row__demand">{{ skill.popularity_pct }}% das vagas</span>
+                </div>
+                }
+            </div>
+        </section>
+        }
+
+        @if (topSkills().length > 0) {
+        <section class="indicator-section">
+            <h2 class="indicator-section__title">
+                <lucide-icon name="flame" [size]="18"></lucide-icon>
+                Top Skills do Mercado
+            </h2>
+            <div class="indicator-card">
+                @for (skill of topSkills(); track skill.id; let i = $index) {
+                <div class="skill-row">
+                    <span class="skill-row__rank">#{{ i + 1 }}</span>
+                    <span class="skill-row__name">{{ skill.name }}</span>
+                    <span class="skill-row__badge skill-row__badge--category">{{ categoryLabels[skill.category] || skill.category }}</span>
+                    <span class="skill-row__demand">{{ skill.demand }} vagas</span>
+                </div>
+                }
+            </div>
+        </section>
+        }
+
+        @if (workModeDistribution().length > 0) {
+        <section class="indicator-section">
+            <h2 class="indicator-section__title">
+                <lucide-icon name="map-pin" [size]="18"></lucide-icon>
+                Modalidades das Vagas
+            </h2>
+            <div class="indicator-card">
+                @for (wm of workModeDistribution(); track wm.work_mode) {
+                <div class="mode-row">
+                    <span class="mode-row__label">{{ workModeLabels[wm.work_mode] || wm.work_mode }}</span>
+                    <div class="mode-row__bar">
+                        <div class="mode-row__fill" [style.width]="wm.pct + '%'"></div>
+                    </div>
+                    <span class="mode-row__pct">{{ wm.pct }}%</span>
+                </div>
+                }
+            </div>
+        </section>
+        }
+    </div>
+
+    <!-- Skills Insights (top by requirement + my analysis) -->
+    @if (!loadingSkillsInsights()) {
+
+    <!-- My Differentials -->
+    @if (myDifferentials().length > 0) {
+    <section class="indicator-section">
+        <h2 class="indicator-section__title">
+            <lucide-icon name="award" [size]="18"></lucide-icon>
+            Suas Skills Diferenciais
+            <span class="indicator-section__badge">acima do mercado e dos devs</span>
+        </h2>
+        <div class="indicator-card">
+            @for (s of myDifferentials(); track s.skill_id) {
+            <div class="skill-row skill-row--diff">
+                <span class="skill-row__name">{{ s.name }}</span>
+                <span class="skill-row__badge">você: {{ skillLevelLabels[s.my_level] || s.my_level }}</span>
+                <span class="skill-row__badge skill-row__badge--muted">vagas: {{ s.market_avg_label }}</span>
+                <span class="skill-row__badge skill-row__badge--muted">devs: {{ s.dev_avg_label }}</span>
+                <span class="skill-row__demand">{{ s.demand }} vagas</span>
+            </div>
+            }
+        </div>
+    </section>
+    }
+
+    <!-- Skills to Improve -->
+    @if (myToImprove().length > 0) {
+    <section class="indicator-section">
+        <h2 class="indicator-section__title">
+            <lucide-icon name="trending-up" [size]="18"></lucide-icon>
+            Skills para Melhorar
+            <span class="indicator-section__badge">seu nível abaixo do exigido</span>
+        </h2>
+        <div class="indicator-card">
+            @for (s of myToImprove(); track s.skill_id) {
+            <div class="skill-row skill-row--warn">
+                <span class="skill-row__name">{{ s.name }}</span>
+                <span class="skill-row__badge">você: {{ skillLevelLabels[s.my_level] || s.my_level }}</span>
+                <span class="skill-row__badge skill-row__badge--muted">vagas pedem: {{ s.market_avg_label }}</span>
+                <span class="skill-row__demand">{{ s.demand }} vagas</span>
+            </div>
+            }
+        </div>
+    </section>
+    }
+
+    <!-- Top Skills by Requirement (general) -->
+    @if (selectedTopSkills().length > 0) {
+    <section class="indicator-section">
+        <h2 class="indicator-section__title">
+            <lucide-icon name="flame" [size]="18"></lucide-icon>
+            Top Skills por Tipo de Exigência
+        </h2>
+
+        <div class="requirement-tabs">
+            <button class="requirement-tab" [class.requirement-tab--active]="selectedRequirement() === 'required'"
+                (click)="selectRequirement('required')">Obrigatórias</button>
+            <button class="requirement-tab" [class.requirement-tab--active]="selectedRequirement() === 'expected'"
+                (click)="selectRequirement('expected')">Esperadas</button>
+            <button class="requirement-tab" [class.requirement-tab--active]="selectedRequirement() === 'differential'"
+                (click)="selectRequirement('differential')">Diferenciais</button>
+        </div>
+
+        <div class="indicator-card">
+            @for (s of selectedTopSkills(); track s.skill_id; let i = $index) {
+            <div class="skill-row">
+                <span class="skill-row__rank">#{{ i + 1 }}</span>
+                <span class="skill-row__name">{{ s.name }}</span>
+                <span class="skill-row__badge skill-row__badge--category">{{ categoryLabels[s.category] || s.category }}</span>
+                <span class="skill-row__badge skill-row__badge--muted">vagas: {{ s.market_avg_label }}</span>
+                <span class="skill-row__badge skill-row__badge--muted">devs: {{ s.dev_avg_label }}</span>
+                <span class="skill-row__demand">{{ s.demand }} vagas</span>
+            </div>
+            }
+        </div>
+    </section>
+    }
+
+    <!-- Required Gap (skills required mais pedidas que não tenho) -->
+    @if (myRequiredGap().length > 0) {
+    <section class="indicator-section">
+        <h2 class="indicator-section__title">
+            <lucide-icon name="lightbulb" [size]="18"></lucide-icon>
+            Skills Obrigatórias que Você Não Tem
+        </h2>
+        <div class="indicator-card">
+            @for (s of myRequiredGap(); track s.skill_id) {
+            <div class="skill-row">
+                <span class="skill-row__name">{{ s.name }}</span>
+                <span class="skill-row__badge skill-row__badge--category">{{ categoryLabels[s.category] || s.category }}</span>
+                <span class="skill-row__badge skill-row__badge--muted">nível exigido: {{ s.market_avg_label }}</span>
+                <span class="skill-row__demand">{{ s.demand }} vagas</span>
+            </div>
+            }
+        </div>
+    </section>
+    }
+
+    }
+
+    <!-- Applications Summary -->
+    @if (applicationsSummary() && applicationsSummary()!.total > 0) {
+    <section class="indicator-section">
+        <h2 class="indicator-section__title">
+            <lucide-icon name="send" [size]="18"></lucide-icon>
+            Candidaturas
+        </h2>
+        <div class="app-stats">
+            <div class="app-stat">
+                <span class="app-stat__value app-stat__value--pending">{{ applicationsSummary()!.pending }}</span>
+                <span class="app-stat__label">Pendentes</span>
+            </div>
+            <div class="app-stat">
+                <span class="app-stat__value app-stat__value--accepted">{{ applicationsSummary()!.accepted }}</span>
+                <span class="app-stat__label">Aceitas</span>
+            </div>
+            <div class="app-stat">
+                <span class="app-stat__value app-stat__value--rejected">{{ applicationsSummary()!.rejected }}</span>
+                <span class="app-stat__label">Rejeitadas</span>
+            </div>
+            <div class="app-stat">
+                <span class="app-stat__value">{{ getAcceptanceRate() }}%</span>
+                <span class="app-stat__label">Taxa de aceite</span>
+            </div>
+        </div>
+    </section>
+    }
+
+    } @else {
+    <!-- Loading -->
+    <div class="indicator-loading">
+        <lucide-icon name="loader-2" [size]="24"></lucide-icon>
+        <span>Carregando indicadores...</span>
+    </div>
+    }
+
+    <!-- Quick Actions -->
     <h2 class="dashboard__section-title">Comandos rápidos</h2>
     <div class="dashboard__actions">
         @for (action of quickActions; track action.path) {

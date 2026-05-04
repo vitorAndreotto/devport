@@ -7,6 +7,10 @@ export interface JobSkill {
   };
   min_level: string;
   requirement: string;
+  /** Set quando o user logado for dev — nivel atual do dev nessa skill (null se nao tem) */
+  dev_level?: string | null;
+  /** Set quando o user logado for dev — true se nivel do dev atende o min exigido */
+  dev_meets_min?: boolean;
 }
 
 /** Response leve da listagem */
@@ -38,8 +42,10 @@ export interface JobDetail {
   skills: JobSkill[];
   min_experience_years: number;
   contract_model: string;
-  salary_min?: number;
-  salary_max?: number;
+  salary_clt_min?: number;
+  salary_clt_max?: number;
+  salary_pj_min?: number;
+  salary_pj_max?: number;
   benefits: string[] | null;
   work_mode: string;
   location: {
@@ -77,9 +83,12 @@ export interface Job {
   skills: JobSkill[];
   min_experience_years: number;
   contract_model: string;
-  salary_min: number;
-  salary_max: number;
+  salary_clt_min: number | null;
+  salary_clt_max: number | null;
+  salary_pj_min: number | null;
+  salary_pj_max: number | null;
   show_salary: boolean;
+  max_radius_km: number | null;
   benefits: string[] | null;
   work_mode: string;
   company_unit_id: string | null;
@@ -112,9 +121,12 @@ export interface CreateJobPayload {
   skills: JobSkillPayload[];
   min_experience_years: number;
   contract_model: string;
-  salary_min: number;
-  salary_max: number;
+  salary_clt_min?: number;
+  salary_clt_max?: number;
+  salary_pj_min?: number;
+  salary_pj_max?: number;
   show_salary?: boolean;
+  max_radius_km?: number;
   benefits?: string[];
   work_mode: string;
   company_unit_id?: string;

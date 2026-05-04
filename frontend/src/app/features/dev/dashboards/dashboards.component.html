@@ -1,0 +1,26 @@
+<div class="dashboards">
+    <header class="dashboards__header">
+        <h1 class="dashboards__title">Painel de Indicadores</h1>
+        <p class="dashboards__subtitle">Acompanhe seu desempenho e posição no mercado</p>
+    </header>
+
+    <!-- File-folder tabs -->
+    <div class="folder-tabs">
+        @for (tab of tabs; track tab.id) {
+        <button class="folder-tab" [class.folder-tab--active]="activeTab() === tab.id" (click)="activate(tab.id)" [attr.aria-selected]="activeTab() === tab.id" role="tab">
+        <lucide-icon [name]="tab.icon" [size]="16"></lucide-icon>
+        <span class="folder-tab__label">{{ tab.label }}</span>
+      </button> }
+    </div>
+
+    <!-- Active tab content -->
+    <div class="dashboards__content" role="tabpanel">
+        @if (activeTab() === 'profile' && isLoaded('profile')) {
+        <app-profile-tab></app-profile-tab>
+        } @if (activeTab() === 'skills' && isLoaded('skills')) {
+        <app-skills-tab></app-skills-tab>
+        } @if (activeTab() === 'jobs' && isLoaded('jobs')) {
+        <app-jobs-tab></app-jobs-tab>
+        }
+    </div>
+</div>

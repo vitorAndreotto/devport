@@ -8,6 +8,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { JobApplication } from './job-application.entity.js';
 import { Job } from '../job/job.entity.js';
+import { MatchBatchProducer } from '../match-batch/match-batch.producer.js';
 
 @Injectable()
 export class JobApplicationService {
@@ -16,6 +17,7 @@ export class JobApplicationService {
     private readonly appRepo: Repository<JobApplication>,
     @InjectRepository(Job)
     private readonly jobRepo: Repository<Job>,
+    private readonly matchBatchProducer: MatchBatchProducer,
   ) {}
 
   async apply(devProfileId: string, jobId: string): Promise<JobApplication> {
@@ -37,8 +39,13 @@ export class JobApplicationService {
       jobId,
       status: 'pending',
     });
+    const saved = await this.appRepo.save(application);
 
-    return this.appRepo.save(application);
+    // Dispara evento async pra calcular o match_score desse par (dev, job).
+    // Processado pelo MatchBatchConsumer com retry/durabilidade via BullMQ.
+    await this.matchBatchProducer.enqueuePair(devProfileId, jobId);
+
+    return saved;
   }
 
   async withdraw(devProfileId: string, applicationId: string): Promise<JobApplication> {

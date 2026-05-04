@@ -65,15 +65,29 @@ export class CreateJobDto {
   @IsEnum(ContractModel)
   contract_model: string;
 
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Type(() => Number)
-  salary_min: number;
+  salary_clt_min?: number;
 
+  @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Type(() => Number)
-  salary_max: number;
+  salary_clt_max?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Type(() => Number)
+  salary_pj_min?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Type(() => Number)
+  salary_pj_max?: number;
 
   @IsOptional()
   @IsBoolean()
@@ -88,6 +102,12 @@ export class CreateJobDto {
 
   @IsEnum(WorkMode)
   work_mode: string;
+
+  @IsOptional()
+  @IsInt()
+  @Min(1)
+  @Type(() => Number)
+  max_radius_km?: number;
 
   @IsOptional()
   @IsString()

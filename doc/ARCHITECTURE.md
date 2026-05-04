@@ -189,7 +189,14 @@ backend/
 │   │
 │   ├── matching/                        # Módulo matching
 │   │   ├── matching.module.ts
-│   │   └── matching.service.ts
+│   │   ├── matching.service.ts          # Algoritmo de score (on-demand)
+│   │   ├── match-score.entity.ts
+│   │   └── redis.provider.ts
+│   │
+│   ├── match-batch/                     # Módulo batch matching (BullMQ)
+│   │   ├── match-batch.module.ts
+│   │   ├── match-batch.producer.ts      # Cron 3h: detecta dirty, enfileira
+│   │   └── match-batch.consumer.ts      # Worker: processa batches de pares
 │   │
 │   └── search/                          # Módulo busca
 │       ├── search.module.ts
@@ -654,6 +661,35 @@ skills/
 
 ---
 
+### 5.7 BullMQ — Processamento em Lote de Matching
+
+**Por quê:** o cálculo de matching N devs × M vagas não escala se feito on-demand. O BullMQ (`@nestjs/bullmq`) permite enfileirar e processar batches de recálculo a cada 3 horas usando o Redis já existente.
+
+**Fluxo:**
+```
+Cron (3h)  ──→  detecta devs/jobs com match_dirty=true
+           ──→  monta pares (dev_id, job_id) a recalcular
+           ──→  agrupa em batches de 100
+           ──→  enfileira no BullMQ (queue: "match-batch")
+           ──→  reseta match_dirty = false
+
+Workers    ──→  processa cada batch:
+                compara hash atual vs armazenado
+                recalcula se hash mudou
+                upsert match_scores + Redis
+```
+
+**Detecção de dirty:** triggers PostgreSQL (`BEFORE UPDATE OF` / `AFTER INSERT OR UPDATE OR DELETE`) setam `match_dirty = TRUE` automaticamente nas tabelas relevantes. Ver [DATA_MODEL.md](DATA_MODEL.md) seção 2.15.
+
+**Configuração via env:**
+```bash
+MATCH_BATCH_CRON=0 */3 * * *              # A cada 3 horas
+MATCH_BATCH_CHUNK_SIZE=100                 # Pares por job na fila
+MATCH_BATCH_CONCURRENCY=3                  # Workers simultâneos
+```
+
+---
+
 ## 6. Fluxo de uma Request (exemplo)
 
 ```
@@ -708,6 +744,8 @@ X. HttpExceptionFilter  → formata em { statusCode, message, errors? }
 
 ## 8. Fluxo de Matching
 
+### 8.1 On-Demand (quando dev/empresa consulta)
+
 ```
 GET /api/v1/jobs?sort=match_score
 Authorization: Bearer {dev_access_token}
@@ -716,16 +754,67 @@ Authorization: Bearer {dev_access_token}
 2. SearchService      → busca vagas abertas com filtros
 3. MatchingService    → para cada vaga, calcula score:
    │
-   ├─ Skills (60%)    → % das skills exigidas que o dev possui
-   │                     bônus se dev.level >= job.min_level
-   ├─ Experiência (20%) → dev.total_years vs job.min_experience
-   ├─ Modalidade (10%)  → dev.work_mode vs job.work_mode
-   └─ Localização (10%) → match textual dev.location vs job.location
+   ├─ Skills (50%)      → compatibilidade ponderada por exigência e nível
+   ├─ Experiência (25%) → dev.total_years vs job.min_experience
+   ├─ Modalidade (10%)  → dev.work_modes vs job.work_mode + localização
+   └─ Salário (15%)     → sobreposição de faixas salariais
    │
 4. Filtra score < 20
 5. Ordena por score DESC
 6. Retorna com paginação
 ```
+
+### 8.2 Proativo (Batch via BullMQ — a cada 3h)
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│  Cron (*/3h) — MatchBatchProducer                            │
+│                                                              │
+│  1. SELECT dev_profiles WHERE match_dirty = TRUE             │
+│  2. SELECT jobs WHERE match_dirty = TRUE AND status = 'open' │
+│  3. SELECT all open jobs (para dirty devs)                   │
+│     SELECT all devs (para dirty jobs)                        │
+│  4. Monta pares únicos (dev_id, job_id)                      │
+│  5. Chunk em batches de 100 → BullMQ "match-batch"           │
+│  6. UPDATE match_dirty = FALSE                               │
+└──────────────────────────────────────────────────────────────┘
+                           │
+                           ▼
+┌──────────────────────────────────────────────────────────────┐
+│  Worker — MatchBatchConsumer (concurrency: 3)                 │
+│                                                              │
+│  Para cada batch de 100 pares:                               │
+│  1. Load dados completos do dev e job                        │
+│  2. Compute hash → compara com match_scores                  │
+│  3. Hash igual → skip | Hash diferente → calculate()         │
+│  4. Decisão de persistência:                                 │
+│     • score >= 70 OU dev aplicou → upsert + Redis 12h        │
+│     • Caso contrário → apenas Redis 6h                       │
+│     • Tinha row no DB e perdeu relevância → DELETE           │
+└──────────────────────────────────────────────────────────────┘
+```
+
+> Triggers PostgreSQL setam `match_dirty = TRUE` automaticamente.
+> Ver [DATA_MODEL.md](DATA_MODEL.md) seção 2.15 para detalhes dos triggers.
+
+### 8.3 Política de Cache e Persistência Seletiva
+
+A tabela `match_scores` armazena **apenas matches relevantes** para evitar crescimento descontrolado:
+
+| Critério | Definição |
+|---|---|
+| Match relevante | `score >= 70` OU dev se candidatou à vaga |
+| Match comum | Demais |
+
+| Camada | Match relevante | Match comum |
+|---|---|---|
+| Redis TTL | **12 horas** | **6 horas** |
+| PostgreSQL | Persistido (upsert) | Não persistido |
+
+**Recálculo:**
+- Score subiu para >= 70 (ou dev aplicou) → upsert + TTL longo
+- Score caiu abaixo de 70 e dev não candidatou → `DELETE` do PostgreSQL + TTL curto
+- Match nunca foi persistido e continua < 70 → apenas Redis 6h
 
 ---
 

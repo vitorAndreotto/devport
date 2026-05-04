@@ -2,6 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { BullModule } from '@nestjs/bullmq';
+import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './auth/auth.module.js';
 import { UsersModule } from './users/users.module.js';
 import { DevProfileModule } from './dev-profile/dev-profile.module.js';
@@ -16,6 +18,8 @@ import { CompanyUnitModule } from './company-unit/company-unit.module.js';
 import { JobModule } from './job/job.module.js';
 import { JobApplicationModule } from './job-application/job-application.module.js';
 import { MatchingModule } from './matching/matching.module.js';
+import { MatchBatchModule } from './match-batch/match-batch.module.js';
+import { DevIndicatorModule } from './dev-indicator/dev-indicator.module.js';
 
 @Module({
   imports: [
@@ -39,6 +43,19 @@ import { MatchingModule } from './matching/matching.module.js';
             limit: config.get<number>('THROTTLE_AUTH_LIMIT', 10),
           },
         ],
+      }),
+    }),
+
+    ScheduleModule.forRoot(),
+
+    BullModule.forRootAsync({
+      inject: [ConfigService],
+      useFactory: (config: ConfigService) => ({
+        connection: {
+          host: config.get<string>('REDIS_HOST', 'localhost'),
+          port: config.get<number>('REDIS_PORT', 6379),
+          password: config.get<string>('REDIS_PASSWORD', '') || undefined,
+        },
       }),
     }),
 
@@ -72,6 +89,8 @@ import { MatchingModule } from './matching/matching.module.js';
     JobModule,
     JobApplicationModule,
     MatchingModule,
+    MatchBatchModule,
+    DevIndicatorModule,
   ],
 })
 export class AppModule {}

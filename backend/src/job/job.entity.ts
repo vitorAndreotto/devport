@@ -39,11 +39,17 @@ export class Job {
   @Column({ name: 'contract_model', type: 'varchar', length: 10 })
   contractModel: string;
 
-  @Column({ name: 'salary_min', type: 'decimal', precision: 10, scale: 2 })
-  salaryMin: number;
+  @Column({ name: 'salary_clt_min', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  salaryCltMin: number | null;
 
-  @Column({ name: 'salary_max', type: 'decimal', precision: 10, scale: 2 })
-  salaryMax: number;
+  @Column({ name: 'salary_clt_max', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  salaryCltMax: number | null;
+
+  @Column({ name: 'salary_pj_min', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  salaryPjMin: number | null;
+
+  @Column({ name: 'salary_pj_max', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  salaryPjMax: number | null;
 
   @Column({ name: 'show_salary', type: 'boolean', default: false })
   showSalary: boolean;
@@ -53,6 +59,9 @@ export class Job {
 
   @Column({ name: 'work_mode', type: 'varchar', length: 10 })
   workMode: string;
+
+  @Column({ name: 'max_radius_km', type: 'integer', nullable: true })
+  maxRadiusKm: number | null;
 
   @Column({ name: 'city_id', type: 'integer', nullable: true })
   cityId: number | null;
@@ -74,6 +83,9 @@ export class Job {
 
   @Column({ type: 'varchar', length: 10, default: 'open' })
   status: string;
+
+  @Column({ name: 'match_dirty', type: 'boolean', default: true })
+  matchDirty: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

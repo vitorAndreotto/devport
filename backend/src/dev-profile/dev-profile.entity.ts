@@ -62,20 +62,32 @@ export class DevProfile {
   @Column({ name: 'work_modes', type: 'jsonb', nullable: true })
   workModes: string[] | null;
 
+  @Column({ name: 'max_radius_km', type: 'integer', nullable: true })
+  maxRadiusKm: number | null;
+
   @Column({ name: 'employment_status', type: 'varchar', length: 10, nullable: true })
   employmentStatus: string | null;
 
-  @Column({ name: 'salary_min', type: 'decimal', precision: 10, scale: 2, nullable: true })
-  salaryMin: number | null;
+  @Column({ name: 'salary_clt_min', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  salaryCltMin: number | null;
 
-  @Column({ name: 'salary_max', type: 'decimal', precision: 10, scale: 2, nullable: true })
-  salaryMax: number | null;
+  @Column({ name: 'salary_clt_max', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  salaryCltMax: number | null;
+
+  @Column({ name: 'salary_pj_min', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  salaryPjMin: number | null;
+
+  @Column({ name: 'salary_pj_max', type: 'decimal', precision: 10, scale: 2, nullable: true })
+  salaryPjMax: number | null;
 
   @Column({ name: 'github_username', type: 'varchar', length: 255, nullable: true })
   githubUsername: string | null;
 
   @Column({ type: 'jsonb', nullable: true })
   links: { label: string; url: string }[] | null;
+
+  @Column({ name: 'match_dirty', type: 'boolean', default: true })
+  matchDirty: boolean;
 
   @CreateDateColumn({ name: 'created_at' })
   createdAt: Date;

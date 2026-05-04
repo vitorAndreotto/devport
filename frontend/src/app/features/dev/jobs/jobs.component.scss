@@ -10,6 +10,51 @@
 }
 
 // =============================================
+// View tabs (Globais / Para você / Candidato)
+// Renderizadas no topo da listagem (.jobs-list)
+// =============================================
+.view-tabs {
+  display: flex;
+  gap: 0.25rem;
+  padding: 0.625rem 0.75rem 0;
+  background: var(--sand-50);
+  border-bottom: 1px solid var(--sand-200);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+
+.view-tab {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.5rem 0.75rem;
+  border: 1.5px solid transparent;
+  border-bottom: none;
+  border-radius: 0.5rem 0.5rem 0 0;
+  background: transparent;
+  color: var(--navy-500);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  margin-bottom: -1px;
+
+  ::ng-deep lucide-icon { display: flex; }
+
+  &:hover:not(.view-tab--active) {
+    color: var(--navy-800);
+  }
+
+  &--active {
+    background: white;
+    border-color: var(--sand-200);
+    color: var(--navy-950);
+  }
+}
+
+// =============================================
 // Filters
 // =============================================
 .filters {
@@ -470,28 +515,24 @@
     border-left: 3px solid var(--navy-900);
   }
 
-  // Match score — top right corner
-  &__score {
-    position: absolute;
-    top: 0.75rem;
-    right: 0.75rem;
-    font-size: 0.6875rem;
-    font-weight: 700;
-    padding: 0.1875rem 0.5rem;
-    border-radius: 1rem;
-    letter-spacing: -0.02em;
-
-    &--high { background: #dcfce7; color: #16a34a; }
-    &--mid  { background: #fffbeb; color: #d97706; }
-    &--low  { background: #fef2f2; color: #dc2626; }
-  }
-
   // Header: company + time
   &__header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    margin-bottom: 0.25rem;
+    margin-bottom: 0.375rem;
+  }
+
+  // Body: title/meta on left, skills on right
+  &__body {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+
+  &__main {
+    flex: 1 1 60%;
+    min-width: 0;
   }
 
   &__company {
@@ -542,7 +583,6 @@
     color: var(--navy-950);
     margin-bottom: 0.375rem;
     line-height: 1.3;
-    padding-right: 2.5rem; // space for score badge
   }
 
   // Meta badges
@@ -586,22 +626,28 @@
     ::ng-deep lucide-icon { display: flex; color: var(--navy-400); }
   }
 
-  // Required skills
+  // Required skills — coluna direita empilhada com largura uniforme
   &__skills {
+    flex: 0 0 8.5rem;
     display: flex;
+    flex-direction: column;
     gap: 0.25rem;
-    flex-wrap: wrap;
-    margin-bottom: 0.25rem;
+    min-width: 0;
   }
 
   &__skill {
+    width: 100%;
+    text-align: center;
     font-size: 0.625rem;
     font-weight: 500;
     color: var(--navy-700);
     background: var(--navy-50);
     border: 1px solid var(--navy-200);
-    padding: 0.0625rem 0.375rem;
+    padding: 0.1875rem 0.375rem;
     border-radius: 0.25rem;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
   // Applied badge
@@ -654,10 +700,15 @@
   }
 
   &__time {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
     font-size: 0.75rem;
     font-weight: 500;
     color: var(--navy-400);
     flex-shrink: 0;
+
+    ::ng-deep lucide-icon { display: flex; color: var(--navy-400); }
   }
 
   &__company {
@@ -716,7 +767,8 @@
 
   &__stats {
     display: flex;
-    gap: 1.25rem;
+    flex-direction: column;
+    gap: 0.5rem;
     margin-top: 0.75rem;
   }
 
@@ -770,13 +822,15 @@
 
   &__stat {
     display: flex;
-    align-items: center;
+    align-items: flex-start;
     gap: 0.375rem;
     font-size: 0.875rem;
     font-weight: 500;
     color: var(--navy-600);
 
-    ::ng-deep lucide-icon { display: flex; color: var(--navy-400); }
+    ::ng-deep lucide-icon { display: flex; color: var(--navy-400); flex-shrink: 0; margin-top: 0.1875rem; }
+
+    &--salary { align-items: flex-start; }
   }
 
   &__action {
@@ -935,6 +989,142 @@
   &--differential &__req {
     background: #bbf7d0;
     color: #166534;
+  }
+}
+
+// =============================================
+// Salary lines (CLT/PJ alinhados em coluna)
+// =============================================
+.salary-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+
+  &__row {
+    color: var(--navy-700);
+    font-weight: 500;
+    line-height: 1.35;
+  }
+}
+
+// =============================================
+// Skills agrupadas por requirement (vertical)
+// =============================================
+.skills-groups {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+
+  @media (min-width: 640px) {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+}
+
+.skill-group {
+  background: white;
+  border: 1px solid var(--sand-200);
+  border-radius: 0.5rem;
+  overflow: hidden;
+
+  &__title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0;
+    padding: 0.5rem 0.75rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    border-bottom: 1px solid var(--sand-200);
+
+    &--required {
+      background: #fef2f2;
+      color: #b91c1c;
+    }
+
+    &--expected {
+      background: #fffbeb;
+      color: #92400e;
+    }
+
+    &--differential {
+      background: #f0fdf4;
+      color: #166534;
+    }
+  }
+
+  &__count {
+    font-size: 0.6875rem;
+    font-weight: 600;
+    background: rgba(255, 255, 255, 0.6);
+    padding: 0.0625rem 0.375rem;
+    border-radius: 1rem;
+  }
+
+  &__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+}
+
+.skill-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.4375rem 0.75rem;
+  font-size: 0.8125rem;
+  border-bottom: 1px solid var(--sand-100, #f5f0eb);
+
+  &:last-child { border-bottom: 0; }
+
+  &__name {
+    flex: 1;
+    min-width: 0;
+    font-weight: 600;
+    color: var(--navy-900);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  &__min {
+    flex-shrink: 0;
+    font-size: 0.6875rem;
+    font-weight: 500;
+    color: var(--navy-500);
+    white-space: nowrap;
+  }
+
+  &__icon {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.25rem;
+    height: 1.25rem;
+    border-radius: 0.3125rem;
+    flex-shrink: 0;
+
+    ::ng-deep lucide-icon { display: flex; }
+
+    // Azul escuro com ancora — dev cumpre o requisito
+    &--ok {
+      background: var(--navy-900, #1e3a5f);
+      color: white;
+    }
+
+    // Ambar — dev tem mas nao cumpre o nivel
+    &--warn {
+      background: #fde68a;
+      color: #92400e;
+    }
+
+    // Vermelho — dev nao tem a skill
+    &--miss {
+      background: #fee2e2;
+      color: #b91c1c;
+    }
   }
 }
 

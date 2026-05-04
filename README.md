@@ -97,8 +97,59 @@ docker exec devport-pgsql psql -U devport -d devport -c "DROP SCHEMA public CASC
 docker restart devport-backend
 
 # Re-rodar seeds
-docker exec -i devport-pgsql psql -U devport -d devport < database/seeds/01_skill_tree.sql
+for f in database/seeds/*.sql; do echo "=== $(basename $f) ===" && docker compose exec -T pgsql psql -U devport -d devport < "$f"; done
 ```
+
+---
+
+## Redis
+
+O Redis é usado para cache (matches, indicadores), JWT blacklist e BullMQ (filas de batch matching).
+
+```bash
+# Abrir redis-cli interativo
+docker compose exec redis redis-cli
+
+# Limpar TODAS as chaves (cuidado: apaga tudo, inclusive blacklist e filas)
+docker compose exec redis redis-cli FLUSHALL
+
+# Limpar apenas matches
+docker compose exec redis redis-cli --scan --pattern 'match:*' | xargs -r docker compose exec -T redis redis-cli DEL
+
+# Limpar apenas indicadores
+docker compose exec redis redis-cli --scan --pattern 'indicator:*' | xargs -r docker compose exec -T redis redis-cli DEL
+```
+
+### Inspeção rápida
+
+```bash
+# Listar todas as chaves (devs, use SCAN em produção)
+docker compose exec redis redis-cli KEYS '*'
+
+# Listar chaves por padrão
+docker compose exec redis redis-cli KEYS 'indicator:dev:*'
+docker compose exec redis redis-cli KEYS 'match:*'
+
+# Total de chaves
+docker compose exec redis redis-cli DBSIZE
+
+# Ler um valor (string)
+docker compose exec redis redis-cli GET 'indicator:global:ranking:top_skills:overall'
+
+# Ler um HASH
+docker compose exec redis redis-cli HGETALL 'indicator:global:seniority:senior:jobs'
+
+# Ver TTL restante (em segundos)
+docker compose exec redis redis-cli TTL 'indicator:dev:abc123:score'
+
+# Stats do servidor
+docker compose exec redis redis-cli INFO stats | head -20
+docker compose exec redis redis-cli INFO memory | head -10
+```
+
+### Interface gráfica
+
+Para uma UI visual, instale o [RedisInsight](https://redis.io/insight/) e conecte em `localhost:6379`.
 
 ---
 

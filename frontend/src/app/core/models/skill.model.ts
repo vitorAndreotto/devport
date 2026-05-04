@@ -40,6 +40,19 @@ export const SKILL_LEVELS = [
   { value: 'expert', label: 'Especialista' },
 ];
 
+export const SKILL_LEVEL_LABELS: Record<string, string> = {
+  beginner: 'Iniciante',
+  intermediate: 'Intermediário',
+  advanced: 'Avançado',
+  expert: 'Especialista',
+};
+
+export const REQUIREMENT_LABELS: Record<string, string> = {
+  required: 'Obrigatória',
+  expected: 'Esperada',
+  differential: 'Diferencial',
+};
+
 export const SKILL_CATEGORIES: Record<string, string> = {
   language: 'Linguagens',
   framework: 'Frameworks',

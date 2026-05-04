@@ -118,16 +118,34 @@ export class CreateDevProfileDto {
   employment_status?: string;
 
   @IsOptional()
-  @IsNumber({ maxDecimalPlaces: 2 })
-  @Min(0)
+  @IsInt()
+  @Min(1)
   @Type(() => Number)
-  salary_min?: number;
+  max_radius_km?: number;
 
   @IsOptional()
   @IsNumber({ maxDecimalPlaces: 2 })
   @Min(0)
   @Type(() => Number)
-  salary_max?: number;
+  salary_clt_min?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Type(() => Number)
+  salary_clt_max?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Type(() => Number)
+  salary_pj_min?: number;
+
+  @IsOptional()
+  @IsNumber({ maxDecimalPlaces: 2 })
+  @Min(0)
+  @Type(() => Number)
+  salary_pj_max?: number;
 
   @IsOptional()
   @IsString()

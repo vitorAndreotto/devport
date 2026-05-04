@@ -1,0 +1,84 @@
+.dashboards {
+    padding: 2rem 1.5rem;
+    max-width: 1500px;
+    margin: 0 auto;
+    @media (min-width: 768px) {
+        padding: 2.5rem 2rem;
+    }
+    &__header {
+        margin-bottom: 1.5rem;
+    }
+    &__title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: var(--navy-950);
+        @media (min-width: 768px) {
+            font-size: 1.75rem;
+        }
+    }
+    &__subtitle {
+        font-size: 0.9375rem;
+        color: var(--navy-600);
+        margin-top: 0.25rem;
+    }
+    &__content {
+        background: white;
+        border: 1px solid var(--sand-200);
+        border-radius: 0 0.75rem 0.75rem 0.75rem;
+        padding: 1.5rem;
+        margin-top: -1px;
+        min-height: 24rem;
+        @media (min-width: 768px) {
+            padding: 2rem;
+        }
+    }
+}
+
+// =============================================
+// File-folder style tabs
+// =============================================
+.folder-tabs {
+    display: flex;
+    gap: 0.25rem;
+    position: relative;
+    z-index: 1;
+}
+
+.folder-tab {
+    background: var(--sand-100, #f5f0eb);
+    border: 1px solid var(--sand-200);
+    border-bottom: none;
+    border-radius: 0.625rem 0.625rem 0 0;
+    padding: 0.625rem 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--navy-600);
+    cursor: pointer;
+    position: relative;
+    top: 1px;
+    transition: all 0.15s ease;
+     ::ng-deep lucide-icon {
+        display: flex;
+    }
+    &:hover {
+        background: var(--sand-50, #fbf8f4);
+        color: var(--navy-900);
+    }
+    &--active {
+        background: white;
+        color: var(--navy-950);
+        font-weight: 600;
+        z-index: 2;
+        &:hover {
+            background: white;
+        }
+    }
+    &__label {
+        @media (max-width: 480px) {
+            display: none;
+        }
+    }
+}

@@ -1,0 +1,134 @@
+@if (loading()) {
+  <div class="tab-loading">
+    <lucide-icon name="loader-2" [size]="20"></lucide-icon>
+    <span>Carregando indicadores de vagas...</span>
+  </div>
+} @else {
+
+  @if (scoreBySeniority().length === 0) {
+    <div class="empty-state">
+      <lucide-icon name="bar-chart-3" [size]="32"></lucide-icon>
+      <h3>Sem dados de match ainda</h3>
+      <p>Conforme matches são calculados, você verá aqui o seu score por senioridade.</p>
+    </div>
+  } @else {
+
+    <!-- Score by Seniority -->
+    <section class="dash-section">
+      <h3 class="dash-section__title">
+        <lucide-icon name="bar-chart-3" [size]="20"></lucide-icon>
+        Score de Match por Senioridade
+      </h3>
+
+      <div class="seniority-cards">
+        @for (s of orderedScores(); track s.seniority) {
+          <button class="seniority-card"
+                  [class.seniority-card--active]="selectedSeniority() === s.seniority"
+                  (click)="selectSeniority(s.seniority)">
+            <span class="seniority-card__label">{{ seniorityLabels[s.seniority] || s.seniority }}</span>
+            <span class="seniority-card__score"
+                  [style.color]="selectedSeniority() === s.seniority ? 'white' : getScoreColor(s.general)">
+              {{ s.general }}
+            </span>
+          </button>
+        }
+      </div>
+
+      @if (selectedScore()) {
+        <div class="score-detail">
+          <span class="score-detail__subtitle">{{ selectedScore()!.total_matches }} vagas analisadas</span>
+
+          <div class="score-row">
+            <span class="score-row__label">Geral</span>
+            <div class="score-row__bar">
+              <div class="score-row__fill"
+                   [style.width]="getScoreBarWidth(selectedScore()!.general)"
+                   [style.background]="getScoreColor(selectedScore()!.general)"></div>
+            </div>
+            <span class="score-row__value">{{ selectedScore()!.general }}</span>
+          </div>
+          <div class="score-row">
+            <span class="score-row__label">Skills</span>
+            <div class="score-row__bar">
+              <div class="score-row__fill"
+                   [style.width]="getScoreBarWidth(selectedScore()!.skills)"
+                   [style.background]="getScoreColor(selectedScore()!.skills)"></div>
+            </div>
+            <span class="score-row__value">{{ selectedScore()!.skills }}</span>
+          </div>
+          <div class="score-row">
+            <span class="score-row__label">Experiência</span>
+            <div class="score-row__bar">
+              <div class="score-row__fill"
+                   [style.width]="getScoreBarWidth(selectedScore()!.experience)"
+                   [style.background]="getScoreColor(selectedScore()!.experience)"></div>
+            </div>
+            <span class="score-row__value">{{ selectedScore()!.experience }}</span>
+          </div>
+          <div class="score-row">
+            <span class="score-row__label">Modalidade</span>
+            <div class="score-row__bar">
+              <div class="score-row__fill"
+                   [style.width]="getScoreBarWidth(selectedScore()!.modality)"
+                   [style.background]="getScoreColor(selectedScore()!.modality)"></div>
+            </div>
+            <span class="score-row__value">{{ selectedScore()!.modality }}</span>
+          </div>
+          <div class="score-row">
+            <span class="score-row__label">Salário</span>
+            <div class="score-row__bar">
+              <div class="score-row__fill"
+                   [style.width]="getScoreBarWidth(selectedScore()!.salary)"
+                   [style.background]="getScoreColor(selectedScore()!.salary)"></div>
+            </div>
+            <span class="score-row__value">{{ selectedScore()!.salary }}</span>
+          </div>
+        </div>
+      }
+    </section>
+
+    <!-- Where to improve -->
+    @if (scoreWeakest()) {
+      <section class="dash-section">
+        <div class="alert">
+          <lucide-icon name="lightbulb" [size]="18"></lucide-icon>
+          <div>
+            <strong>Onde melhorar:</strong> {{ scoreWeakest()!.suggestion }}
+          </div>
+        </div>
+      </section>
+    }
+  }
+
+  <!-- Applications -->
+  @if (applicationsSummary() && applicationsSummary()!.total > 0) {
+    <section class="dash-section">
+      <h3 class="dash-section__title">
+        <lucide-icon name="send" [size]="20"></lucide-icon>
+        Candidaturas
+      </h3>
+      <div class="app-grid">
+        <div class="app-stat">
+          <span class="app-stat__value">{{ applicationsSummary()!.total }}</span>
+          <span class="app-stat__label">Total</span>
+        </div>
+        <div class="app-stat">
+          <span class="app-stat__value app-stat__value--pending">{{ applicationsSummary()!.pending }}</span>
+          <span class="app-stat__label">Pendentes</span>
+        </div>
+        <div class="app-stat">
+          <span class="app-stat__value app-stat__value--accepted">{{ applicationsSummary()!.accepted }}</span>
+          <span class="app-stat__label">Aceitas</span>
+        </div>
+        <div class="app-stat">
+          <span class="app-stat__value app-stat__value--rejected">{{ applicationsSummary()!.rejected }}</span>
+          <span class="app-stat__label">Rejeitadas</span>
+        </div>
+        <div class="app-stat">
+          <span class="app-stat__value">{{ acceptanceRate() }}%</span>
+          <span class="app-stat__label">Taxa de aceite</span>
+        </div>
+      </div>
+    </section>
+  }
+}

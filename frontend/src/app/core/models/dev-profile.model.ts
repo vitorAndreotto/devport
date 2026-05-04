@@ -15,8 +15,11 @@ export interface DevProfile {
   complement: string | null;
   work_modes: string[] | null;
   employment_status: string | null;
-  salary_min: number | null;
-  salary_max: number | null;
+  max_radius_km: number | null;
+  salary_clt_min: number | null;
+  salary_clt_max: number | null;
+  salary_pj_min: number | null;
+  salary_pj_max: number | null;
   github_username: string | null;
   links: { label: string; url: string }[] | null;
   created_at: string;
@@ -38,8 +41,11 @@ export interface CreateDevProfilePayload {
   complement?: string;
   work_modes?: string[];
   employment_status?: string;
-  salary_min?: number;
-  salary_max?: number;
+  max_radius_km?: number;
+  salary_clt_min?: number;
+  salary_clt_max?: number;
+  salary_pj_min?: number;
+  salary_pj_max?: number;
   github_username?: string;
   links?: { label: string; url: string }[];
 }

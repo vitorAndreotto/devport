@@ -107,9 +107,12 @@ Dados centrais do desenvolvedor.
 | E-mail de contato | string | Sim |
 | Localização | string | Não |
 | Modalidades preferidas | array de enum: `onsite`, `hybrid`, `remote` (múltipla seleção) | Não |
+| Raio máximo (km) | integer (1-60) | Não |
 | Situação profissional | enum: `looking`, `employed` | Não |
-| Pretensão salarial mínima | decimal | Não |
-| Pretensão salarial máxima | decimal | Não |
+| Pretensão salarial CLT mínima | decimal | Não |
+| Pretensão salarial CLT máxima | decimal | Não |
+| Pretensão salarial PJ mínima | decimal | Não |
+| Pretensão salarial PJ máxima | decimal | Não |
 | Links externos (GitHub, LinkedIn, site) | json/array | Não |
 
 **Regras:**
@@ -119,6 +122,8 @@ Dados centrais do desenvolvedor.
 - Handle é único, usado na URL pública (`/developers/vitorsantos`), aceita apenas letras minúsculas, números e hífens, entre 3 e 40 caracteres
 - Situação profissional é informativa (visível no perfil público). Serve como alerta para empresas — devs empregados podem representar um empecilho na contratação
 - Pretensão salarial **nunca** é exibida publicamente nem para empresas — usada apenas internamente para cálculo de compatibilidade salarial com vagas
+- Pretensão salarial separada por modelo de contratação: dev pode informar faixa CLT, faixa PJ, ou ambas
+- Raio máximo define a distância máxima aceitável para vagas presenciais/híbridas (1 a 60 km). Se não informado, o default depende da cidade: 40 km para capitais, 20 km para não-capitais
 
 ---
 
@@ -279,11 +284,14 @@ Endereços de filiais/unidades adicionais da empresa.
 | Skills (com nível mínimo e exigência) | array de { skill_id, min_level, requirement } | Sim |
 | Experiência mínima (anos) | integer | Sim |
 | Modelo de contratação | enum: `clt`, `pj`, `clt_pj` | Sim |
-| Faixa salarial mínima | decimal | Sim |
-| Faixa salarial máxima | decimal | Sim |
+| Faixa salarial CLT mínima | decimal | Condicional** |
+| Faixa salarial CLT máxima | decimal | Condicional** |
+| Faixa salarial PJ mínima | decimal | Condicional** |
+| Faixa salarial PJ máxima | decimal | Condicional** |
 | Exibir salário | boolean | Sim (default: false) |
 | Benefícios | array de strings | Não |
 | Modalidade | enum: `onsite`, `hybrid`, `remote` | Sim |
+| Raio máximo (km) | integer (1-60) | Não |
 | Unidade de referência | FK → company_units (nullable) | Não |
 | Município | FK → cities | Condicional* |
 | CEP | string | Condicional* |
@@ -297,7 +305,9 @@ Endereços de filiais/unidades adicionais da empresa.
 - *Endereço completo obrigatório quando modalidade = `onsite` ou `hybrid` (city_id, zip_code, street, neighborhood, number)
 - Vaga pode referenciar uma unidade (`company_unit_id`) ou a sede (null) para pré-preencher o endereço no frontend
 - O endereço da vaga é independente — preenchido automaticamente mas editável livremente
+- **Faixa salarial obrigatória conforme modelo de contratação: se `clt` → faixa CLT obrigatória; se `pj` → faixa PJ obrigatória; se `clt_pj` → ambas obrigatórias
 - Faixa salarial controlada por `show_salary`: se `true`, visível publicamente; se `false`, apenas para a empresa
+- Raio máximo define a distância para vagas presenciais/híbridas (1 a 60 km). Se não informado, default: 40 km para capitais, 20 km para não-capitais
 - Benefícios são texto livre (array de strings), exibidos no perfil público da vaga
 - Skills da vaga são referências à árvore de skills, cada uma com tipo de exigência:
   - `required` — obrigatória (eliminatória)
@@ -469,9 +479,9 @@ Se total_anos < min_experience_years → score = (total_anos / min_experience_ye
 
 #### 6.4.3 Modalidade + Localização (10%)
 
-Dividido em duas partes de **50% cada**:
+A composição depende da **modalidade da vaga** e se o **dev aceita** essa modalidade.
 
-**Parte A — Modalidade (50% do critério):**
+**Parte A — Modalidade:**
 
 O dev possui um array de modalidades preferidas (`work_modes`): ex. `["remote", "hybrid"]`.
 
@@ -479,25 +489,45 @@ O dev possui um array de modalidades preferidas (`work_modes`): ex. `["remote", 
 - Modalidade da vaga **não está** no array do dev → **0%**
 - Dev sem preferência (array vazio ou null) → **100%** (aceita qualquer)
 
-**Parte B — Localização (50% do critério):**
+**Parte B — Localização (Haversine + raio):**
 
 - Vaga é **remote** → **100%** (localização não se aplica)
 - Vaga é **onsite/hybrid**:
-  - Mesma cidade (city_id) → **100%**
-  - Mesmo estado → **50%**
-  - Estado diferente → **0%**
-  - Dev sem cidade cadastrada → **50%**
+  - Distância calculada pela **fórmula de Haversine** entre as coordenadas (latitude/longitude) das cidades do dev e da vaga
+  - Raio efetivo = `min(raio_dev, raio_vaga)` (vaga sem raio usa 60 km)
+  - Distância ≤ raio efetivo → **100%**
+  - Distância ≤ raio efetivo × 1.5 → **50%** (margem tolerável)
+  - Distância > raio efetivo × 1.5 → **0%**
+  - Dev/vaga sem cidade cadastrada → **50%** (neutro)
 
-**Score final do critério:**
-```
-score = (modalidade_part × 0.5) + (localização_part × 0.5)
-```
+**Raio máximo do dev (km):**
+- Se o dev informou `max_radius_km` → usa esse valor (1-60 km)
+- Se não informou e cidade é capital (`is_capital = true`) → **40 km**
+- Se não informou e cidade não é capital → **20 km**
+- Se dev sem cidade → usa 40 km (neutro)
+
+**Composição do score final do critério:**
+
+A regra de pesos é **dependente da modalidade**:
+
+| Cenário | Score |
+|---|---|
+| Vaga `remote` E dev aceita remote | **100%** (Parte A apenas) |
+| Vaga `remote` E dev NÃO aceita remote | **0%** |
+| Vaga `hybrid`/`onsite` (qualquer aceitação) | `modalidade × 0.25 + localização × 0.75` |
+
+**Justificativa:** quando a vaga é remota e o dev aceita remoto, não faz sentido descontar pontos por distância — não há deslocamento. Já em vagas presenciais/híbridas, a distância importa **mais** que a modalidade em si (dev que aceita híbrido mas mora a 200 km da empresa não consegue ir ao escritório), por isso a localização pesa 75%.
 
 ---
 
-#### 6.4.4 Faixa Salarial (30%)
+#### 6.4.4 Faixa Salarial (15%)
 
-Compara a pretensão do dev (`salary_min`/`salary_max`) com a faixa da vaga (`salary_min`/`salary_max`).
+Compara a pretensão do dev com a faixa da vaga **por modelo de contratação correspondente**.
+
+A comparação é feita entre faixas do mesmo modelo:
+- Se vaga é `clt` → compara com `salary_clt_min`/`salary_clt_max` do dev
+- Se vaga é `pj` → compara com `salary_pj_min`/`salary_pj_max` do dev
+- Se vaga é `clt_pj` → compara com o modelo que o dev informou (se ambos, usa o melhor score)
 
 **Casos:**
 
@@ -548,13 +578,114 @@ score = (skills × 0.50) + (experiencia × 0.25) + (modalidade_localizacao × 0.
 Quando uma empresa busca devs para uma vaga, cada dev recebe o **mesmo score** calculado contra aquela vaga.
 
 **Regras gerais:**
-- Score com cache em 2 camadas: Redis (hot, TTL 24h) + PostgreSQL (persistente, tabela `match_scores`)
+- Score com cache em 2 camadas: Redis (hot) + PostgreSQL (persistente seletivo, tabela `match_scores`)
 - Recalcula apenas quando hash dos dados do dev ou da vaga muda
 - Resultados ordenados por score decrescente
 - Score < 20 não aparece nos resultados
 - Dev vê o score ao lado de cada vaga
 - Empresa vê o score ao lado de cada dev
 - Sub-scores individuais (skills, experiência, modalidade, salário) armazenados para transparência
+
+**Política de cache e persistência:**
+
+Critério de "match relevante": `score >= 70` **OU** dev se candidatou à vaga (`job_applications`).
+
+| Camada | Match relevante | Match comum |
+|---|---|---|
+| Redis TTL | 12 horas | 6 horas |
+| PostgreSQL | Persistido (upsert) | NÃO persistido |
+
+**Transições:**
+- Match relevante → calculado e armazenado no Redis (12h) e no PostgreSQL
+- Match comum → calculado e armazenado apenas no Redis (6h)
+- Match que era relevante e deixou de ser (recalculo abaixo de 70 e dev não candidatou) → **DELETADO** do PostgreSQL na nova checagem
+- Match que era comum e virou relevante → upsert no PostgreSQL, TTL Redis sobe para 12h
+
+> A tabela `match_scores` mantém apenas matches "fortes" (>= 70) ou de candidaturas, reduzindo drasticamente o volume de I/O persistente. Matches comuns ficam apenas em cache.
+
+---
+
+#### 6.4.7 Motor de Eliminação (Pre-filter)
+
+Antes de calcular o score completo, um **motor de eliminação** descarta pares dev↔vaga que não têm chance de match. Isso reduz drasticamente o volume de cálculos (de N×M para um subconjunto viável).
+
+**Filtro 1 — Modalidade + Distância:**
+
+| Modalidade da vaga | Dev aceita remoto? | Resultado |
+|---|---|---|
+| `remote` | — | **Passa** (qualquer dev) |
+| `hybrid` / `onsite` | Sim, e dev só tem remoto | **Eliminado** |
+| `hybrid` / `onsite` | Dev aceita hybrid/onsite | Calcular distância |
+
+Se a vaga é presencial/híbrida e o dev aceita essa modalidade:
+- Calcular distância (Haversine) entre cidades do dev e da vaga
+- Se distância > raio máximo do dev (ou raio da vaga, o menor dos dois) → **Eliminado**
+- Se dev ou vaga sem cidade → **Passa** (sem dados para eliminar)
+
+**Filtro 2 — Faixa Salarial por Modelo de Contratação:**
+
+Compara faixas salariais **do mesmo modelo** (CLT com CLT, PJ com PJ).
+
+| Situação | Resultado |
+|---|---|
+| Dev não informou pretensão nenhuma (CLT nem PJ) e vaga é < senior | **Eliminado** |
+| Dev não informou pretensão nenhuma e vaga é ≥ senior | **Passa** (calcula match) |
+| Dev informou pretensão CLT, vaga é PJ (e vice-versa) — sem modelo em comum | **Eliminado** |
+| Dev e vaga têm pelo menos 1 modelo em comum | Comparar faixas do(s) modelo(s) em comum |
+| Para todos os modelos em comum: máx da vaga < mín do dev | **Eliminado** (dev quer mais que todas as faixas) |
+| Pelo menos 1 modelo em comum com sobreposição ou vaga paga mais | **Passa** |
+
+> Senioridades ≥ senior: `senior`, `lead`, `specialist`
+
+**Ordem dos filtros:** Modalidade primeiro (mais barato — sem I/O), depois salário.
+
+---
+
+#### 6.4.8 Processamento em Lote (Batch Matching)
+
+Os scores são calculados on-demand (quando dev ou empresa consulta), mas também **proativamente a cada 3 horas** para garantir que resultados de busca já estejam prontos.
+
+**Estratégia: delta por dirty flag + hash**
+
+1. Cada entidade que afeta o score possui um flag `match_dirty` (boolean, default `true`)
+2. O flag é setado automaticamente via **triggers PostgreSQL** quando dados relevantes mudam
+3. A cada 3 horas, um cron identifica entidades dirty e enfileira o recálculo
+4. Workers processam os pares em batches, usando o hash para confirmar que o recálculo é necessário
+
+**Triggers que setam `match_dirty = true`:**
+
+| Tabela | Evento | Alvo |
+|---|---|---|
+| `dev_profiles` | UPDATE de `work_modes`, `city_id`, `salary_min`, `salary_max` | `dev_profiles.match_dirty` |
+| `dev_skills` | INSERT, UPDATE, DELETE | `dev_profiles.match_dirty` |
+| `experiences` | INSERT, UPDATE, DELETE | `dev_profiles.match_dirty` |
+| `jobs` | UPDATE de `work_mode`, `city_id`, `salary_min`, `salary_max`, `seniority`, `min_experience_years` | `jobs.match_dirty` |
+| `job_skills` | INSERT, UPDATE, DELETE | `jobs.match_dirty` |
+
+> Novos devs e novas vagas já nascem com `match_dirty = true` (default da coluna).
+
+**Fluxo do batch:**
+
+```
+Cron (3h) → busca dirty devs + dirty jobs
+         → monta pares: (dirty_devs × open_jobs) ∪ (all_devs × dirty_jobs)
+         → deduplica
+         → agrupa em batches de 100 pares
+         → enfileira no BullMQ
+         → reseta match_dirty = false
+
+Workers  → para cada batch:
+            compara hash atual vs hash armazenado
+            se hash mudou → recalcula score
+            se hash igual → skip (dirty flag pode ter sido setado por update irrelevante)
+            upsert em match_scores + Redis
+```
+
+**Escalabilidade:**
+- Se 10.000 devs mas apenas 15 mudaram + 3 vagas novas: ~37.000 cálculos em vez de 5.000.000
+- Workers com concorrência configurável (default: 3)
+- Retries automáticos com backoff exponencial
+- Infraestrutura: BullMQ sobre o Redis já existente
 
 ---
 
@@ -597,6 +728,26 @@ Mantém a busca existente da v1 — qualquer visitante busca devs por nome ou sk
 
 ---
 
+### 6.6 Indicadores do Dev (`dev-indicators`)
+
+Dashboard de metricas que ajuda o dev a entender sua posicao no mercado, identificar pontos de melhoria e acompanhar desempenho.
+
+**Categorias de indicadores:**
+
+| Categoria | Indicadores-chave | Tipo |
+|---|---|---|
+| Score de match | Media geral, sub-scores (radar), ponto mais fraco | Pessoal |
+| Skills | Gap analysis, popularidade, top 5 demanda | Pessoal + Geral |
+| Salario | Posicao na faixa, gap vs mercado, % vagas acima | Pessoal |
+| Localizacao | Vagas por raio, distribuicao de modalidades | Pessoal + Geral |
+| Candidaturas | Taxa de aceite, resumo por status, score aceitas vs rejeitadas | Pessoal |
+| Perfil | Completude, impacto de preencher secoes | Pessoal |
+| Competitividade | Ranking em candidaturas, concorrentes similares | Pessoal |
+
+> Especificacao detalhada, queries e priorizacao em **[DEV_INDICATORS.md](DEV_INDICATORS.md)**.
+
+---
+
 ## 7. Fora do Escopo (MVP)
 
 - Autenticação com OAuth (GitHub/Google)
@@ -604,7 +755,7 @@ Mantém a busca existente da v1 — qualquer visitante busca devs por nome ou sk
 - ~~Candidatura formal a vagas (apply)~~ — agora no escopo
 - Notificações (e-mail, push)
 - Score automático baseado em GitHub
-- Dashboard de analytics
+- ~~Dashboard de analytics~~ — parcialmente no escopo (indicadores do dev)
 - Upload de arquivos/imagens (usar URLs)
 - Painel administrativo para gerenciar skill tree (seed manual)
 - Faixa salarial visível para devs
@@ -673,6 +824,7 @@ SkillTree (N) ── (0..1) SkillTree ← hierarquia pai/filho
 - Busca de vagas com filtros e ordenação por match
 - Busca de devs por empresa com score
 - Integração GitHub (importar repos)
+- Indicadores do dev (dashboard com metricas de match, skills e mercado)
 
 ### Could Have
 - Busca pública de devs (por nome/skill)

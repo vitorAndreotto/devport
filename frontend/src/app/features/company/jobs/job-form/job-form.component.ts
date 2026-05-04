@@ -66,9 +66,12 @@ export class JobFormComponent implements OnInit {
     seniority: ['', Validators.required],
     min_experience_years: [0, [Validators.required, Validators.min(0)]],
     contract_model: ['', Validators.required],
-    salary_min: ['', Validators.required],
-    salary_max: ['', Validators.required],
+    salary_clt_min: [''],
+    salary_clt_max: [''],
+    salary_pj_min: [''],
+    salary_pj_max: [''],
     show_salary: [false],
+    max_radius_km: [null as number | null],
     work_mode: ['', Validators.required],
     company_unit_id: ['' as string],
     // Address
@@ -84,6 +87,32 @@ export class JobFormComponent implements OnInit {
     benefits: this.fb.array([] as FormGroup[]),
   });
 
+  private salaryRangeValidator() {
+    return (group: any) => {
+      const parse = (v: any) => {
+        if (!v) return null;
+        const cleaned = String(v).replace(/\./g, '').replace(',', '.');
+        const num = parseFloat(cleaned);
+        return isNaN(num) || num === 0 ? null : num;
+      };
+      const cMin = parse(group.get('salary_clt_min')?.value);
+      const cMax = parse(group.get('salary_clt_max')?.value);
+      const pMin = parse(group.get('salary_pj_min')?.value);
+      const pMax = parse(group.get('salary_pj_max')?.value);
+
+      const errors: any = {};
+      if (cMin != null && cMax != null && cMax < cMin) errors.cltRange = true;
+      if (pMin != null && pMax != null && pMax < pMin) errors.pjRange = true;
+      if ((cMin != null) !== (cMax != null)) errors.cltIncomplete = true;
+      if ((pMin != null) !== (pMax != null)) errors.pjIncomplete = true;
+      return Object.keys(errors).length ? errors : null;
+    };
+  }
+
+  hasSalaryError(key: string): boolean {
+    return !!this.form.errors?.[key];
+  }
+
   get skillsArray(): FormArray<FormGroup> {
     return this.form.controls.skills;
   }
@@ -98,6 +127,9 @@ export class JobFormComponent implements OnInit {
   }
 
   ngOnInit(): void {
+    this.form.addValidators(this.salaryRangeValidator());
+    this.form.updateValueAndValidity({ emitEvent: false });
+
     this.loadStates();
     this.loadUnits();
     this.loadSkills();
@@ -206,8 +238,11 @@ export class JobFormComponent implements OnInit {
       })),
       min_experience_years: d.min_experience_years!,
       contract_model: d.contract_model!,
-      salary_min: this.parseCurrency(d.salary_min),
-      salary_max: this.parseCurrency(d.salary_max),
+      salary_clt_min: this.parseCurrency(d.salary_clt_min) || undefined,
+      salary_clt_max: this.parseCurrency(d.salary_clt_max) || undefined,
+      salary_pj_min: this.parseCurrency(d.salary_pj_min) || undefined,
+      salary_pj_max: this.parseCurrency(d.salary_pj_max) || undefined,
+      max_radius_km: d.max_radius_km || undefined,
       show_salary: d.show_salary ?? false,
       benefits: d.benefits.length ? d.benefits.map((b: any) => b.value) : undefined,
       work_mode: d.work_mode!,
@@ -239,17 +274,18 @@ export class JobFormComponent implements OnInit {
 
   private loadJob(id: string): void {
     this.isLoading.set(true);
-    this.jobService.getMyJobs()
+    this.jobService.getById(id)
       .pipe(takeUntilDestroyed(this.destroyRef))
-      .subscribe((jobs) => {
-        const job = jobs.find((j) => j.id === id);
-        if (!job) {
+      .subscribe({
+        next: (job) => {
+          this.editingJob.set(job);
+          this.patchForm(job);
+          this.isLoading.set(false);
+        },
+        error: () => {
+          this.isLoading.set(false);
           this.router.navigate(['/company/jobs']);
-          return;
-        }
-        this.editingJob.set(job);
-        this.patchForm(job);
-        this.isLoading.set(false);
+        },
       });
   }
 
@@ -260,8 +296,10 @@ export class JobFormComponent implements OnInit {
       seniority: job.seniority,
       min_experience_years: job.min_experience_years,
       contract_model: job.contract_model,
-      salary_min: String(job.salary_min),
-      salary_max: String(job.salary_max),
+      salary_clt_min: job.salary_clt_min != null ? String(job.salary_clt_min) : '',
+      salary_clt_max: job.salary_clt_max != null ? String(job.salary_clt_max) : '',
+      salary_pj_min: job.salary_pj_min != null ? String(job.salary_pj_min) : '',
+      salary_pj_max: job.salary_pj_max != null ? String(job.salary_pj_max) : '',
       show_salary: job.show_salary,
       work_mode: job.work_mode,
       company_unit_id: job.company_unit_id ?? '',

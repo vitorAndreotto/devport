@@ -160,11 +160,15 @@ Dados profissionais do desenvolvedor.
 | `number` | `varchar(20)` | sim | null | Número |
 | `complement` | `varchar(255)` | sim | null | Complemento |
 | `work_modes` | `jsonb` | sim | null | Array de modalidades preferidas: `["remote","hybrid"]` |
+| `max_radius_km` | `integer` | sim | null | Raio máximo para vagas presenciais/híbridas (1-60 km) |
 | `employment_status` | `varchar(10)` | sim | null | `looking`, `employed` |
-| `salary_min` | `decimal(10,2)` | sim | null | Pretensão salarial mínima |
-| `salary_max` | `decimal(10,2)` | sim | null | Pretensão salarial máxima |
+| `salary_clt_min` | `decimal(10,2)` | sim | null | Pretensão salarial CLT mínima |
+| `salary_clt_max` | `decimal(10,2)` | sim | null | Pretensão salarial CLT máxima |
+| `salary_pj_min` | `decimal(10,2)` | sim | null | Pretensão salarial PJ mínima |
+| `salary_pj_max` | `decimal(10,2)` | sim | null | Pretensão salarial PJ máxima |
 | `github_username` | `varchar(255)` | sim | null | Username do GitHub |
 | `links` | `jsonb` | sim | null | Links externos |
+| `match_dirty` | `boolean` | não | true | Flag para recálculo de matching em lote |
 | `created_at` | `timestamp` | não | now() | Criação |
 | `updated_at` | `timestamp` | não | now() | Atualização |
 
@@ -175,6 +179,7 @@ Dados profissionais do desenvolvedor.
 - `INDEX (full_name)` — busca por nome
 - `INDEX (city_id)` — busca por localização
 - `INDEX (github_username)`
+- `INDEX (match_dirty) WHERE match_dirty = TRUE` — partial index para batch matching
 
 **Foreign Keys:**
 - `user_id → users(id) ON DELETE CASCADE`
@@ -184,8 +189,11 @@ Dados profissionais do desenvolvedor.
 - `handle ~ '^[a-z0-9][a-z0-9-]{1,38}[a-z0-9]$'` — 3-40 chars, lowercase, números e hífens, sem iniciar/terminar com hífen
 - `work_modes` é jsonb array (ex: `["remote","hybrid"]`) ou null
 - `employment_status IN ('looking', 'employed') OR employment_status IS NULL`
-- `salary_min IS NULL OR salary_min >= 0`
-- `salary_max IS NULL OR salary_max >= salary_min`
+- `max_radius_km IS NULL OR (max_radius_km >= 1 AND max_radius_km <= 60)`
+- `salary_clt_min IS NULL OR salary_clt_min >= 0`
+- `salary_clt_max IS NULL OR salary_clt_max >= salary_clt_min`
+- `salary_pj_min IS NULL OR salary_pj_min >= 0`
+- `salary_pj_max IS NULL OR salary_pj_max >= salary_pj_min`
 
 **Estrutura do campo `links` (jsonb):**
 ```json
@@ -460,11 +468,14 @@ Vagas publicadas por empresas.
 | `seniority` | `varchar(15)` | não | — | Nível de senioridade |
 | `min_experience_years` | `integer` | não | — | Experiência mínima (anos) |
 | `contract_model` | `varchar(10)` | não | — | Modelo de contratação |
-| `salary_min` | `decimal(10,2)` | não | — | Faixa salarial mínima |
-| `salary_max` | `decimal(10,2)` | não | — | Faixa salarial máxima |
+| `salary_clt_min` | `decimal(10,2)` | sim | null | Faixa salarial CLT mínima |
+| `salary_clt_max` | `decimal(10,2)` | sim | null | Faixa salarial CLT máxima |
+| `salary_pj_min` | `decimal(10,2)` | sim | null | Faixa salarial PJ mínima |
+| `salary_pj_max` | `decimal(10,2)` | sim | null | Faixa salarial PJ máxima |
 | `show_salary` | `boolean` | não | false | Exibir faixa salarial publicamente |
 | `benefits` | `jsonb` | sim | null | Lista de benefícios |
 | `work_mode` | `varchar(10)` | não | — | Modalidade |
+| `max_radius_km` | `integer` | sim | null | Raio máximo para candidatos presenciais/híbridos (1-60 km) |
 | `city_id` | `integer` (FK) | sim | null | Município da vaga |
 | `zip_code` | `varchar(9)` | sim | null | CEP |
 | `street` | `varchar(255)` | sim | null | Rua / Logradouro |
@@ -472,6 +483,7 @@ Vagas publicadas por empresas.
 | `number` | `varchar(20)` | sim | null | Número |
 | `complement` | `varchar(255)` | sim | null | Complemento |
 | `status` | `varchar(10)` | não | 'open' | Status da vaga |
+| `match_dirty` | `boolean` | não | true | Flag para recálculo de matching em lote |
 | `created_at` | `timestamp` | não | now() | Criação |
 | `updated_at` | `timestamp` | não | now() | Atualização |
 
@@ -484,6 +496,7 @@ Vagas publicadas por empresas.
 - `INDEX (work_mode)`
 - `INDEX (city_id)`
 - `INDEX (created_at)`
+- `INDEX (match_dirty) WHERE match_dirty = TRUE` — partial index para batch matching
 
 **Foreign Keys:**
 - `company_profile_id → company_profiles(id) ON DELETE CASCADE`
@@ -495,8 +508,11 @@ Vagas publicadas por empresas.
 - `contract_model IN ('clt', 'pj', 'clt_pj')`
 - `work_mode IN ('onsite', 'hybrid', 'remote')`
 - `status IN ('open', 'closed')`
-- `salary_min >= 0`
-- `salary_max >= salary_min`
+- `salary_clt_min IS NULL OR salary_clt_min >= 0`
+- `salary_clt_max IS NULL OR salary_clt_max >= salary_clt_min`
+- `salary_pj_min IS NULL OR salary_pj_min >= 0`
+- `salary_pj_max IS NULL OR salary_pj_max >= salary_pj_min`
+- `max_radius_km IS NULL OR (max_radius_km >= 1 AND max_radius_km <= 60)`
 - `NOT (work_mode IN ('onsite', 'hybrid') AND city_id IS NULL)` — presencial/híbrido exige endereço
 
 > `company_unit_id` é apenas referência para pré-preenchimento no frontend. O endereço da vaga é independente e editável.
@@ -650,13 +666,21 @@ Onde `skills_sorted` = lista ordenada de `skill_id:min_level:requirement` das jo
 ```
 Key:   match:{dev_profile_id}:{job_id}
 Value: { score, dev_hash, job_hash, skill_score, experience_score, modality_score, salary_score }
-TTL:   24 horas
+TTL:   12 horas (match relevante)  |  6 horas (match comum)
 ```
 
 **Camada 2 — PostgreSQL (tabela `match_scores`):**
-- Persistência do último cálculo
-- Permite queries analíticas (ranking, busca paginada por score)
+- Persistência **seletiva**: apenas matches relevantes (`score >= 70` ou dev aplicou à vaga)
+- Permite queries analíticas (ranking, busca paginada por score) sobre matches fortes
 - Upsert ao calcular (`ON CONFLICT (dev_profile_id, job_id) DO UPDATE`)
+- DELETE ao recalcular: se row existe e match perdeu relevância
+
+**Definição de "match relevante":**
+```
+relevant = score >= 70 OR EXISTS (
+  SELECT 1 FROM job_applications WHERE dev_profile_id = X AND job_id = Y
+)
+```
 
 **Fluxo de cálculo:**
 
@@ -672,9 +696,13 @@ TTL:   24 horas
        │   └─ Mudaram → recalcular (passo 4)
        └─ NOT FOUND → recalcular (passo 4)
 4. Calcular score (algoritmo 6.4)
-5. Salvar no Redis (TTL 24h)
-6. Upsert no PostgreSQL (match_scores)
-7. Retornar score ✓
+5. Determinar TTL e persistencia:
+   ├─ relevant = score >= 70 OR dev aplicou
+   ├─ relevant = true → TTL Redis 12h + UPSERT PostgreSQL
+   └─ relevant = false → TTL Redis 6h
+                          ├─ Se row existia em match_scores → DELETE
+                          └─ Senão → não persiste
+6. Retornar score ✓
 ```
 
 **Invalidação:**
@@ -686,6 +714,59 @@ TTL:   24 horas
 - Ao listar vagas para um dev, calcular scores para a página inteira em batch
 - Usar pipeline Redis para buscar/salvar múltiplos scores em uma operação
 - Jobs sem score calculado são calculados on-demand e inseridos no cache
+
+---
+
+### 2.15 Triggers de Match Dirty
+
+Triggers PostgreSQL que setam `match_dirty = TRUE` automaticamente quando dados relevantes ao matching mudam.
+
+#### Funções
+
+```sql
+-- Seta match_dirty na própria tabela (dev_profiles ou jobs)
+CREATE OR REPLACE FUNCTION set_self_match_dirty()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.match_dirty := TRUE;
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Seta match_dirty no dev_profile referenciado pela tabela filha
+CREATE OR REPLACE FUNCTION set_dev_match_dirty()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE dev_profiles SET match_dirty = TRUE
+  WHERE id = COALESCE(NEW.dev_profile_id, OLD.dev_profile_id);
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+
+-- Seta match_dirty no job referenciado pela tabela filha
+CREATE OR REPLACE FUNCTION set_job_match_dirty()
+RETURNS TRIGGER AS $$
+BEGIN
+  UPDATE jobs SET match_dirty = TRUE
+  WHERE id = COALESCE(NEW.job_id, OLD.job_id);
+  RETURN COALESCE(NEW, OLD);
+END;
+$$ LANGUAGE plpgsql;
+```
+
+#### Triggers
+
+| Trigger | Tabela | Evento | Colunas monitoradas | Função |
+|---|---|---|---|---|
+| `trg_dev_profile_match_dirty` | `dev_profiles` | BEFORE UPDATE OF | `work_modes`, `city_id`, `max_radius_km`, `salary_clt_min`, `salary_clt_max`, `salary_pj_min`, `salary_pj_max` | `set_self_match_dirty()` |
+| `trg_dev_skill_match_dirty` | `dev_skills` | AFTER INSERT OR UPDATE OR DELETE | — (todas) | `set_dev_match_dirty()` |
+| `trg_experience_match_dirty` | `experiences` | AFTER INSERT OR UPDATE OR DELETE | — (todas) | `set_dev_match_dirty()` |
+| `trg_job_match_dirty` | `jobs` | BEFORE UPDATE OF | `work_mode`, `city_id`, `max_radius_km`, `salary_clt_min`, `salary_clt_max`, `salary_pj_min`, `salary_pj_max`, `seniority`, `min_experience_years`, `contract_model` | `set_self_match_dirty()` |
+| `trg_job_skill_match_dirty` | `job_skills` | AFTER INSERT OR UPDATE OR DELETE | — (todas) | `set_job_match_dirty()` |
+
+> **BEFORE UPDATE OF** para triggers na própria tabela (modifica o NEW diretamente, sem UPDATE extra).
+> **AFTER** para triggers em tabelas filhas (precisa do UPDATE na tabela pai).
+> Novos registros já nascem com `match_dirty = TRUE` (default da coluna).
 
 ---
 
@@ -785,6 +866,7 @@ Ordem de criação respeitando dependências:
 12. job_applications
 13. saved_developers
 14. match_scores
+15. match_dirty triggers (functions + triggers)
 ```
 
 ---

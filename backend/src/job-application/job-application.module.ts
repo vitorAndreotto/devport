@@ -6,12 +6,14 @@ import { JobApplicationService } from './job-application.service.js';
 import { DevApplicationController, CompanyApplicationController } from './job-application.controller.js';
 import { DevProfileModule } from '../dev-profile/dev-profile.module.js';
 import { CompanyProfileModule } from '../company-profile/company-profile.module.js';
+import { MatchBatchModule } from '../match-batch/match-batch.module.js';
 
 @Module({
   imports: [
     TypeOrmModule.forFeature([JobApplication, Job]),
     DevProfileModule,
     CompanyProfileModule,
+    MatchBatchModule,
   ],
   controllers: [DevApplicationController, CompanyApplicationController],
   providers: [JobApplicationService],

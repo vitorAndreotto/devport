@@ -3,7 +3,7 @@ import { FormsModule } from '@angular/forms';
 import { DecimalPipe } from '@angular/common';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { LucideAngularModule } from 'lucide-angular';
-import { PublicJobService, JobSearchFilters, SkillFilter } from '../../../core/services/public-job.service';
+import { PublicJobService, JobSearchFilters, SkillFilter, JobPeriodFilter, JobViewFilter } from '../../../core/services/public-job.service';
 import { JobApplicationService, DevApplication } from '../../../core/services/job-application.service';
 import { SkillService } from '../../../core/services/skill.service';
 import { NotificationService } from '../../../core/services/notification.service';
@@ -11,7 +11,7 @@ import { ApiError } from '../../../core/api/api.service';
 import { extractErrorMessage } from '../../../core/api/api-error.util';
 import { LocationService } from '../../../core/services/location.service';
 import { JobListItem, JobDetail } from '../../../core/models/job.model';
-import { SkillTree } from '../../../core/models/skill.model';
+import { SkillTree, SKILL_CATEGORIES, SKILL_LEVEL_LABELS, REQUIREMENT_LABELS } from '../../../core/models/skill.model';
 
 @Component({
   selector: 'app-dev-jobs',
@@ -28,6 +28,10 @@ export class DevJobsComponent implements OnInit {
   private readonly notify = inject(NotificationService);
   private readonly destroyRef = inject(DestroyRef);
 
+  readonly categoryLabels = SKILL_CATEGORIES;
+  readonly skillLevelLabels = SKILL_LEVEL_LABELS;
+  readonly requirementLabels = REQUIREMENT_LABELS;
+
   jobs = signal<JobListItem[]>([]);
   selectedJob = signal<JobDetail | null>(null);
   selectedJobId = signal<string | null>(null);
@@ -41,7 +45,8 @@ export class DevJobsComponent implements OnInit {
   currentPage = signal(1);
   totalItems = signal(0);
   lastPage = signal(1);
-  readonly pageSize = 15;
+  readonly pageSize = 5;
+  readonly maxPages = 500;
 
   // Filters
   filterQ = signal('');
@@ -59,6 +64,8 @@ export class DevJobsComponent implements OnInit {
   cityDropdownOpen = signal(false);
   cityOptions = signal<{ id: number; name: string; state_abbr: string }[]>([]);
   filterApplication = signal(''); // 'applied' | 'not_applied' | ''
+  filterPeriod = signal<JobPeriodFilter | ''>('');
+  filterView = signal<JobViewFilter>('global');
 
   showCityFilter = computed(() => {
     const mode = this.filterWorkMode();
@@ -98,6 +105,7 @@ export class DevJobsComponent implements OnInit {
     count += this.filterSkills().length;
     if (this.filterCityId()) count++;
     if (this.filterApplication()) count++;
+    if (this.filterPeriod()) count++;
     return count;
   });
 
@@ -121,6 +129,8 @@ export class DevJobsComponent implements OnInit {
     if (this.filterSeniority()) filters.seniority = this.filterSeniority();
     if (this.filterSkills().length) filters.skills = this.filterSkills();
     if (this.filterCityId()) filters.city_id = this.filterCityId()!;
+    if (this.filterPeriod()) filters.period = this.filterPeriod() as JobPeriodFilter;
+    if (this.filterView() !== 'global') filters.view = this.filterView();
 
     this.jobService.search(filters)
       .pipe(takeUntilDestroyed(this.destroyRef))
@@ -128,8 +138,8 @@ export class DevJobsComponent implements OnInit {
         next: (result) => {
           this.jobs.set(result.data);
           this.totalItems.set(result.meta.total);
-          this.lastPage.set(result.meta.last_page);
-          this.currentPage.set(result.meta.current_page);
+          this.lastPage.set(Math.min(result.meta.last_page, this.maxPages));
+          this.currentPage.set(Math.min(result.meta.current_page, this.maxPages));
           this.isLoading.set(false);
 
           const visible = this.filteredJobs();
@@ -163,6 +173,13 @@ export class DevJobsComponent implements OnInit {
     this.citySearchQuery.set('');
     this.cityOptions.set([]);
     this.filterApplication.set('');
+    this.filterPeriod.set('');
+    this.search();
+  }
+
+  selectView(view: JobViewFilter): void {
+    if (this.filterView() === view) return;
+    this.filterView.set(view);
     this.search();
   }
 
@@ -283,6 +300,20 @@ export class DevJobsComponent implements OnInit {
     return [...skills].sort((a, b) => (order[a.requirement] ?? 9) - (order[b.requirement] ?? 9));
   }
 
+  /** Agrupa skills por requirement na ordem required → expected → differential */
+  skillsByRequirement(skills: JobDetail['skills']): { requirement: string; items: JobDetail['skills'] }[] {
+    const order = ['required', 'expected', 'differential'];
+    const groups = new Map<string, JobDetail['skills']>();
+    for (const r of order) groups.set(r, []);
+    for (const s of skills) {
+      const arr = groups.get(s.requirement);
+      if (arr) arr.push(s);
+    }
+    return order
+      .map((r) => ({ requirement: r, items: groups.get(r) ?? [] }))
+      .filter((g) => g.items.length > 0);
+  }
+
   timeAgo(dateStr: string): string {
     const now = Date.now();
     const date = new Date(dateStr).getTime();
@@ -337,7 +368,7 @@ export class DevJobsComponent implements OnInit {
   }
 
   levelLabel(v: string): string {
-    return ({ beginner: 'Iniciante', intermediate: 'Intermediário', advanced: 'Avançado', expert: 'Expert' } as Record<string, string>)[v] ?? v;
+    return this.skillLevelLabels[v] ?? v;
   }
 
   seniorityLabel(v: string): string {
@@ -353,7 +384,7 @@ export class DevJobsComponent implements OnInit {
   }
 
   requirementLabel(v: string): string {
-    return ({ required: 'Obrigatória', expected: 'Esperada', differential: 'Diferencial' } as Record<string, string>)[v] ?? v;
+    return this.requirementLabels[v] ?? v;
   }
 
   formatCurrency(v: number): string {

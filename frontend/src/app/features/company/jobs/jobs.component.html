@@ -1,60 +1,184 @@
 <div class="jobs-page">
-  <div class="jobs-page__header">
-    <div>
-      <h1 class="jobs-page__title">Rotas de Navegação</h1>
-      <p class="jobs-page__subtitle">Abra rotas para atrair navios ao seu porto.</p>
-    </div>
-    <a routerLink="/company/jobs/new" class="btn-new">
-      <lucide-icon name="plus" [size]="18"></lucide-icon>
-      Nova rota
-    </a>
-  </div>
-
-  @if (jobs().length === 0 && !isLoading()) {
-    <div class="jobs-page__empty">
-      <div class="jobs-page__empty-icon">
-        <lucide-icon name="compass" [size]="40"></lucide-icon>
-      </div>
-      <h2 class="jobs-page__empty-title">Nenhuma rota aberta</h2>
-      <p class="jobs-page__empty-text">Publique sua primeira rota para que navios possam traçar curso até o seu porto.</p>
-    </div>
-  }
-
-  @for (job of jobs(); track job.id) {
-    <div class="job-card" [class.job-card--closed]="job.status === 'closed'">
-      <div class="job-card__main">
-        <div class="job-card__header">
-          <h3 class="job-card__title">{{ job.title }}</h3>
-          <span class="job-card__badge" [class.job-card__badge--open]="job.status === 'open'" [class.job-card__badge--closed]="job.status === 'closed'">
-            {{ job.status === 'open' ? 'Aberta' : 'Fechada' }}
-          </span>
+    <div class="jobs-page__header">
+        <div>
+            <h1 class="jobs-page__title">Vagas</h1>
+            <p class="jobs-page__subtitle">Gerencie suas vagas, acompanhe candidatos e match scores.</p>
         </div>
-        <div class="job-card__meta">
-          <span class="job-card__tag">{{ seniorityLabel(job.seniority) }}</span>
-          <span class="job-card__tag">{{ contractLabel(job.contract_model) }}</span>
-          <span class="job-card__tag">{{ workModeLabel(job.work_mode) }}</span>
-          <span class="job-card__tag">{{ job.skills.length }} skills</span>
-        </div>
-        @if (job.salary_min && job.salary_max) {
-          <p class="job-card__salary">
-            R$ {{ formatCurrency(job.salary_min) }} — R$ {{ formatCurrency(job.salary_max) }}
-            @if (!job.show_salary) {
-              <span class="job-card__salary-hidden">(oculto para candidatos)</span>
-            }
-          </p>
-        }
-      </div>
-      <div class="job-card__actions">
-        <a [routerLink]="['/company/jobs', job.id, 'edit']" class="job-card__btn">
-          <lucide-icon name="edit-3" [size]="16"></lucide-icon>
+        <a routerLink="/company/jobs/new" class="btn-new">
+            <lucide-icon name="plus" [size]="18"></lucide-icon>
+            Nova vaga
         </a>
-        <button class="job-card__btn" (click)="toggleStatus(job)" [title]="job.status === 'open' ? 'Fechar' : 'Reabrir'">
-          <lucide-icon [name]="job.status === 'open' ? 'x' : 'check'" [size]="16"></lucide-icon>
-        </button>
-        <button class="job-card__btn job-card__btn--danger" (click)="removeJob(job)">
-          <lucide-icon name="trash-2" [size]="16"></lucide-icon>
-        </button>
-      </div>
     </div>
-  }
+
+    <!-- Filters -->
+    <div class="filters">
+        <div class="filters__search">
+            <lucide-icon name="search" [size]="16"></lucide-icon>
+            <input
+                class="filters__input"
+                type="text"
+                placeholder="Buscar por título ou descrição..."
+                [ngModel]="filterQ()"
+                (ngModelChange)="filterQ.set($event)"
+                (keydown.enter)="search()">
+        </div>
+        <select class="filters__select" [ngModel]="filterStatus()" (ngModelChange)="filterStatus.set($event); search()">
+            <option value="">Todos status</option>
+            <option value="open">Aberta</option>
+            <option value="frozen">Congelada</option>
+            <option value="closed">Finalizada</option>
+        </select>
+        @if (filterStatus() || filterQ()) {
+        <button class="filters__clear" (click)="clearFilters()">
+            <lucide-icon name="x" [size]="14"></lucide-icon>
+            Limpar
+        </button>
+        }
+    </div>
+
+    <!-- Table -->
+    <div class="table-wrap">
+        @if (isLoading()) {
+        <div class="state-loading">
+            <lucide-icon name="loader-2" [size]="22" class="spin"></lucide-icon>
+            <span>Carregando...</span>
+        </div>
+        } @else if (rows().length === 0) {
+        <div class="state-empty">
+            <lucide-icon name="compass" [size]="32"></lucide-icon>
+            <p>Nenhuma vaga encontrada com os filtros atuais.</p>
+        </div>
+        } @else {
+        <table class="jobs-table">
+            <thead>
+                <tr>
+                    <th>Vaga</th>
+                    <th>Senioridade</th>
+                    <th>Salário</th>
+                    <th>Modalidade</th>
+                    <th>Contrato</th>
+                    <th>Descrição</th>
+                    <th>Skills</th>
+                    <th>Abertura</th>
+                    <th>Encerramento</th>
+                    <th class="num">Candidatos</th>
+                    <th class="num">Score cand.</th>
+                    <th class="num">Score top devs</th>
+                    <th class="actions-col">Ações</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (j of rows(); track j.id) {
+                <tr>
+                    <td class="cell-title">
+                        <span class="cell-title__name">{{ j.title }}</span>
+                        <span class="cell-title__status status-pill status-pill--{{ j.status }}">{{ statusLabel(j.status) }}</span>
+                    </td>
+                    <td>{{ seniorityLabel(j.seniority) }}</td>
+                    <td class="cell-salary">
+                        @if (j.salary_clt_min || j.salary_pj_min) {
+                            @if (j.salary_clt_min && j.salary_clt_max) {
+                            <div class="cell-salary__row">
+                                <span class="cell-salary__label">CLT</span>
+                                <span>R$ {{ formatBRL(j.salary_clt_min) }} – {{ formatBRL(j.salary_clt_max) }}</span>
+                            </div>
+                            }
+                            @if (j.salary_pj_min && j.salary_pj_max) {
+                            <div class="cell-salary__row">
+                                <span class="cell-salary__label">PJ</span>
+                                <span>R$ {{ formatBRL(j.salary_pj_min) }} – {{ formatBRL(j.salary_pj_max) }}</span>
+                            </div>
+                            }
+                            <span class="cell-salary__visibility" [class.cell-salary__visibility--off]="!j.show_salary">
+                                <lucide-icon [name]="j.show_salary ? 'check' : 'x'" [size]="10"></lucide-icon>
+                                {{ j.show_salary ? 'Visível' : 'Oculto' }}
+                            </span>
+                        } @else {
+                            <span class="dim">-</span>
+                        }
+                    </td>
+                    <td>{{ workModeLabel(j.work_mode) }}</td>
+                    <td>{{ contractLabel(j.contract_model) }}</td>
+                    <td class="cell-desc" [title]="j.description">{{ truncate(j.description, 140) }}</td>
+                    <td class="cell-skills">
+                        @for (s of j.skills.slice(0, 4); track s.skill.id) {
+                        <span class="skill-tag">{{ s.skill.name }}</span>
+                        }
+                        @if (j.skills.length > 4) {
+                        <span class="skill-tag skill-tag--more">+{{ j.skills.length - 4 }}</span>
+                        }
+                    </td>
+                    <td class="cell-date">{{ formatDate(j.created_at) }}</td>
+                    <td class="cell-date">
+                        @if (closedAt(j); as d) { {{ formatDate(d) }} } @else { <span class="dim">-</span> }
+                    </td>
+                    <td class="num">{{ j.application_count }}</td>
+                    <td class="num">
+                        @if (j.applicants_avg_score != null) {
+                        <span class="score-pill" [class.score-pill--high]="j.applicants_avg_score >= 70" [class.score-pill--mid]="j.applicants_avg_score >= 40 && j.applicants_avg_score < 70" [class.score-pill--low]="j.applicants_avg_score < 40">{{ j.applicants_avg_score }}</span>
+                        } @else { <span class="dim">-</span> }
+                    </td>
+                    <td class="num">
+                        @if (j.top_devs_avg_score != null) {
+                        <span class="score-pill" [class.score-pill--high]="j.top_devs_avg_score >= 70" [class.score-pill--mid]="j.top_devs_avg_score >= 40 && j.top_devs_avg_score < 70" [class.score-pill--low]="j.top_devs_avg_score < 40">{{ j.top_devs_avg_score }}</span>
+                        } @else { <span class="dim">-</span> }
+                    </td>
+                    <td class="actions-col">
+                        <div class="actions">
+                            <button class="action-btn" title="Visualizar" (click)="view(j)">
+                                <lucide-icon name="search" [size]="14"></lucide-icon>
+                            </button>
+                            <button class="action-btn" title="Editar" (click)="edit(j)">
+                                <lucide-icon name="edit-3" [size]="14"></lucide-icon>
+                            </button>
+                            <button class="action-btn action-btn--danger" title="Excluir" (click)="askDelete(j)">
+                                <lucide-icon name="trash-2" [size]="14"></lucide-icon>
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+        }
+    </div>
+
+    <!-- Pagination -->
+    @if (lastPage() > 1) {
+    <div class="pagination">
+        <button class="pagination__btn" [disabled]="currentPage() === 1" (click)="goToPage(currentPage() - 1)">
+            <lucide-icon name="chevron-left" [size]="14"></lucide-icon>
+        </button>
+        @for (p of [].constructor(lastPage()); track $index) {
+            @if ($index + 1 === 1 || $index + 1 === lastPage() || ($index + 1 >= currentPage() - 1 && $index + 1 <= currentPage() + 1)) {
+            <button class="pagination__btn" [class.pagination__btn--active]="$index + 1 === currentPage()" (click)="goToPage($index + 1)">{{ $index + 1 }}</button>
+            } @else if ($index + 1 === currentPage() - 2 || $index + 1 === currentPage() + 2) {
+            <span class="pagination__dots">...</span>
+            }
+        }
+        <button class="pagination__btn" [disabled]="currentPage() === lastPage()" (click)="goToPage(currentPage() + 1)">
+            <lucide-icon name="chevron-right" [size]="14"></lucide-icon>
+        </button>
+    </div>
+    }
 </div>
+
+<!-- Delete confirmation modal -->
+@if (pendingDelete(); as job) {
+<div class="modal-overlay" (click)="cancelDelete()">
+    <div class="modal" (click)="$event.stopPropagation()">
+        <h3 class="modal__title">Excluir vaga?</h3>
+        <p class="modal__text">
+            Tem certeza que deseja excluir <strong>{{ job.title }}</strong>?
+            Esta ação não pode ser desfeita e removerá todas as candidaturas associadas.
+        </p>
+        <div class="modal__actions">
+            <button class="btn-secondary" (click)="cancelDelete()">Cancelar</button>
+            <button class="btn-danger" (click)="confirmDelete()">
+                <lucide-icon name="trash-2" [size]="16"></lucide-icon>
+                Excluir
+            </button>
+        </div>
+    </div>
+</div>
+}

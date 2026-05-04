@@ -85,6 +85,7 @@ A documentação completa está organizada em [`/doc/`](doc/):
 | [USER_STORIES.md](doc/USER_STORIES.md) | **User Stories** — 42 histórias organizadas por módulo, com critérios de aceite |
 | [DATA_MODEL.md](doc/DATA_MODEL.md) | **Data Model** — 10 tabelas PostgreSQL com UUID, índices, constraints e regras de integridade |
 | [API_CONTRACT.md](doc/API_CONTRACT.md) | **API Contract** — 40 endpoints RESTful com request/response, validações e códigos de erro |
+| [DEV_INDICATORS.md](doc/DEV_INDICATORS.md) | **Indicadores do Dev** — 30+ metricas de mercado, skills, salario, score e candidaturas |
 
 ### Técnico
 

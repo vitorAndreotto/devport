@@ -24,6 +24,7 @@ export class DevLayoutComponent {
 
   readonly navItems = [
     { path: '/dev', label: 'Início', icon: 'layout-dashboard', exact: true },
+    { path: '/dev/dashboards', label: 'Indicadores', icon: 'bar-chart-3', exact: false },
     { path: '/dev/profile', label: 'Perfil', icon: 'user', exact: false },
     { path: '/dev/skills', label: 'Skills', icon: 'puzzle', exact: false },
     { path: '/dev/experiences', label: 'Experiências', icon: 'anchor', exact: false },

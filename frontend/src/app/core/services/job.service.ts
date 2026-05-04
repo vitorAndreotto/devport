@@ -7,16 +7,43 @@ interface JobResponse {
   data: Job;
 }
 
-interface JobsResponse {
-  data: Job[];
+export type CompanyJobStatus = 'open' | 'frozen' | 'closed';
+
+export interface CompanyJobRow extends Job {
+  application_count: number;
+  applicants_avg_score: number | null;
+  top_devs_avg_score: number | null;
+}
+
+export interface CompanyJobsSearchFilters {
+  status?: CompanyJobStatus;
+  q?: string;
+  page?: number;
+  limit?: number;
+}
+
+export interface PaginatedCompanyJobs {
+  data: CompanyJobRow[];
+  meta: { current_page: number; limit: number; total: number; last_page: number };
 }
 
 @Injectable({ providedIn: 'root' })
 export class JobService {
   private readonly api = inject(ApiService);
 
-  getMyJobs(): Observable<Job[]> {
-    return this.api.get<JobsResponse>('/company/jobs').pipe(map((r) => r.data));
+  search(filters: CompanyJobsSearchFilters = {}): Observable<PaginatedCompanyJobs> {
+    const params = new URLSearchParams();
+    if (filters.status) params.set('status', filters.status);
+    if (filters.q) params.set('q', filters.q);
+    if (filters.page) params.set('page', String(filters.page));
+    if (filters.limit) params.set('limit', String(filters.limit));
+    const qs = params.toString();
+    const path = qs ? `/company/jobs?${qs}` : '/company/jobs';
+    return this.api.get<{ data: PaginatedCompanyJobs }>(path).pipe(map((r) => r.data));
+  }
+
+  getById(id: string): Observable<Job> {
+    return this.api.get<JobResponse>(`/company/jobs/${id}`).pipe(map((r) => r.data));
   }
 
   create(payload: CreateJobPayload): Observable<Job> {

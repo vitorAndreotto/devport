@@ -18,6 +18,9 @@ export interface SkillFilter {
   min_level?: string;
 }
 
+export type JobPeriodFilter = 'last_month' | 'older_30' | 'older_60';
+export type JobViewFilter = 'global' | 'for_you' | 'applied';
+
 export interface JobSearchFilters {
   q?: string;
   work_mode?: string;
@@ -25,6 +28,8 @@ export interface JobSearchFilters {
   seniority?: string;
   city_id?: number;
   skills?: SkillFilter[];
+  period?: JobPeriodFilter;
+  view?: JobViewFilter;
   page?: number;
   limit?: number;
 }
@@ -46,6 +51,8 @@ export class PublicJobService {
       ).join(',');
       params.set('skills', encoded);
     }
+    if (filters.period) params.set('period', filters.period);
+    if (filters.view) params.set('view', filters.view);
     if (filters.page) params.set('page', String(filters.page));
     if (filters.limit) params.set('limit', String(filters.limit));
 

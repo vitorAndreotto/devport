@@ -10,16 +10,35 @@ export class SkillService {
   private cachedTree: SkillTree[] | null = null;
   private cachedCategories: string[] | null = null;
 
-  // Skill Tree (público, com cache)
+  // Skill Tree (público, com cache).
+  // Deduplica por id: a mesma skill pode vir aninhada em multiplos pais —
+  // mantemos apenas a primeira ocorrencia para evitar duplicatas em listas/selects.
   getSkillTree(): Observable<SkillTree[]> {
     if (this.cachedTree) {
       return of(this.cachedTree);
     }
 
     return this.api.get<{ data: SkillTree[] }>('/skills').pipe(
-      map((res) => res.data),
+      map((res) => this.dedupTree(res.data)),
       tap((tree) => this.cachedTree = tree),
     );
+  }
+
+  private dedupTree(tree: SkillTree[]): SkillTree[] {
+    const seen = new Set<string>();
+    const visit = (items: SkillTree[]): SkillTree[] => {
+      const result: SkillTree[] = [];
+      for (const s of items) {
+        if (seen.has(s.id)) continue;
+        seen.add(s.id);
+        result.push({
+          ...s,
+          children: s.children ? visit(s.children) : [],
+        });
+      }
+      return result;
+    };
+    return visit(tree);
   }
 
   getCategories(): Observable<string[]> {

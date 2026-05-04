@@ -1,0 +1,280 @@
+@if (loading()) {
+<div class="tab-loading">
+    <lucide-icon name="loader-2" [size]="20"></lucide-icon>
+    <span>Carregando indicadores de perfil...</span>
+</div>
+} @else {
+
+<!-- Profile completeness -->
+@if (profileCompleteness()) {
+<section class="dash-section">
+    <h3 class="dash-section__title">
+        <lucide-icon name="shield-check" [size]="20"></lucide-icon>
+        Completude do Perfil
+    </h3>
+    <div class="completeness">
+        <div class="completeness__score" [style.color]="getCompletenessColor(profileCompleteness()!.score)">
+            {{ profileCompleteness()!.score }}%
+        </div>
+        <div class="completeness__bar">
+            <div class="completeness__fill" [style.width]="profileCompleteness()!.score + '%'" [style.background]="getCompletenessColor(profileCompleteness()!.score)"></div>
+        </div>
+        @if (profileCompleteness()!.missing.length > 0) {
+        <p class="completeness__hint">Pendente: {{ profileCompleteness()!.missing.join(', ') }}</p>
+        } @else {
+        <p class="completeness__hint completeness__hint--ok">Perfil completo</p>
+        }
+    </div>
+</section>
+}
+
+<!-- 3 pies: modalidade / contrato / senioridade -->
+<section class="dash-section pies-section">
+    <div class="pies-row">
+        @if (workModeDistribution().length > 0) {
+        <div class="pie-cell">
+            <h3 class="pie-cell__title">
+                <lucide-icon name="map-pin" [size]="16"></lucide-icon>
+                Modalidade
+            </h3>
+            @if (profile()?.work_modes?.length) {
+            <div class="my-modes">
+                <span class="my-modes__label">Você aceita:</span>
+                @for (m of profile()!.work_modes; track m) {
+                <span class="my-modes__badge" [style.background]="pieColors[m] || '#94a3b8'">{{ workModeLabels[m] || m }}</span>
+                }
+            </div>
+            }
+            <div class="pie-chart">
+                <svg class="pie-chart__svg" viewBox="0 0 200 200" role="img" aria-label="Distribuição de modalidades">
+                    @for (slice of modePieSlices(); track slice.key) {
+                    <path [attr.d]="slice.path" [attr.fill]="slice.color" stroke="white" stroke-width="2"></path>
+                    }
+                </svg>
+                <ul class="pie-chart__legend">
+                    @for (slice of modePieSlices(); track slice.key) {
+                    <li class="pie-chart__legend-item">
+                        <span class="pie-chart__swatch" [style.background]="slice.color"></span>
+                        <span class="pie-chart__legend-label">{{ slice.label }}</span>
+                        <span class="pie-chart__legend-pct">{{ slice.pct }}%</span>
+                    </li>
+                    }
+                </ul>
+            </div>
+        </div>
+        }
+
+        @if (contractDistribution().length > 0) {
+        <div class="pie-cell">
+            <h3 class="pie-cell__title">
+                <lucide-icon name="briefcase" [size]="16"></lucide-icon>
+                Modelo de contrato
+            </h3>
+            <div class="pie-chart">
+                <svg class="pie-chart__svg" viewBox="0 0 200 200" role="img" aria-label="Distribuição de modelos de contrato">
+                    @for (slice of contractPieSlices(); track slice.key) {
+                    <path [attr.d]="slice.path" [attr.fill]="slice.color" stroke="white" stroke-width="2"></path>
+                    }
+                </svg>
+                <ul class="pie-chart__legend">
+                    @for (slice of contractPieSlices(); track slice.key) {
+                    <li class="pie-chart__legend-item">
+                        <span class="pie-chart__swatch" [style.background]="slice.color"></span>
+                        <span class="pie-chart__legend-label">{{ slice.label }}</span>
+                        <span class="pie-chart__legend-pct">{{ slice.pct }}%</span>
+                    </li>
+                    }
+                </ul>
+            </div>
+        </div>
+        }
+
+        @if (seniorityDistribution().length > 0) {
+        <div class="pie-cell">
+            <h3 class="pie-cell__title">
+                <lucide-icon name="award" [size]="16"></lucide-icon>
+                Senioridade
+            </h3>
+            <div class="pie-chart">
+                <svg class="pie-chart__svg" viewBox="0 0 200 200" role="img" aria-label="Distribuição de senioridades">
+                    @for (slice of seniorityPieSlices(); track slice.key) {
+                    <path [attr.d]="slice.path" [attr.fill]="slice.color" stroke="white" stroke-width="2"></path>
+                    }
+                </svg>
+                <ul class="pie-chart__legend">
+                    @for (slice of seniorityPieSlices(); track slice.key) {
+                    <li class="pie-chart__legend-item pie-chart__legend-item--multi">
+                        <span class="pie-chart__swatch" [style.background]="slice.color"></span>
+                        <span class="pie-chart__legend-label">
+                            {{ slice.label }}
+                            @if (slice.sublabel) { <span class="pie-chart__legend-sub">· {{ slice.sublabel }}</span> }
+                        </span>
+                        <span class="pie-chart__legend-pct">{{ slice.pct }}%</span>
+                    </li>
+                    }
+                </ul>
+            </div>
+        </div>
+        }
+    </div>
+</section>
+
+<hr class="dash-divider">
+
+<!-- Mapa do Brasil — vagas por cidade -->
+@if (jobsMap().length > 0) {
+<section class="dash-section">
+    <h3 class="dash-section__title">
+        <lucide-icon name="map-pin" [size]="20"></lucide-icon>
+        Mapa de Vagas por Cidade
+        <span class="dash-section__count">{{ jobsMap().length }}</span>
+    </h3>
+    <p class="dash-section__hint">Top 100 cidades com mais vagas presencial/híbrido — tamanho do círculo proporcional ao número de vagas</p>
+
+    <div class="brazil-map">
+        <div
+            class="brazil-map__leaflet"
+            leaflet
+            [leafletOptions]="mapOptions"
+            [leafletLayers]="jobLayers()"
+            (leafletMapReady)="onMapReady($event)">
+        </div>
+
+        <!-- Legenda -->
+        <div class="brazil-map__legend">
+            <span class="brazil-map__legend-label">Vagas:</span>
+            <div class="brazil-map__legend-scale">
+                <span class="brazil-map__legend-dot" style="width: 8px; height: 8px;"></span>
+                <span class="brazil-map__legend-dot" style="width: 14px; height: 14px;"></span>
+                <span class="brazil-map__legend-dot" style="width: 22px; height: 22px;"></span>
+                <span class="brazil-map__legend-dot" style="width: 32px; height: 32px;"></span>
+            </div>
+            <span class="brazil-map__legend-range">
+                {{ jobsMap()[jobsMap().length - 1]?.job_count }}
+                ―
+                {{ jobsMap()[0]?.job_count }}
+            </span>
+        </div>
+    </div>
+</section>
+}
+
+<hr class="dash-divider">
+
+<!-- Salary by seniority — full width -->
+@if (salaryAvgBySeniority().length > 0) {
+<section class="dash-section">
+    <h3 class="dash-section__title">
+        <lucide-icon name="briefcase" [size]="20"></lucide-icon>
+        Faixa Salarial Média por Senioridade
+    </h3>
+
+    @if (hasSalary()) {
+    <div class="my-salary-card">
+        <span class="my-salary-card__label">Sua pretensão:</span>
+        <div class="my-salary-card__values">
+            @if (profile()!.salary_clt_min) {
+            <span class="my-salary-card__value">CLT R$ {{ formatBRL(profile()!.salary_clt_min) }} – {{ formatBRL(profile()!.salary_clt_max) }}</span>
+            }
+            @if (profile()!.salary_pj_min) {
+            <span class="my-salary-card__value">PJ R$ {{ formatBRL(profile()!.salary_pj_min) }} – {{ formatBRL(profile()!.salary_pj_max) }}</span>
+            }
+        </div>
+    </div>
+    } @else {
+    <div class="info-banner">
+        <lucide-icon name="info" [size]="16"></lucide-icon>
+        <span>Adicione sua pretensão salarial no perfil para comparar com o mercado.</span>
+    </div>
+    }
+
+    <div class="salary-table-wrap">
+        <table class="salary-table">
+            <thead>
+                <tr>
+                    <th>Senioridade</th>
+                    <th>CLT (média)</th>
+                    <th>PJ (média)</th>
+                    <th class="salary-table__count">Vagas</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (row of salaryAvgBySeniority(); track row.seniority) {
+                <tr>
+                    <td class="salary-table__seniority">{{ seniorityLabels[row.seniority] || row.seniority }}</td>
+                    <td>
+                        @if (row.clt_avg_min) {
+                          R$ {{ formatBRL(row.clt_avg_min) }} – {{ formatBRL(row.clt_avg_max) }}
+                        } @else {
+                          <span class="dim">-</span>
+                        }
+                    </td>
+                    <td>
+                        @if (row.pj_avg_min) {
+                          R$ {{ formatBRL(row.pj_avg_min) }} – {{ formatBRL(row.pj_avg_max) }}
+                        } @else {
+                          <span class="dim">-</span>
+                        }
+                    </td>
+                    <td class="salary-table__count">{{ row.job_count }}</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+}
+
+<hr class="dash-divider">
+
+<!-- Top cities for dev -->
+@if (topCities().length > 0) {
+<section class="dash-section">
+    <h3 class="dash-section__title">
+        <lucide-icon name="map-pin" [size]="20"></lucide-icon>
+        Cidades das Melhores Vagas para Você
+    </h3>
+    <p class="dash-section__hint">
+        Vagas presencial/híbrido com seu match score ≥ 60 — ordenadas pelo número de vagas
+    </p>
+
+    <div class="cities-table-wrap">
+        <table class="cities-table">
+            <thead>
+                <tr>
+                    <th>Cidade</th>
+                    <th>Estado</th>
+                    <th class="cities-table__num">Vagas</th>
+                    <th class="cities-table__num">Score médio</th>
+                    <th class="cities-table__num">CLT médio</th>
+                    <th class="cities-table__num">PJ médio</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (row of topCities(); track row.city_id) {
+                <tr>
+                    <td class="cities-table__name">{{ row.city_name }}</td>
+                    <td>
+                        <span class="cities-table__chip" [title]="row.state_name">{{ row.state_abbr }}</span>
+                    </td>
+                    <td class="cities-table__num">{{ row.job_count }}</td>
+                    <td class="cities-table__num">
+                        <span class="score-pill" [class.score-pill--high]="row.avg_score >= 80" [class.score-pill--mid]="row.avg_score >= 60 && row.avg_score < 80" [class.score-pill--low]="row.avg_score < 60">
+                            {{ row.avg_score }}
+                        </span>
+                    </td>
+                    <td class="cities-table__num">
+                        @if (row.avg_clt !== null) { R$ {{ formatBRL(row.avg_clt) }} } @else { <span class="dim">-</span> }
+                    </td>
+                    <td class="cities-table__num">
+                        @if (row.avg_pj !== null) { R$ {{ formatBRL(row.avg_pj) }} } @else { <span class="dim">-</span> }
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+</section>
+}
+
+}

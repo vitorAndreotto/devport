@@ -1,0 +1,328 @@
+@if (loading()) {
+  <div class="tab-loading">
+    <lucide-icon name="loader-2" [size]="20"></lucide-icon>
+    <span>Carregando indicadores de skills...</span>
+  </div>
+} @else {
+
+  <!-- My Differentials -->
+  @if (myDifferentials().length > 0) {
+    <section class="dash-section">
+      <h3 class="dash-section__title">
+        <lucide-icon name="award" [size]="20"></lucide-icon>
+        Suas Skills Diferenciais
+        <span class="dash-section__count">{{ myDifferentials().length }}</span>
+      </h3>
+      <p class="dash-section__hint">Top 5 — você acima da média do mercado e dos outros devs</p>
+
+      <div class="diff-cards">
+        @for (s of myDifferentials(); track s.skill_id; let i = $index) {
+          <div class="diff-card" [style.animation-delay.ms]="i * 60">
+            <div class="diff-card__rank">#{{ i + 1 }}</div>
+
+            <div class="diff-card__body">
+              <div class="diff-card__header">
+                <span class="diff-card__name">{{ s.name }}</span>
+                <span class="diff-card__chip">{{ categoryLabels[s.category] || s.category }}</span>
+                <span class="diff-card__demand">
+                  <lucide-icon name="briefcase" [size]="12"></lucide-icon>
+                  {{ s.demand }} vagas
+                </span>
+              </div>
+
+              <div class="ruler">
+                <div class="ruler__track">
+                  <div class="ruler__seg ruler__seg--1"></div>
+                  <div class="ruler__seg ruler__seg--2"></div>
+                  <div class="ruler__seg ruler__seg--3"></div>
+                  <div class="ruler__seg ruler__seg--4"></div>
+                </div>
+
+                <div class="ruler__pin ruler__pin--devs"
+                     [style.left.%]="levelToPct(s.dev_avg_level)"
+                     [title]="'Média dos devs: ' + s.dev_avg_label">
+                  <span class="ruler__pin-arrow"></span>
+                  <span class="ruler__pin-label">Devs</span>
+                </div>
+                <div class="ruler__pin ruler__pin--market"
+                     [style.left.%]="levelToPct(s.market_avg_level)"
+                     [title]="'Média do mercado: ' + s.market_avg_label">
+                  <span class="ruler__pin-arrow"></span>
+                  <span class="ruler__pin-label">Mercado</span>
+                </div>
+                <div class="ruler__pin ruler__pin--you"
+                     [style.left.%]="levelToPct(s.my_level_num)"
+                     [title]="'Você: ' + (skillLevelLabels[s.my_level] || s.my_level)">
+                  <span class="ruler__pin-arrow"></span>
+                  <span class="ruler__pin-label">Você</span>
+                </div>
+
+                <div class="ruler__labels">
+                  <span>Iniciante</span>
+                  <span>Intermediário</span>
+                  <span>Avançado</span>
+                  <span>Especialista</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- Top matches gaps -->
+  @if (topMatchesGapsTop().length > 0) {
+    <section class="dash-section">
+      <h3 class="dash-section__title">
+        <lucide-icon name="trending-up" [size]="20"></lucide-icon>
+        Maiores Gaps das Suas Top Vagas
+        <span class="dash-section__count dash-section__count--warn">{{ topMatchesGaps().length }}</span>
+      </h3>
+      <p class="dash-section__hint">
+        Skills mais pedidas nas vagas com seu maior match score
+        @if (strongGapsCount() > 0) { · <strong class="text-strong">{{ strongGapsCount() }} forte(s)</strong> }
+        @if (mediumGapsCount() > 0) { · <strong class="text-medium">{{ mediumGapsCount() }} médio(s)</strong> }
+      </p>
+
+      <div class="diff-cards">
+        @for (g of topMatchesGapsTop(); track g.skill_id; let i = $index) {
+          <div class="diff-card diff-card--gap-{{ g.gap_type }}" [style.animation-delay.ms]="i * 60">
+            <div class="diff-card__rank">#{{ i + 1 }}</div>
+
+            <div class="diff-card__body">
+              <div class="diff-card__header">
+                <span class="diff-card__name">{{ g.name }}</span>
+                <span class="diff-card__chip">{{ categoryLabels[g.category] || g.category }}</span>
+                <span class="gap-tag gap-tag--{{ g.gap_type }}">
+                  @if (g.gap_type === 'strong') { Não tem } @else { Abaixo do exigido }
+                </span>
+                <span class="diff-card__demand">
+                  <lucide-icon name="briefcase" [size]="12"></lucide-icon>
+                  {{ g.appearances }} top vagas
+                </span>
+              </div>
+
+              <div class="ruler">
+                <div class="ruler__track">
+                  <div class="ruler__seg ruler__seg--1"></div>
+                  <div class="ruler__seg ruler__seg--2"></div>
+                  <div class="ruler__seg ruler__seg--3"></div>
+                  <div class="ruler__seg ruler__seg--4"></div>
+                </div>
+
+                <!-- Pin: nivel exigido -->
+                <div class="ruler__pin ruler__pin--required"
+                     [style.left.%]="levelToPct(g.avg_required_level)"
+                     [title]="'Nível exigido: ' + g.required_label">
+                  <span class="ruler__pin-arrow"></span>
+                  <span class="ruler__pin-label">Exigido</span>
+                </div>
+
+                <!-- Pin: voce (so se tem a skill) -->
+                @if (g.my_level_num !== null) {
+                  <div class="ruler__pin ruler__pin--you"
+                       [style.left.%]="levelToPct(g.my_level_num)"
+                       [title]="'Você: ' + (skillLevelLabels[g.my_level!] || g.my_level)">
+                    <span class="ruler__pin-arrow"></span>
+                    <span class="ruler__pin-label">Você</span>
+                  </div>
+                }
+
+                <div class="ruler__labels">
+                  <span>Iniciante</span>
+                  <span>Intermediário</span>
+                  <span>Avançado</span>
+                  <span>Especialista</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- Top by requirement -->
+  @if (selectedTopSkills().length > 0) {
+    <section class="dash-section">
+      <h3 class="dash-section__title">
+        <lucide-icon name="flame" [size]="20"></lucide-icon>
+        Top Skills do Mercado por Tipo de Exigência
+      </h3>
+      <p class="dash-section__hint">Top 10 do último mês — com tendência em relação ao mês anterior</p>
+
+      <div class="req-pills">
+        <button class="req-pill req-pill--required" [class.req-pill--active]="selectedRequirement() === 'required'"
+                (click)="selectRequirement('required')">
+          <span class="req-pill__dot"></span>
+          <span class="req-pill__label">Obrigatórias</span>
+          <span class="req-pill__count">{{ reqCounts().required }}</span>
+        </button>
+        <button class="req-pill req-pill--expected" [class.req-pill--active]="selectedRequirement() === 'expected'"
+                (click)="selectRequirement('expected')">
+          <span class="req-pill__dot"></span>
+          <span class="req-pill__label">Esperadas</span>
+          <span class="req-pill__count">{{ reqCounts().expected }}</span>
+        </button>
+        <button class="req-pill req-pill--differential" [class.req-pill--active]="selectedRequirement() === 'differential'"
+                (click)="selectRequirement('differential')">
+          <span class="req-pill__dot"></span>
+          <span class="req-pill__label">Diferenciais</span>
+          <span class="req-pill__count">{{ reqCounts().differential }}</span>
+        </button>
+      </div>
+
+      <div class="diff-cards">
+        @for (s of selectedTopSkills(); track s.skill_id; let i = $index) {
+          <div class="diff-card diff-card--top diff-card--{{ i < 3 ? 'podium-' + (i + 1) : 'top-normal' }}"
+               [style.animation-delay.ms]="i * 40">
+            <div class="diff-card__rank">{{ s.position }}</div>
+
+            <div class="diff-card__body">
+              <div class="diff-card__header">
+                <span class="diff-card__name">{{ s.name }}</span>
+                <span class="diff-card__chip">{{ categoryLabels[s.category] || s.category }}</span>
+                <span class="pos-cell pos-cell--{{ s.trend }}"
+                      [title]="'Último mês: ' + s.demand_last_month + ' · Mês anterior: ' + s.demand_prev_month">
+                  @if (s.trend === 'up') {
+                    <lucide-icon name="trending-up" [size]="12"></lucide-icon>
+                  } @else if (s.trend === 'down') {
+                    <lucide-icon name="trending-down" [size]="12"></lucide-icon>
+                  } @else {
+                    <span class="pos-cell__stable">—</span>
+                  }
+                </span>
+                <span class="diff-card__demand">
+                  <lucide-icon name="briefcase" [size]="12"></lucide-icon>
+                  {{ formatDemand(s.demand_last_month) }} vagas no mês
+                </span>
+              </div>
+
+              <div class="ruler">
+                <div class="ruler__track">
+                  <div class="ruler__seg ruler__seg--1"></div>
+                  <div class="ruler__seg ruler__seg--2"></div>
+                  <div class="ruler__seg ruler__seg--3"></div>
+                  <div class="ruler__seg ruler__seg--4"></div>
+                </div>
+
+                <div class="ruler__pin ruler__pin--devs"
+                     [style.left.%]="levelToPct(s.dev_avg_level)"
+                     [title]="'Média dos devs: ' + s.dev_avg_label">
+                  <span class="ruler__pin-arrow"></span>
+                  <span class="ruler__pin-label">Devs</span>
+                </div>
+                <div class="ruler__pin ruler__pin--market"
+                     [style.left.%]="levelToPct(s.market_avg_level)"
+                     [title]="'Mercado pede: ' + s.market_avg_label">
+                  <span class="ruler__pin-arrow"></span>
+                  <span class="ruler__pin-label">Mercado</span>
+                </div>
+                @if (s.my_level_num !== null) {
+                  <div class="ruler__pin ruler__pin--you"
+                       [style.left.%]="levelToPct(s.my_level_num)"
+                       [title]="'Você: ' + (skillLevelLabels[s.my_level!] || s.my_level)">
+                    <span class="ruler__pin-arrow"></span>
+                    <span class="ruler__pin-label">Você</span>
+                  </div>
+                }
+
+                <div class="ruler__labels">
+                  <span>Iniciante</span>
+                  <span>Intermediário</span>
+                  <span>Avançado</span>
+                  <span>Especialista</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- My skills in market — paginated table -->
+  @if (mySkillsMarketTable().length > 0) {
+    <section class="dash-section">
+      <h3 class="dash-section__title">
+        <lucide-icon name="star" [size]="20"></lucide-icon>
+        Suas Skills no Mercado
+        <span class="dash-section__count">{{ mySkillsMarketTable().length }}</span>
+      </h3>
+      <p class="dash-section__hint">Posição no ranking das skills mais pedidas no último mês</p>
+
+      <div class="market-table-wrap">
+        <table class="market-table">
+          <thead>
+            <tr>
+              <th class="market-table__pos">#</th>
+              <th>Skill</th>
+              <th>Categoria</th>
+              <th>Seu nível</th>
+              <th>Nível do mercado</th>
+              <th class="market-table__num">% vagas que você atende</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (row of marketTablePageItems(); track row.skill_id) {
+              <tr>
+                <td class="market-table__pos">
+                  @if (row.month_position !== null) {
+                    <div class="pos-cell pos-cell--{{ row.trend }}"
+                         [title]="'Último mês: ' + row.demand_last_month + ' · Mês anterior: ' + row.demand_prev_month">
+                      <span class="pos-cell__num">#{{ row.month_position }}</span>
+                      @if (row.trend === 'up') {
+                        <lucide-icon name="trending-up" [size]="14"></lucide-icon>
+                      } @else if (row.trend === 'down') {
+                        <lucide-icon name="trending-down" [size]="14"></lucide-icon>
+                      } @else {
+                        <span class="pos-cell__stable">—</span>
+                      }
+                    </div>
+                  } @else {
+                    <span class="pos-cell__none" title="Sem vagas no último mês">—</span>
+                  }
+                </td>
+                <td class="market-table__name">{{ row.name }}</td>
+                <td><span class="market-table__chip">{{ categoryLabels[row.category] || row.category }}</span></td>
+                <td><span class="market-table__lvl market-table__lvl--you">{{ skillLevelLabels[row.my_level] || row.my_level }}</span></td>
+                <td><span class="market-table__lvl">{{ skillLevelLabels[row.market_avg_label] || row.market_avg_label }}</span></td>
+                <td class="market-table__num">
+                  <div class="meet-cell">
+                    <div class="meet-cell__bar">
+                      <div class="meet-cell__fill"
+                           [class.meet-cell__fill--high]="row.dev_can_meet_pct >= 70"
+                           [class.meet-cell__fill--mid]="row.dev_can_meet_pct >= 40 && row.dev_can_meet_pct < 70"
+                           [class.meet-cell__fill--low]="row.dev_can_meet_pct < 40"
+                           [style.width.%]="row.dev_can_meet_pct"></div>
+                    </div>
+                    <span class="meet-cell__pct">{{ row.dev_can_meet_pct }}%</span>
+                    <span class="meet-cell__qty">({{ row.jobs_dev_can_meet }} de {{ row.total_jobs }})</span>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+
+        @if (marketTableTotalPages() > 1) {
+          <div class="market-table__pager">
+            <button class="pager-btn" (click)="prevPage()" [disabled]="marketTablePage() === 1">
+              <lucide-icon name="chevron-left" [size]="14"></lucide-icon>
+              Anterior
+            </button>
+            <span class="pager-info">
+              Página <strong>{{ marketTablePage() }}</strong> de {{ marketTableTotalPages() }}
+            </span>
+            <button class="pager-btn" (click)="nextPage()" [disabled]="marketTablePage() === marketTableTotalPages()">
+              Próxima
+              <lucide-icon name="chevron-right" [size]="14"></lucide-icon>
+            </button>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+}

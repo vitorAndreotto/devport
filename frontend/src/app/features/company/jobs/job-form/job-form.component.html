@@ -71,13 +71,44 @@
         <h2 class="form-section__title">Remuneração</h2>
       </div>
       <div class="form-section__body">
+        <h3 class="form-subsection-title">Faixa salarial CLT</h3>
         <div class="form-grid">
-          <app-form-field label="Salário mínimo (R$)" [control]="form.controls.salary_min" [required]="true">
-            <input class="input" type="text" formControlName="salary_min" placeholder="0,00" appCurrencyMask>
+          <app-form-field label="CLT mínimo (R$)" [control]="form.controls.salary_clt_min">
+            <input class="input" type="text" formControlName="salary_clt_min" placeholder="0,00" appCurrencyMask>
           </app-form-field>
-          <app-form-field label="Salário máximo (R$)" [control]="form.controls.salary_max" [required]="true">
-            <input class="input" type="text" formControlName="salary_max" placeholder="0,00" appCurrencyMask>
+          <app-form-field label="CLT máximo (R$)" [control]="form.controls.salary_clt_max">
+            <input class="input" type="text" formControlName="salary_clt_max" placeholder="0,00" appCurrencyMask>
           </app-form-field>
+        </div>
+        @if (hasSalaryError('cltRange')) {
+          <span class="form-field__error">Salário CLT máximo deve ser maior ou igual ao mínimo.</span>
+        }
+        @if (hasSalaryError('cltIncomplete')) {
+          <span class="form-field__error">Informe ambos os salários CLT (mínimo e máximo) ou nenhum.</span>
+        }
+
+        <h3 class="form-subsection-title">Faixa salarial PJ</h3>
+        <div class="form-grid">
+          <app-form-field label="PJ mínimo (R$)" [control]="form.controls.salary_pj_min">
+            <input class="input" type="text" formControlName="salary_pj_min" placeholder="0,00" appCurrencyMask>
+          </app-form-field>
+          <app-form-field label="PJ máximo (R$)" [control]="form.controls.salary_pj_max">
+            <input class="input" type="text" formControlName="salary_pj_max" placeholder="0,00" appCurrencyMask>
+          </app-form-field>
+        </div>
+        @if (hasSalaryError('pjRange')) {
+          <span class="form-field__error">Salário PJ máximo deve ser maior ou igual ao mínimo.</span>
+        }
+        @if (hasSalaryError('pjIncomplete')) {
+          <span class="form-field__error">Informe ambos os salários PJ (mínimo e máximo) ou nenhum.</span>
+        }
+
+        <span class="form-field__hint">Preencha conforme o modelo de contratação: CLT, PJ ou ambos.</span>
+
+        <div class="form-field" style="margin-top: 1rem;">
+          <label class="form-field__label">Raio máximo para candidatos (km)</label>
+          <input class="input" type="number" formControlName="max_radius_km" placeholder="Ex: 30" min="1" max="60">
+          <span class="form-field__hint">Apenas para vagas presenciais/híbridas. 1 a 60 km.</span>
         </div>
 
         <label class="checkbox-field">

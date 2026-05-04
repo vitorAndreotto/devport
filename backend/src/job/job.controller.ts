@@ -42,10 +42,43 @@ export class CompanyJobController {
   ) {}
 
   @Get()
-  async findAll(@CurrentUser() user: User) {
+  async findAll(
+    @CurrentUser() user: User,
+    @Query('status') statusRaw?: string,
+    @Query('q') q?: string,
+    @Query('page') pageRaw?: string,
+    @Query('limit') limitRaw?: string,
+  ) {
     const profile = await this.profileService.findByUserIdOrFail(user.id);
-    const jobs = await this.jobService.findByCompanyProfileId(profile.id);
-    return jobs.map((j) => this.toOwnerResponse(j));
+    const validStatus = (['open', 'frozen', 'closed'] as const).find((s) => s === statusRaw);
+
+    const result = await this.jobService.searchOwned({
+      company_profile_id: profile.id,
+      status: validStatus,
+      q,
+      page: pageRaw ? parseInt(pageRaw, 10) : undefined,
+      limit: limitRaw ? parseInt(limitRaw, 10) : undefined,
+    });
+
+    return {
+      data: result.data.map((j) => ({
+        ...this.toOwnerResponse(j),
+        application_count: j.application_count,
+        applicants_avg_score: j.applicants_avg_score,
+        top_devs_avg_score: j.top_devs_avg_score,
+      })),
+      meta: result.meta,
+    };
+  }
+
+  @Get(':id')
+  async findOne(
+    @CurrentUser() user: User,
+    @Param('id', ParseUUIDPipe) jobId: string,
+  ) {
+    const profile = await this.profileService.findByUserIdOrFail(user.id);
+    const job = await this.jobService.findOwned(jobId, profile.id);
+    return this.toOwnerResponse(job);
   }
 
   @Post()
@@ -109,11 +142,14 @@ export class CompanyJobController {
       skills: this.formatSkills(job),
       min_experience_years: job.minExperienceYears,
       contract_model: job.contractModel,
-      salary_min: job.salaryMin,
-      salary_max: job.salaryMax,
+      salary_clt_min: job.salaryCltMin,
+      salary_clt_max: job.salaryCltMax,
+      salary_pj_min: job.salaryPjMin,
+      salary_pj_max: job.salaryPjMax,
       show_salary: job.showSalary,
       benefits: job.benefits,
       work_mode: job.workMode,
+      max_radius_km: job.maxRadiusKm,
       company_unit_id: job.companyUnitId,
       city_id: job.cityId,
       zip_code: job.zipCode,
@@ -164,6 +200,8 @@ export class PublicJobController {
     @Query('seniority') seniority?: string,
     @Query('city_id') cityId?: string,
     @Query('skills') skillsRaw?: string,
+    @Query('period') periodRaw?: string,
+    @Query('view') viewRaw?: string,
     @Query('page') pageRaw?: string,
     @Query('limit') limitRaw?: string,
   ) {
@@ -175,6 +213,16 @@ export class PublicJobController {
       });
     }
 
+    // Dev profile lookup (only when needed for view filter or score computation)
+    let devProfileId: string | undefined;
+    if (user?.role === 'dev') {
+      const profile = await this.devProfileRepo.findOne({ where: { userId: user.id }, select: ['id'] });
+      devProfileId = profile?.id;
+    }
+
+    const validPeriod = (['last_month', 'older_30', 'older_60'] as const).find((p) => p === periodRaw);
+    const validView = (['global', 'for_you', 'applied'] as const).find((v) => v === viewRaw);
+
     const result = await this.jobService.searchPublic({
       q,
       work_mode: workMode,
@@ -182,6 +230,9 @@ export class PublicJobController {
       seniority,
       city_id: cityId ? parseInt(cityId, 10) : undefined,
       skills,
+      period: validPeriod,
+      view: validView,
+      dev_profile_id: devProfileId,
       page: pageRaw ? parseInt(pageRaw, 10) : undefined,
       limit: limitRaw ? parseInt(limitRaw, 10) : undefined,
     });
@@ -224,8 +275,22 @@ export class PublicJobController {
       if (devData) {
         const jobData = this.buildJobData(job);
         const match = await this.matchingService.getScore(devData, jobData);
+
+        // Enriquece cada skill da vaga com info do dev (gap vs ok)
+        const levelNum = (l?: string | null) => l === 'beginner' ? 1 : l === 'intermediate' ? 2 : l === 'advanced' ? 3 : l === 'expert' ? 4 : 0;
+        const devSkillMap = new Map(devData.skills.map((s) => [s.skillId, s.level]));
+        const enrichedSkills = detail.skills.map((js: any) => {
+          const devLevel = devSkillMap.get(js.skill.id) ?? null;
+          return {
+            ...js,
+            dev_level: devLevel,
+            dev_meets_min: levelNum(devLevel) >= levelNum(js.min_level),
+          };
+        });
+
         return {
           ...detail,
+          skills: enrichedSkills,
           match_score: match.score,
           match_detail: {
             skills: match.skillScore,
@@ -286,7 +351,12 @@ export class PublicJobController {
       })),
       min_experience_years: job.minExperienceYears,
       contract_model: job.contractModel,
-      ...(job.showSalary ? { salary_min: job.salaryMin, salary_max: job.salaryMax } : {}),
+      ...(job.showSalary ? {
+        salary_clt_min: job.salaryCltMin,
+        salary_clt_max: job.salaryCltMax,
+        salary_pj_min: job.salaryPjMin,
+        salary_pj_max: job.salaryPjMax,
+      } : {}),
       benefits: job.benefits,
       work_mode: job.workMode,
       location: job.city ? {
@@ -328,8 +398,11 @@ export class PublicJobController {
       id: profile.id,
       workModes: profile.workModes,
       cityId: profile.cityId,
-      salaryMin: profile.salaryMin,
-      salaryMax: profile.salaryMax,
+      maxRadiusKm: profile.maxRadiusKm,
+      salaryCltMin: profile.salaryCltMin,
+      salaryCltMax: profile.salaryCltMax,
+      salaryPjMin: profile.salaryPjMin,
+      salaryPjMax: profile.salaryPjMax,
       skills: skills.map((s) => ({ skillId: s.skillId, level: s.level })),
       totalExperienceMonths: totalMonths,
     };
@@ -341,8 +414,12 @@ export class PublicJobController {
       workMode: job.workMode,
       cityId: job.cityId,
       cityStateId: null as number | null,
-      salaryMin: Number(job.salaryMin),
-      salaryMax: Number(job.salaryMax),
+      maxRadiusKm: job.maxRadiusKm,
+      salaryCltMin: job.salaryCltMin ? Number(job.salaryCltMin) : null,
+      salaryCltMax: job.salaryCltMax ? Number(job.salaryCltMax) : null,
+      salaryPjMin: job.salaryPjMin ? Number(job.salaryPjMin) : null,
+      salaryPjMax: job.salaryPjMax ? Number(job.salaryPjMax) : null,
+      contractModel: job.contractModel,
       seniority: job.seniority,
       minExperienceYears: job.minExperienceYears,
       skills: (job.skills ?? []).map((js) => ({

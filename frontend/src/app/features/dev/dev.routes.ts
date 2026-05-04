@@ -2,6 +2,7 @@ import { Routes } from '@angular/router';
 import { DevLayoutComponent } from '../../layouts/dev-layout/dev-layout.component';
 import { hasProfileGuard, noProfileGuard } from '../../core/guards/profile.guard';
 import { DashboardComponent } from './dashboard/dashboard.component';
+import { DashboardsComponent } from './dashboards/dashboards.component';
 import { ProfileComponent } from './profile/profile.component';
 import { SkillsComponent } from './skills/skills.component';
 import { ExperiencesComponent } from './experiences/experiences.component';
@@ -22,6 +23,7 @@ export const devRoutes: Routes = [
     canActivate: [hasProfileGuard],
     children: [
       { path: '', component: DashboardComponent },
+      { path: 'dashboards', component: DashboardsComponent },
       { path: 'profile', component: ProfileComponent },
       { path: 'skills', component: SkillsComponent },
       { path: 'experiences', component: ExperiencesComponent },

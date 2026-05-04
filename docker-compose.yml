@@ -9,6 +9,7 @@ services:
     volumes:
       - ./backend:/app
       - /app/node_modules
+      - /app/dist
     env_file: ./backend/.env
     environment:
       DB_HOST: pgsql
@@ -29,6 +30,8 @@ services:
     volumes:
       - ./frontend:/app
       - /app/node_modules
+      - /app/dist
+      - /app/.angular
     depends_on:
       - backend
 

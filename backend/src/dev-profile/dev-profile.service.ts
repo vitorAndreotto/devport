@@ -59,8 +59,11 @@ export class DevProfileService {
       complement: dto.complement ?? null,
       workModes: dto.work_modes ?? null,
       employmentStatus: dto.employment_status ?? null,
-      salaryMin: dto.salary_min ?? null,
-      salaryMax: dto.salary_max ?? null,
+      maxRadiusKm: dto.max_radius_km ?? null,
+      salaryCltMin: dto.salary_clt_min ?? null,
+      salaryCltMax: dto.salary_clt_max ?? null,
+      salaryPjMin: dto.salary_pj_min ?? null,
+      salaryPjMax: dto.salary_pj_max ?? null,
       githubUsername: dto.github_username ?? null,
       links: dto.links ?? null,
     });
@@ -93,8 +96,11 @@ export class DevProfileService {
     if (dto.complement !== undefined) updateData.complement = dto.complement ?? null;
     if (dto.work_modes !== undefined) updateData.workModes = dto.work_modes ?? null;
     if (dto.employment_status !== undefined) updateData.employmentStatus = dto.employment_status ?? null;
-    if (dto.salary_min !== undefined) updateData.salaryMin = dto.salary_min ?? null;
-    if (dto.salary_max !== undefined) updateData.salaryMax = dto.salary_max ?? null;
+    if (dto.max_radius_km !== undefined) updateData.maxRadiusKm = dto.max_radius_km ?? null;
+    if (dto.salary_clt_min !== undefined) updateData.salaryCltMin = dto.salary_clt_min ?? null;
+    if (dto.salary_clt_max !== undefined) updateData.salaryCltMax = dto.salary_clt_max ?? null;
+    if (dto.salary_pj_min !== undefined) updateData.salaryPjMin = dto.salary_pj_min ?? null;
+    if (dto.salary_pj_max !== undefined) updateData.salaryPjMax = dto.salary_pj_max ?? null;
     if (dto.github_username !== undefined) updateData.githubUsername = dto.github_username ?? null;
     if (dto.links !== undefined) updateData.links = dto.links ?? null;
 

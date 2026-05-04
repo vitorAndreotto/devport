@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import Redis from 'ioredis';
 import { REDIS_CLIENT } from '../matching/redis.provider.js';
-import { MatchScore } from '../matching/match-score.entity.js';
+import { MatchScore } from '../matching/infrastructure/match-score.entity.js';
 import { Job } from '../job/job.entity.js';
 import { JobSkill } from '../job/job-skill.entity.js';
 import { DevSkill } from '../dev-skill/dev-skill.entity.js';

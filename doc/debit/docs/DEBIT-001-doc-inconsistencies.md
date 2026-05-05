@@ -2,7 +2,7 @@
 
 > Tipo: Docs
 > Prioridade: Baixa
-> Status: Pendente
+> Status: ✅ Resolvido (2026-05-03)
 
 ---
 
@@ -61,7 +61,16 @@ O resumo no USER_STORIES.md conta 61 stories, mas o total real conforme as histo
 
 ## Criterios de aceite
 
-- [ ] RESUME.md com pesos de matching corretos
-- [ ] Headers de subsecao do PRD alinhados com a formula final
-- [ ] API_CONTRACT.md usando `work_modes` (array) consistente com DATA_MODEL
-- [ ] Contagem de User Stories validada
+- [x] RESUME.md com pesos de matching corretos (50/25/10/15)
+- [x] Headers de subsecao do PRD alinhados com a formula final (6.4.1 → 50%, 6.4.2 → 25%, 6.4.4 ja 15%)
+- [x] API_CONTRACT.md usando `work_modes` (array) consistente com DATA_MODEL
+- [x] Contagem de User Stories validada (real: 57 — Must 47, Should 8, Could 2; Experiencia 4→5)
+
+---
+
+## Confirmacao no backend
+
+| Tema | Implementacao atual | Documentacao corrigida |
+|---|---|---|
+| Pesos do matching | `SCORE_WEIGHTS` em [domain/constants.ts](../../../backend/src/matching/domain/constants.ts) = `{skills: 0.50, experience: 0.25, modality: 0.10, salary: 0.15}` | RESUME.md + PRD 6.4.1/6.4.2 |
+| `work_modes` no perfil | [dev-profile.entity.ts](../../../backend/src/dev-profile/dev-profile.entity.ts) → `@Column({ name: 'work_modes', type: 'jsonb', nullable: true }) workModes: string[] \| null` | API_CONTRACT secao 2.1 |

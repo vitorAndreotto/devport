@@ -664,7 +664,7 @@
 | Perfil Dev | 4 | 4 | 0 | 0 |
 | Skills Dev | 4 | 3 | 0 | 1 |
 | Formação | 4 | 4 | 0 | 0 |
-| Experiência | 4 | 4 | 0 | 0 |
+| Experiência | 5 | 4 | 1 | 0 |
 | Projetos | 3 | 3 | 0 | 0 |
 | GitHub | 3 | 0 | 3 | 0 |
 | Perfil Empresa | 3 | 3 | 0 | 0 |
@@ -675,4 +675,4 @@
 | Skill Tree | 2 | 2 | 0 | 0 |
 | Matching | 2 | 0 | 2 | 0 |
 | Buscas | 3 | 0 | 2 | 1 |
-| **Total** | **61** | **52** | **7** | **2** |
+| **Total** | **57** | **47** | **8** | **2** |

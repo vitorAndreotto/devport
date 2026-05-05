@@ -53,7 +53,7 @@ Este projeto tem como foco **estudo e aprendizado**, abordando:
 - Busca de devs com score de compatibilidade por vaga
 
 ### Matching
-- Score de 0 a 100 baseado em: skills (60%), experiência (20%), modalidade (10%), localização (10%)
+- Score de 0 a 100 baseado em: skills (50%), experiência (25%), modalidade + localização (10%), faixa salarial (15%)
 - Bidirecional: dev busca vagas, empresa busca devs
 - Faixa salarial visível apenas internamente para a empresa
 

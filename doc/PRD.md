@@ -424,7 +424,7 @@ Algoritmo de compatibilidade entre devs e vagas. Score de **0 a 100**.
 
 ---
 
-#### 6.4.1 Skills (40%)
+#### 6.4.1 Skills (50%)
 
 Cada skill da vaga gera um sub-score baseado em:
 1. **O dev possui a skill?** — se não, sub-score = 0
@@ -461,7 +461,7 @@ skill_score = Σ (sub_score_i × peso_i) / Σ (100 × peso_i) × 100
 
 ---
 
-#### 6.4.2 Experiência (20%)
+#### 6.4.2 Experiência (25%)
 
 Calculada a partir da **soma total de tempo das experiências profissionais** do dev (tabela `experiences`).
 

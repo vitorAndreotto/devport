@@ -199,7 +199,7 @@ POST /dev/profile
   "avatar_url": "https://example.com/avatar.jpg",
   "email_contact": "contato@vitor.dev",
   "location": "São Paulo, SP",
-  "work_mode": "remote",
+  "work_modes": ["remote", "hybrid"],
   "salary_min": 10000.00,
   "salary_max": 15000.00,
   "github_username": "vitorsantos",
@@ -223,7 +223,7 @@ POST /dev/profile
     "avatar_url": "https://example.com/avatar.jpg",
     "email_contact": "contato@vitor.dev",
     "location": "São Paulo, SP",
-    "work_mode": "remote",
+    "work_modes": ["remote", "hybrid"],
     "employment_status": "looking",
     "salary_min": 10000.00,
     "salary_max": 15000.00,
@@ -246,7 +246,7 @@ POST /dev/profile
 - `avatar_url`: opcional, url válida, max 2048
 - `email_contact`: obrigatório, email válido
 - `location`: opcional, string, max 255
-- `work_mode`: opcional, enum: `onsite`, `hybrid`, `remote`
+- `work_modes`: opcional, array de enums: `onsite`, `hybrid`, `remote` (multipla selecao)
 - `salary_min`: opcional, decimal, min 0
 - `salary_max`: opcional, decimal, ≥ salary_min
 - `github_username`: opcional, string, max 255
@@ -1663,7 +1663,7 @@ GET /developers
       "title": "Desenvolvedor Full Stack",
       "avatar_url": "https://example.com/avatar.jpg",
       "location": "São Paulo, SP",
-      "work_mode": "remote",
+      "work_modes": ["remote", "hybrid"],
       "employment_status": "looking",
       "skills": [
         { "name": "Angular", "level": "advanced" },
@@ -1726,7 +1726,7 @@ GET /developers/{handle}
     "avatar_url": "https://example.com/avatar.jpg",
     "email_contact": "contato@vitor.dev",
     "location": "São Paulo, SP",
-    "work_mode": "remote",
+    "work_modes": ["remote", "hybrid"],
     "employment_status": "looking",
     "github_username": "vitorsantos",
     "links": [
